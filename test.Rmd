@@ -84,13 +84,15 @@ cb_box2 = JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))').
 
 dat <- mbase$datasets %>% mutate(Month=paste(month(Date,label=TRUE),year(Date))) %>% tbl_df
 #'@ dat <- mbase$datasets %>% mutate(Month=month(ymd(Date), label=TRUE)) %>% tbl_df
-m <- ddply(dat, .(Sess, Month), summarise, Stakes=sum(Stakes)/10000, PL=sum(PL)/10000) %>% tbl_df
+#'@ m <- ddply(dat, .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df
+
+m <- ddply(data.frame(Month=as.yearmon(mbase$datasets$Date,'%b'),mbase$datasets), .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df %>% mutate(Month=as.character(Month))
 #'@ melted <- melt(m, id.vars=c('Sess','Month')) %>% tbl_df
 
 ## http://help.plot.ly/make-a-3D-surface-plot
 ## Will doing research on 3D graph some other days.
-gvis.options <- list(hAxis="{title:'Month'}", vAxis="{title:'Stakes'}",width='automatic', height='automatic')
-line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes','PL'), data=m, options=gvis.options)
+gvis.options <- list(title="Monthly Stakes & PL ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Month'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
+line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes','Return','PL'), data=m, options=gvis.options)
 plot(line.gvis)
 #'@ print(line.gvis, tag='chart')
 ```

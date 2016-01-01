@@ -105,8 +105,12 @@ dateID <- sort(unique(mbase$datasets$Date)); spboDate <- gsub('-','',dateID)
 #'@ source(paste0(getwd(),'/function/scrapSPBO2.R'))
 #'@ scrapSPBO2(lnk=lnk, dateID=dateID, path='livescore', parallel=TRUE)
 
-## scraped spbo livescore datasets.
+## Read spbo livescore datasets.
+if(dir.exists(paste0(getwd(),'/datasets/livescore'))==FALSE){
+  unzip(paste0(getwd(),'/datasets/livescore.zip'),exdir=paste0(getwd(),'/datasets'))
+}
 spboData <- readSPBO(dateID=dateID, parallel=FALSE)
+unlink(paste0(getwd(),'/datasets/livescore'),recursive=TRUE)
 
 ## Apply stringdist() to 'exactly matching' and 'approximate matching' team names
 #'@ method <- c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')
@@ -156,22 +160,31 @@ mbase$datasets %>% head %>% select(No,EUPrice,HKPrice,fHKPriceL,fMYPriceB,fMYPri
 ## the stakes amount display as $1 = $10,000
 #'@ zoo::as.yearmon(mbase$Date,'%b')
 #'@ chron::cut_date()
-#'@ m <- ddply(data.frame(Month=as.yearmon(mbase$datasets$Date,'%b'),mbase$datasets), .(Sess, Month), summarise, Stakes=sum(Stakes)/10000, PL=sum(PL)/10000)
+#'@ m <- ddply(data.frame(Month=as.yearmon(mbase$datasets$Date,'%b'),mbase$datasets), .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000)
 ## zoo::yearmon() doesn't work, here I apply `lubridate::year` and `lubridate::month` instead.
 dat <- mbase$datasets %>% mutate(Month=paste(month(Date,label=TRUE),year(Date))) %>% tbl_df
-m <- ddply(dat, .(Sess, Month), summarise, Stakes=sum(Stakes)/10000, PL=sum(PL)/10000) %>% tbl_df
+m <- ddply(dat, .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df
 #'@ melted <- melt(m, id.vars=c('Sess','Month')) %>% tbl_df
 
 ## http://help.plot.ly/make-a-3D-surface-plot
 ## Will doing research on 3D graph some other days.
-gvis.options <- list(hAxis="{title:'Month'}", vAxis="{title:'Stakes(in \'0000)'}",width=img.width, height=img.height)
-line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes','PL'), data=m, options=gvis.options)
+gvis.options <- list(title="Monthly Investment & Return ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Month'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
+line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes','Return','PL'), data=m, options=gvis.options)
 plot(line.gvis)
 
 #'@ plots <- suppressWarnings(dlply(melted, .(Sess), function(mb) ggplot(x=factor(Month), y=value, fill=variable, data=mb, geom='bar', stat='identity', position='dodge', color=variable) + ylab("HKD (in '0000)") + theme_pander(base_family='Verdana') + scale_fill_pander() + ggtitle(paste('Monthly Summary ',min(mb$Month),'-',max(mb$Month)))))
 
 rm(dat, melted, m)
 #'@ do.call(grid.arrange, plots)
+
+m <- ddply(data.frame(Month=as.yearmon(mbase$datasets$Date,'%b'),mbase$datasets), .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df %>% mutate(Month=as.character(Month))
+#'@ melted <- melt(m, id.vars=c('Sess','Month')) %>% tbl_df
+
+## http://help.plot.ly/make-a-3D-surface-plot
+## Will doing research on 3D graph some other days.
+gvis.options <- list(title="Monthly Stakes & PL ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Month'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
+line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes','Return','PL'), data=m, options=gvis.options)
+plot(line.gvis)
 ```
 
 *graph 3.1.1*
@@ -198,24 +211,26 @@ cd <- list(list(targets=14, render=JS("function(data, type, full){ return '<span
 cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = "")
 
 dt1 %>% datatable(.,caption='Table 3.1.1 : Annual Summary of Staking Data.',extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
-dt1$dependencies <- append(dt1$dependencies, htmlwidgets:::getDependency("sparkline"))
+
+#### errors, need to review
+#'@ dt1$dependencies <- append(dt1$dependencies, htmlwidgets:::getDependency("sparkline"))
 dt1
 ```
 
-*table 3.1.1* `r paste(unlist(strsplit(as.character(dim(res)),' ')), collapse=' x ')`
+*table 3.1.1* `r paste(unlist(strsplit(as.character(dim(dt1)),' ')), collapse=' x ')`
 
   From the table above, we realized that the Asian agency A make profit by follow the British sports betting consultancy firm A every year. Since thousands of bets (and maximum bet limit setting, league profile setting, and also value betting which properly based on Kelly model, mean value will be kinda bias) placed per anum, here we take median will be accurate than mean value which is more than `HKD200,000` per bet. The **annual profit** around `7~11%`.
 
 ```{r data-annum-summary-plot, echo=FALSE, results='asis'}
 ## Plot multiple layer and labeling y-axis on both left-right side.
 ## http://rpubs.com/kohske/dual_axis_in_ggplot2
-melted <- melt(res[c('Sess','Stakes','Return','PL')], id.vars=c('Sess')) %>% tbl_df
+#'@ melted <- melt(dt1[c('Sess','Stakes','Return','PL')], id.vars=c('Sess')) %>% tbl_df
 
 ## ... + xlab('Year') + ylab("HKD ('000,000)")
 ## doesn't work in the ggthemes
 #'@ direct.label(ggplot(melted, aes(x=Sess, y=value/1000000, fill=variable, color=variable)) + geom_bar(stat='identity', colour='black', position='dodge') + xlab('Year') + ylab("HKD ('000,000)") + theme_wsj(base_family='Verdana') + scale_colour_wsj('colors6', '') + ggtitle("Annual Turnover and P&L HKD ('000,000)"), list(last.bumpup,hjust=0.45,cex=0.65))
 
-ggplot(melted, aes(x=Sess, y=value/1000000, fill=variable, color=variable)) + geom_bar(stat='identity', colour='black', position='dodge') + xlab('Year') + ylab("HKD ('000,000)") + theme_wsj(base_family='Verdana') + scale_colour_wsj('colors6', '') + ggtitle("Annual Turnover and P&L HKD ('000,000)")
+#'@ ggplot(melted, aes(x=Sess, y=value/1000000, fill=variable, color=variable)) + geom_bar(stat='identity', colour='black', position='dodge') + xlab('Year') + ylab("HKD ('000,000)") + theme_wsj(base_family='Verdana') + scale_colour_wsj('colors6', '') + ggtitle("Annual Turnover and P&L HKD ('000,000)")
 ```
 
 *graph 3.1.2*
@@ -234,7 +249,7 @@ dt2$dependencies <- append(dt2$dependencies, htmlwidgets:::getDependency("sparkl
 dt2
 ```
 
-*table 3.1.2* `r paste(unlist(strsplit(as.character(dim(d1)),' ')), collapse=' x ')`
+*table 3.1.2* `r paste(unlist(strsplit(as.character(dim(dat.t)),' ')), collapse=' x ')`
 
 
 ### 3.2 Analyse the Staking Handicap
@@ -496,9 +511,7 @@ mbase2 %>% select(No,EUPrice,HKPrice,fHKPriceL,fMYPriceB,fMYPriceL,netProbB,netP
 #'@ out <- ggplotly(viz2)
 #'@ plotly_url <- out$response$url
 
-ggplot(mbase2, aes(x = netProbB, y = rEMProbB)) + geom_point(aes(y = netProbB, color = 'netProbB')) +
-  geom_point(aes(y = rEMProbB, color = 'rEMProbB')) + xlab('Bookmaker Backed Net Prob') + ylab('Calculated EM Backed Prob') +
-  theme_economist(base_family='Verdana') + scale_colour_economist() + ggtitle('Bookmaker Net Probabilities -vs- Firm A EM Probabilities')
+#'@ ggplot(mbase2, aes(x = netProbB, y = rEMProbB)) + geom_point(aes(y = netProbB, color = 'netProbB')) + geom_point(aes(y = rEMProbB, color = 'rEMProbB')) + xlab('Bookmaker Backed Net Prob') + ylab('Calculated EM Backed Prob') + theme_economist(base_family='Verdana') + scale_colour_economist() + ggtitle('Bookmaker Net Probabilities -vs- Firm A EM Probabilities')
 ```
 
 *graph 4.1.1*
