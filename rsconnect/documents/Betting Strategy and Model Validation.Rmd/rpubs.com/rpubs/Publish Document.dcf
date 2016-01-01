@@ -1,7 +1,7 @@
 name: Publish Document
 account: rpubs
 server: rpubs.com
-appId: https://api.rpubs.com/api/v1/document/135403/dd925d9a8a4648f48bc2428bc3afe265
-bundleId: https://api.rpubs.com/api/v1/document/135403/dd925d9a8a4648f48bc2428bc3afe265
-url: http://rpubs.com/englianhu/135403
-when: 1450837191.05244
+appId: https://api.rpubs.com/api/v1/document/139752/0709a760a3e347b6813a864407037639
+bundleId: https://api.rpubs.com/api/v1/document/139752/0709a760a3e347b6813a864407037639
+url: http://rpubs.com/englianhu/139752
+when: 1451643231.62721

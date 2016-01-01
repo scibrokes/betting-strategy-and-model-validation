@@ -1,6 +1,6 @@
 ---
 title: "Betting Strategy and Model Validation (Testing)"
-author: "[Ryo®, Eng Lian Hu](http://englianhu.wordpress.com) <img src='figure/me.JPG' width='24'> 白戸則道®"
+author: "[Ryo®, Eng Lian Hu](http://englianhu.wordpress.com) <img src='figure/ShirotoNorimichi.jpg' width='24'> 白戸則道®"
 date: "7/22/2015"
 output:
   html_document:
@@ -22,7 +22,7 @@ output:
 
 
 
-<img src='figure/Scibrokes-TonyStark.png' width='168'>
+<img src='figure/JJ 02.jpg' width='168'>
 
   [Scibrokes®](http://www.scibrokes.com)   [TonyStark®](https://about.me/englianhu)
 
@@ -132,6 +132,7 @@ $$P_i^{HK_{Lay}} = 1/P_i^{HK_{Back}}-\nu_{j}$$   *equation 2.2.1*
 ## fMYPriceB adn fMYPriceL are MYPrice
 ## Here we term as Real Odds
 
+## Refer to named chunk `read-data-summary-table` for further details.
 #'@ bP <- ifelse(mbase$datasets$fMYPriceB<0, -1/mbase$datasets$fMYPriceB, mbase$datasets$fMYPriceB)
 #'@ lP <- ifelse(mbase$datasets$fMYPriceL<0, -1/mbase$datasets$fMYPriceL, mbase$datasets$fMYPriceL)
 
@@ -155,44 +156,19 @@ mbase$datasets %>% head %>% select(No,EUPrice,HKPrice,fHKPriceL,fMYPriceB,fMYPri
   
   Before we start analyse the staking model, we are firstly see the monthly Stakes and Profit & Lose of the Agency A.
   
-```{r data-month-summary-plots, echo=FALSE, results='asis'}
-## Before we start analyse the staking model, we are firstly see the monthly Stakes and Profit & Lose of the Agency A
-## the stakes amount display as $1 = $10,000
-#'@ zoo::as.yearmon(mbase$Date,'%b')
-#'@ chron::cut_date()
-#'@ m <- ddply(data.frame(Month=as.yearmon(mbase$datasets$Date,'%b'),mbase$datasets), .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000)
-## zoo::yearmon() doesn't work, here I apply `lubridate::year` and `lubridate::month` instead.
-dat <- mbase$datasets %>% mutate(Month=paste(month(Date,label=TRUE),year(Date))) %>% tbl_df
-m <- ddply(dat, .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df
-#'@ melted <- melt(m, id.vars=c('Sess','Month')) %>% tbl_df
+```{r data-annum-summary-plot, echo=FALSE, results='asis'}
+## Annual summry graph.
+m <- ddply(mbase$datasets, .(Sess), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df
 
-## http://help.plot.ly/make-a-3D-surface-plot
-## Will doing research on 3D graph some other days.
-gvis.options <- list(title="Monthly Investment & Return ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Month'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
-line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes','Return','PL'), data=m, options=gvis.options)
-plot(line.gvis)
-
-#'@ plots <- suppressWarnings(dlply(melted, .(Sess), function(mb) ggplot(x=factor(Month), y=value, fill=variable, data=mb, geom='bar', stat='identity', position='dodge', color=variable) + ylab("HKD (in '0000)") + theme_pander(base_family='Verdana') + scale_fill_pander() + ggtitle(paste('Monthly Summary ',min(mb$Month),'-',max(mb$Month)))))
-
-rm(dat, melted, m)
-#'@ do.call(grid.arrange, plots)
-
-m <- ddply(data.frame(Month=as.yearmon(mbase$datasets$Date,'%b'),mbase$datasets), .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df %>% mutate(Month=as.character(Month))
-#'@ melted <- melt(m, id.vars=c('Sess','Month')) %>% tbl_df
-
-## http://help.plot.ly/make-a-3D-surface-plot
-## Will doing research on 3D graph some other days.
-gvis.options <- list(title="Monthly Stakes & PL ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Month'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
-line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes','Return','PL'), data=m, options=gvis.options)
-plot(line.gvis)
+gvis.options <- list(title="Annum Stakes & PL ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Year'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
+col.gvis <- gvisColumnChart(xvar='Sess', yvar=c('Stakes','Return','PL'), data=m, options=gvis.options)
+plot(col.gvis)
 ```
 
-*graph 3.1.1*
+*graph 3.1.1* *Annum stakes and return of firm A.*
   
-  From the graph above we know that the agency A generate profit every single month by following sports-book consultancy firm A.
-  
-```{r data-annum-summary-table, echo=FALSE, results='asis'}
-## Annual summary
+```{r data-month-summary-table, echo=FALSE, results='asis'}
+## Monthly summary table.
 dat <- mbase$datasets %>% tbl_df %>% mutate(Month=month(ymd(Date), label=TRUE))
 
 dt1 <- dat %>% group_by(Sess, Month) %>% summarise(S.total=sum(Stakes/10000), S.median=median(Stakes/10000), S.mean=mean(Stakes/10000), S.sd=sd(Stakes/10000), Count=length(PL/10000), minHKPrcB=min(HKPrice/10000), maxHKPrcB=max(HKPrice/10000), minProbB=min(netProbB), maxProbB=max(netProbB), Return=sum(PL/10000,Stakes/10000), PL=sum(PL/10000), PL.percent=sum(PL/10000)/sum(Stakes/10000), Samples=paste(Stakes/10000, collapse = ",")) %>% mutate(Series = Samples)
@@ -206,22 +182,48 @@ cb_line <- JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))')
 
 box_string <- "type: 'box', lineColor: 'black', whiskerColor: 'black', outlierFillColor: 'black', outlierLineColor: 'black', medianColor: 'black', boxFillColor: 'orange', boxLineColor: 'black'"
 
-cd <- list(list(targets=14, render=JS("function(data, type, full){ return '<span class=sparkSamples>' + data + '</span>' }")), list(targets=15, render=JS("function(data, type, full){ return '<span class=sparkSeries>' + data + '</span>' }")))
+cd <- list(list(targets=15, render=JS("function(data, type, full){ return '<span class=sparkSamples>' + data + '</span>' }")), list(targets=16, render=JS("function(data, type, full){ return '<span class=sparkSeries>' + data + '</span>' }")))
 
 cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = "")
 
-dt1 %>% datatable(.,caption='Table 3.1.1 : Annual Summary of Staking Data.',extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
+dt1 %>% datatable(.,caption="Table 3.1.1 : Summary of Monthly Stakes and Return. ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
 
 #### errors, need to review
 #'@ dt1$dependencies <- append(dt1$dependencies, htmlwidgets:::getDependency("sparkline"))
-dt1
+#'@ dt1
 ```
 
 *table 3.1.1* `r paste(unlist(strsplit(as.character(dim(dt1)),' ')), collapse=' x ')`
 
   From the table above, we realized that the Asian agency A make profit by follow the British sports betting consultancy firm A every year. Since thousands of bets (and maximum bet limit setting, league profile setting, and also value betting which properly based on Kelly model, mean value will be kinda bias) placed per anum, here we take median will be accurate than mean value which is more than `HKD200,000` per bet. The **annual profit** around `7~11%`.
 
-```{r data-annum-summary-plot, echo=FALSE, results='asis'}
+```{r data-month-summary-plots, echo=FALSE, results='asis'}
+## Monthly summary graph.
+## the stakes amount display as $1 = $10,000
+m <- ddply(data.frame(Month=as.yearmon(mbase$datasets$Date,'%b'),mbase$datasets), .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df %>% mutate(Month=as.character(Month))
+
+gvis.options <- list(title="Monthly Stakes & PL ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Month'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
+line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes','Return','PL'), data=m, options=gvis.options)
+plot(line.gvis)
+```
+
+*graph 3.1.2* *Monthly stakes and return of firm A.*
+
+```{r data-daily-summary, echo=FALSE, results='asis'}
+dat.t <- dat %>% group_by(Sess, Month, Day) %>% summarise(Mean=round(mean(Stakes),1)/10000, SD=round(sd(Stakes),2)/10000, Min=min(Stakes)/10000, Max=max(Stakes)/10000, Samples=paste(Stakes/10000, collapse=',')) %>% mutate(Series=Samples) %>% tbl_df
+
+cd <- list(list(targets=7, render=JS("function(data, type, full){ return '<span class=sparkSamples>' + data + '</span>' }")), list(targets=8, render=JS("function(data, type, full){ return '<span class=sparkSeries>' + data + '</span>' }")))
+
+cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = '')
+
+dt2 <- dat.t %>% datatable(.,caption="Table 3.1.2 : Summary of Daily Stakes and Return. ('0,000)", rownames=FALSE, extensions=c('ColReorder','ColVis','TableTools'), options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE,scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
+dt2$dependencies <- append(dt2$dependencies, htmlwidgets:::getDependency("sparkline"))
+dt2
+```
+
+*table 3.1.2* `r paste(unlist(strsplit(as.character(dim(dat.t)),' ')), collapse=' x ')`
+
+```{r data-daily-summary-plot, echo=FALSE, results='asis'}
 ## Plot multiple layer and labeling y-axis on both left-right side.
 ## http://rpubs.com/kohske/dual_axis_in_ggplot2
 #'@ melted <- melt(dt1[c('Sess','Stakes','Return','PL')], id.vars=c('Sess')) %>% tbl_df
@@ -236,22 +238,8 @@ dt1
 *graph 3.1.2*
 
   From the graph above, we can easily know the figure of Stakes, Returns and Profit & Lose while below table separate into daily breakdown. The table shows the daily stakes and also quantile values.
-
-```{r data-daily-summary, echo=FALSE, results='asis'}
-dat.t <- dat %>% group_by(Sess, Month, Day) %>% summarise(Mean=round(mean(Stakes),1)/10000, SD=round(sd(Stakes),2)/10000, Min=min(Stakes)/10000, Max=max(Stakes)/10000, Samples=paste(Stakes/10000, collapse=',')) %>% mutate(Series=Samples) %>% tbl_df
-
-cd <- list(list(targets=7, render=JS("function(data, type, full){ return '<span class=sparkSamples>' + data + '</span>' }")), list(targets=8, render=JS("function(data, type, full){ return '<span class=sparkSeries>' + data + '</span>' }")))
-
-cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = '')
-
-dt2 <- dat.t %>% datatable(.,caption='Table 3.1.2 : Daily Summary of Staking Data.', rownames=FALSE, extensions=c('ColReorder','ColVis','TableTools'), options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE,scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
-dt2$dependencies <- append(dt2$dependencies, htmlwidgets:::getDependency("sparkline"))
-dt2
-```
-
-*table 3.1.2* `r paste(unlist(strsplit(as.character(dim(dat.t)),' ')), collapse=' x ')`
-
-
+  
+  
 ### 3.2 Analyse the Staking Handicap
 
   In order to analyse only 90 minutes games, here I filter the matches from this section and so forth.
@@ -739,5 +727,8 @@ Sys.info()
   * [R + htmlwidgets + DT + sparkline](https://englianhu.wordpress.com/2015/10/04/r-htmlwidgets-dt-sparkline/)
   
   
-**Powered by - Copyright© Intellectual Property Rights of <img src='figure/Scibrokes.png' width='24'> [Scibrokes®](http://www.scibrokes.com)**
+<img src='figure/JJ 01.jpg' width='48'>
+
+**Powered by - Copyright© Intellectual Property Rights of <img src='figure/Orchard.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)**
+
 
