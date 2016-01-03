@@ -1,6 +1,6 @@
 ---
-title: "Test"
-author: "Ryo®, Eng Lian Hu"
+title: "テスト <img src='http://datemasamune.com/history/images/top_img_01.jpg' width='28'>"
+author: "伊達正宗 <img src='http://z.abang.com/f/rxwanju/1/3/s/B/0/-/FIG-IPN-1490_02.jpg' width='22'>"
 date: "October 25, 2015"
 output: 
   html_document: 
@@ -14,7 +14,6 @@ output:
     fig_caption: yes
     toc: yes
 ---
-
 
 Testing output of the coding.
 
@@ -61,159 +60,74 @@ mbase <- readfirmDatasets(years=years) %>% arrfirmDatasets(., lProfile=lProfile)
 r <- range(mbase$datasets$Stakes)
 ```
 
-```{r, echo=FALSE}
-bar_string <- "type: 'bar', barColor: 'orange', negBarColor: 'purple', highlightColor: 'black'"
-
-cb_bar = JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))').sparkline('html', { ", bar_string, " }); }"), collapse = "")
-
-line_string <- "type: 'line', lineColor: 'black', fillColor: '#ccc', highlightLineColor: 'orange', highlightSpotColor: 'orange'"
-
-cb_line <- JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))').sparkline('html', { ", line_string, ", chartRangeMin: ", r[1], ", chartRangeMax: ", r[2], " }); }"), collapse = "")
-
-box_string <- "type: 'box', lineColor: 'black', whiskerColor: 'black', outlierFillColor: 'black', outlierLineColor: 'black', medianColor: 'black', boxFillColor: 'orange', boxLineColor: 'black'"
-
-cb_box1 = JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))').sparkline('html', { ", box_string, " }); }"), collapse = "")
-cb_box2 = JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))').sparkline('html', { ", box_string, ", chartRangeMin: ", r[1], ", chartRangeMax: ", r[2], " }); }"), collapse = "")
-```
-  
   Please refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) to see the firm A staking sample dataset.
   
-```{r data-month-summary-plots, results='asis'}
-## Before we start analyse the staking model, we are firstly see the monthly Stakes and Profit & Lose of the Agency A
+```{r data-hdp-summary-table1a, echo=FALSE, results='asis'}
+## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
 ## the stakes amount display as $1 = $10,000
+#'@ mbase2 <- mbase[!(mbase$Home %in% corners)|!(mbase$Away %in% corners),]
+mbase2 <- mbase$datasets[!(mbase$datasets$Home %in% mbase$others)|!(mbase$datasets$Away %in% mbase$others),] %>% mutate(Stakes=Stakes/10000, Return=Return/10000, PL=PL/10000)
+```
 
-dat <- mbase$datasets %>% mutate(Month=paste(month(Date,label=TRUE),year(Date))) %>% tbl_df
-#'@ dat <- mbase$datasets %>% mutate(Month=month(ymd(Date), label=TRUE)) %>% tbl_df
-#'@ m <- ddply(dat, .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df
+```{r data-ip-summary-table1a, echo=FALSE, results='asis'}
+## In-Play : time range
+#'@ ipBets1 <- tbl_df(subset(mbase2, CurScore!='No')) %>% group_by(AHOU,ipRange) %>% summarise(Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))
+#'@ ipBets1 <- ldply(split(mbase2, mbase2$InPlay2), function(x) {ddply(x, .(AHOU,ipRange), summarise, Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))})
 
-m <- ddply(data.frame(Month=as.yearmon(mbase$datasets$Date,'%b'),mbase$datasets), .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df %>% mutate(Month=as.character(Month))
-#'@ melted <- melt(m, id.vars=c('Sess','Month')) %>% tbl_df
+ipBets1 <- data.frame(ddply(mbase2, ~InPlay2+AHOU+ipRange,
+                            .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL, na.rm=TRUE)),
+                      ddply(mbase2, ~InPlay2+AHOU+ipRange,
+                            .drop=TRUE, colwise(.fun=mean, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:3)],
+                      ddply(mbase2, ~InPlay2+AHOU+ipRange,
+                            .drop=TRUE, colwise(.fun=sd, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:3)],
+                      ddply(mbase2, ~InPlay2+AHOU+ipRange,
+                            .drop=TRUE, colwise(.fun=length, .cols=~Stakes))[-c(1:3)])
+names(ipBets1) <- suppressWarnings(c('InPlay2','AHOU','ipRange','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.sd','R.sd','PL.sd','Count'))
+ipBets1 %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(sum(Return)/sum(Stakes),fmt="%1.4f%%"), PL.percent=sprintf(sum(PL)/sum(Stakes),fmt="%1.4f%%"))
 
-## http://help.plot.ly/make-a-3D-surface-plot
-## Will doing research on 3D graph some other days.
-gvis.options <- list(title="Monthly Stakes & PL ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Month'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
-line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes','Return','PL'), data=m, options=gvis.options)
+lst <- ipBets1 %>% dlply(.(AHOU))
+lst[[1]] %>% datatable(.,caption="Table 3.4.1A : Firm A Staking InPlay Data",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
+```
+
+*table 3.4.1a* `r llply(split(ipBets1,ipBets1$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[1]]`
+
+```{r data-ip-summary-table1b, echo=FALSE, results='asis'}
+lst[[2]] %>% datatable(.,caption="Table 3.4.1B : Firm A Staking InPlay Data",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
+```
+
+*table 3.4.1b* `r llply(split(ipBets1,ipBets1$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[2]]`
+  
+  The table above shows the breakdown stakes on `Breaks` includes pregames of Extra-Time (started 90 minutes games), Half-Time and Full-Time in both 90 minutes games and also Extra-Time, Injuries-Time, Breaks-Time etc (All stakes after blew game-start whistle and before final result). While `No` means pre-games stakes and P&L summary.
+
+```{r data-ip-summary-plots1a, echo=FALSE, results='asis'}
+## Plot the Stakes and P&L on AH handicap graphs
+## the stakes amount display as $1 = $10,000
+lst <- ipBets1 %>% select(AHOU, ipRange, Picked, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, Picked, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(tbl_df)
+
+gvis.options <- list(title="Asian Handicap Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'ipRange'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
+line.gvis <- gvisLineChart(xvar='ipRange', yvar=names(lst[[1]])[-c(1:2)], data=lst[[1]], options=gvis.options)
 plot(line.gvis)
-#'@ print(line.gvis, tag='chart')
+
+rm(ipBets1, line.gvis)
 ```
 
-*graph 3.1.1*
+*graph 3.4.1a*
 
-```{r}
-#'@ CityPopularity$Mean=mean(CityPopularity$Popularity)
-#'@ plots <- gvisComboChart(CityPopularity, xvar='City', yvar=c('Mean', 'Popularity'), options=list(seriesType='bars', width=450, height=300, title='City Popularity', series='{0: {type:"line"}}'))
-#'@ plot(plots)
+```{r data-ip-summary-plots1b, echo=FALSE, results='asis'}
+## Plot the Stakes and P&L on OU handicap graphs
+## the stakes amount display as $1 = $10,000
+gvis.options <- list(title="Goal Line ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'ipRange'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
+line.gvis <- gvisLineChart(xvar='ipRange', yvar=names(lst[[2]])[-c(1:2)], data=lst[[2]], options=gvis.options)
+plot(line.gvis)
+
+rm(line.gvis)
 ```
 
-```{r}
-## aaaaaaaaaaaaaaa
-#'@ plots <- gvisComboChart(m, xvar='Month', yvar=c('Stakes','PL'), options=list(seriesType='bars', width=450, height=300, title='Monthly Summary', series='{0: {type:"line"}}'))
-#'@ plot(plots)
-#'@ print(plots, tag='chart')
-```
+*graph 3.4.1b*
 
 ```{r, results='asis'}
 ## Set options back to original options
 options(op)
-```
-
-## DT data tables
-
-  Here is the full data table generated with DT. There are various feature options for data table html widgets in the browser using DT. See this introduction for details.
-
-### DT
-
-```{r, echo=FALSE}
-dat <- mbase$datasets %>% mutate(Month=month(ymd(Date), label=TRUE)) %>% tbl_df
-m <- ddply(dat, .(Sess, Month, Day), summarise, Stakes=sum(Stakes)/10000, PL=sum(PL)/10000) %>% tbl_df
-
-m %>% select(Sess,Month,Day,Stakes) %>% datatable(.,caption="Table 3.1.1 : Annual Summary of Staking Data.",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
-```
-
-```{r, echo=FALSE}
-## 12 columns which are counting from Jan until Dec
-colDefs1 <- list(list(targets = c(1:12), render = JS("function(data, type, full){ return '<span class=spark>' + data + '</span>' }")))
-
-## 4 columns which are counting the Soccer Session from 2011 untli 2014
-colDefs2 <- list(list(targets = c(1:4), render = JS("function(data, type, full){ return '<span class=spark>' + data + '</span>' }")))
-```
-
-```{r,echo=FALSE}
-dat.t <- m %>% group_by(Sess, Month) %>% summarise(Stakes = paste(Stakes, collapse = ",")) %>% tbl_df
-dat.ta <- suppressAll(dcast(dat.t, Sess ~ Month)) %>% tbl_df
-dat.tb <- suppressAll(dcast(dat.t, Month ~ Sess)) %>% tbl_df
-```
-
-### d1
-
-```{r, echo=FALSE}
-#'@ d1 <- dat.ta %>% datatable(.,caption="Table 3.1.1 : Annual Summary of Staking Data.",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE,columnDefs = colDefs2, fnDrawCallback = cb_bar))
-#'@ d1 <- datatable(tbl_df(dat.ta), rownames = FALSE, options = list(columnDefs = colDefs1, fnDrawCallback = cb_line))
-
-d1 <- dat.ta %>% data.table %>% datatable(., rownames=FALSE, options=list(columnDefs=colDefs1, fnDrawCallback=cb_line))
-d1$dependencies <- append(d1$dependencies, htmlwidgets:::getDependency("sparkline"))
-d1
-```
-
-### d2
-
-```{r}
-#'@ d2 <- dat.tb %>% datatable(.,caption="Table 3.1.1 : Annual Summary of Staking Data.",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE, options = list(columnDefs = colDefs2, fnDrawCallback = cb_line)))
-
-#'@ d2 <- datatable(tbl_df(dat.tb), rownames = FALSE, options = list(columnDefs = colDefs2, fnDrawCallback = cb_bar))
-d2 <- dat.tb %>% data.table %>% datatable(., rownames=FALSE, options=list(columnDefs=colDefs2, fnDrawCallback=cb_bar))
-d2$dependencies <- append(d2$dependencies, htmlwidgets:::getDependency("sparkline"))
-d2
-```
-
-Here I try to plot an inline graph `r sparkline(mbase$datasets$HKPrice, type='bar')` testing `r sparkline(mbase$datasets$netProbB)`... line `r sparkline(mbase$datasets$netProbB, type='line')`
-
-```{r}
-d3 <- datatable(data.table(dat.tb), rownames = FALSE, options = list(columnDefs = colDefs2, 
-    fnDrawCallback = cb_box1))
-d3$dependencies <- append(d3$dependencies, htmlwidgets:::getDependency("sparkline"))
-d3
-```
-
-```{r}
-d4 <- datatable(data.table(dat.tb), rownames = FALSE, options = list(columnDefs = colDefs2, 
-    fnDrawCallback = cb_box2))
-d4$dependencies <- append(d4$dependencies, htmlwidgets:::getDependency("sparkline"))
-d4
-```
-
-```{r, echo=FALSE}
-dat.t2 <- dat %>% group_by(Sess, Month, Day) %>% summarise(Mean = round(mean(Stakes), 1)/10000, SD = round(sd(Stakes), 2)/10000, Min = min(Stakes)/10000, Max = max(Stakes)/10000, Samples = paste(Stakes/10000, collapse = ",")) %>% mutate(Series = Samples) %>% tbl_df
-
-cd <- list(list(targets=7, render=JS("function(data, type, full){ return '<span class=sparkSamples>' + data + '</span>' }")), list(targets=8, render=JS("function(data, type, full){ return '<span class=sparkSeries>' + data + '</span>' }")))
-
-cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = "")
-```
-
-```{r}
-d5 <- dat.t2 %>% datatable(., rownames = FALSE, options = list(columnDefs=cd, fnDrawCallback=cb))
-d5$dependencies <- append(d5$dependencies, htmlwidgets:::getDependency("sparkline"))
-d5
-```
-
-### res
-
-```{r, echo=FALSE}
-## Annual summary
-res <- ldply(.data=split(mbase$datasets, mbase$datasets$Sess), summarise, S.total=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), minHKPrcB=min(HKPrice), maxHKPrcB=max(HKPrice), minProbB=min(netProbB), maxProbB=max(netProbB), Return=sum(PL,Stakes), PL.Total=sum(PL), PL.percent=sum(PL)/sum(Stakes), S.box=as.character(paste(Stakes,collapse=','))) %>% tbl_df
-##, S.graph=as.character(paste(x$Stakes,collapse=',', PL.box=paste(x$PL,collapse=','), PL.graph=paste(x$PL,collapse=','))))) %>% tbl_df
-names(res)[1] <- 'Sess'
-
-cd <- list(list(targets=12, render=JS("function(data, type, full){ return '<span class=sparkSamples>' + data + '</span>' }")), list(targets=13, render=JS("function(data, type, full){ return '<span class=sparkSeries>' + data + '</span>' }")))
-
-cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = "")
-```
-
-```{r, echo=FALSE}
-#'@ res %>% datatable(.,caption="Table 3.1.1 : Annual Summary of Staking Data.",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE,columnDefs=cd, fnDrawCallback=cb))
-
-res %>% datatable(., rownames=FALSE, options=list(dom='t', scrollX=TRUE, scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
-res$dependencies <- append(res$dependencies, htmlwidgets:::getDependency("sparkline"))
 ```
 
 
