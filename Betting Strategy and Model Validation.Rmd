@@ -261,22 +261,18 @@ rm(ddim, line.gvis, m)
 
 ```{r data-hdp-summary-table1a, echo=FALSE, results='asis'}
 ## Handicap breakdown summary
-#'@ ahBets <- dat %>% group_by(HCap, AHOU, Picked) %>% summarise(Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))
-#'@ ahBets <- ddply(dat, .(HCap, AHOU, Picked), summarise, Stakes=sum(Stakes/10000), S.median=round(median(Stakes/10000),4), S.mean=round(mean(Stakes/10000),4), S.sd=round(sd(Stakes/10000),4), Count=length(PL), Return=sum(PL,Stakes/10000), PL=sum(PL/10000), PL.percent=sprintf(sum(PL/10000)/sum(Stakes/10000),fmt="%1.4f%%"))
-#'@ llply(split(dat, dat$AHOU), function(x) kable(head(ddply(x, .(HCap,Picked), summarise, Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes)))))
+funs <- expression(sum,mean,median,sd,length)
+ahBets <- llply(funs, function(x)
+    ddply(dat, ~HCap+AHOU+Picked, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('HCap','AHOU','Picked')) %>% .[-c((ncol(.)-1):ncol(.))] %>% tbl_df
 
-ahBets <- data.frame(ddply(dat, ~HCap+AHOU+Picked,
-                           .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL, na.rm=TRUE)),
-                     ddply(dat, ~HCap+AHOU+Picked,
-                           .drop=TRUE, colwise(.fun=mean, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:3)],
-                     ddply(dat, ~HCap+AHOU+Picked,
-                           .drop=TRUE, colwise(.fun=sd, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:3)],
-                     ddply(dat, ~HCap+AHOU+Picked, .drop=TRUE, colwise(.fun=length, .cols=~Stakes))[-c(1:3)]) %>% tbl_df
-names(ahBets) <- suppressWarnings(c('HCap','AHOU','Picked','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.sd','R.sd','PL.sd','Count'))
-ahBets %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(sum(Return)/sum(Stakes),fmt="%1.4f%%"), PL.percent=sprintf(sum(PL)/sum(Stakes),fmt="%1.4f%%"))
+names(ahBets) <- suppressWarnings(c('HCap','AHOU','Picked','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.median','R.median','PL.median','S.sd','R.sd','PL.sd','Count'))
+
+ahBets %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(Return/Stakes,fmt="%1.4f%%"), PL.percent=sprintf(PL/Stakes,fmt="%1.4f%%"))
 
 lst <- ahBets %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(.,caption="Table 3.2.1A : Asian Handicap - Handicap Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
+
+rm(funs)
 ```
 
 *table 3.2.1a* `r llply(split(ahBets,ahBets$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[1]]`
@@ -324,24 +320,18 @@ rm(line.gvis)
 
 ```{r data-hdp-summary-table2a, echo=FALSE, results='asis'}
 ## Favorite or Underdog and price range breakdown
-#'@ fuBets <- subset(dat, CurScore!='No') %>% group_by(AHOU, pHKRange, Picked) %>% summarise(Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))
-#'@ subset(dat, InPlay2=='No') #Pre-games
-#'@ split(dat, mbase$InPlay2)
-#'@ fuBets <- ddply(dat, .(AHOU, pHKRange, Picked), summarise, Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), Return=sum(Return), PL=sum(PL), PL.percent=(PL/Stakes))
+funs <- expression(sum,mean,median,sd,length)
+fuBets <- llply(funs, function(x)
+    ddply(dat, ~AHOU+pHKRange+pMYRange+Picked, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('AHOU','pHKRange','pMYRange','Picked')) %>% .[-c((ncol(.)-1):ncol(.))] %>% tbl_df
 
-fuBets <- data.frame(ddply(dat, ~AHOU+pHKRange+Picked,
-                           .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL, na.rm=TRUE)),
-                     ddply(dat, ~AHOU+pHKRange+Picked,
-                           .drop=TRUE, colwise(.fun=mean, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:3)],
-                     ddply(dat, ~AHOU+pHKRange+Picked,
-                           .drop=TRUE, colwise(.fun=sd, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:3)],
-                     ddply(dat, ~AHOU+pHKRange+Picked,
-                           .drop=TRUE, colwise(.fun=length, .cols=~Stakes))[-c(1:3)]) %>% tbl_df
-names(fuBets) <- suppressWarnings(c('AHOU','pHKRange','Picked','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.sd','R.sd','PL.sd','Count'))
-fuBets %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(sum(Return)/sum(Stakes),fmt="%1.4f%%"), PL.percent=sprintf(sum(PL)/sum(Stakes),fmt="%1.4f%%"))
+names(fuBets) <- suppressWarnings(c('AHOU','pHKRange','pMYRange','Picked','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.median','R.median','PL.median','S.sd','R.sd','PL.sd','Count'))
+
+fuBets %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), Count=length(Stakes), R.percent=sprintf(Return/Stakes,fmt="%1.4f%%"), PL.percent=sprintf(PL/Stakes,fmt="%1.4f%%"))
 
 lst <- fuBets %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(.,caption="Table 3.3.1A : Asian Handicap - Price Range Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
+
+rm(funs)
 ```
 
 *table 3.3.1a* `r llply(split(fuBets,fuBets$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[1]]`
@@ -387,22 +377,18 @@ rm(line.gvis)
 
 ```{r data-ip-summary-table1a, echo=FALSE, results='asis'}
 ## In-Play : time range
-#'@ ipBets1 <- tbl_df(subset(dat, CurScore!='No')) %>% group_by(AHOU,ipRange) %>% summarise(Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))
-#'@ ipBets1 <- ldply(split(dat, dat$InPlay2), function(x) {ddply(x, .(AHOU,ipRange), summarise, Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))})
+funs <- expression(sum,mean,median,sd,length)
+ipBets1 <- llply(funs, function(x)
+    ddply(dat, ~InPlay2+AHOU+ipRange, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('InPlay2','AHOU','ipRange')) %>% .[-c((ncol(.)-1):ncol(.))] %>% tbl_df
 
-ipBets1 <- data.frame(ddply(dat, ~InPlay2+AHOU+ipRange,
-                            .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL, na.rm=TRUE)),
-                      ddply(dat, ~InPlay2+AHOU+ipRange,
-                            .drop=TRUE, colwise(.fun=mean, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:3)],
-                      ddply(dat, ~InPlay2+AHOU+ipRange,
-                            .drop=TRUE, colwise(.fun=sd, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:3)],
-                      ddply(dat, ~InPlay2+AHOU+ipRange,
-                            .drop=TRUE, colwise(.fun=length, .cols=~Stakes))[-c(1:3)])
-names(ipBets1) <- suppressWarnings(c('InPlay2','AHOU','ipRange','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.sd','R.sd','PL.sd','Count'))
-ipBets1 %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(sum(Return)/sum(Stakes),fmt="%1.4f%%"), PL.percent=sprintf(sum(PL)/sum(Stakes),fmt="%1.4f%%"))
+names(ipBets1) <- suppressWarnings(c('InPlay2','AHOU','ipRange','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.median','R.median','PL.median','S.sd','R.sd','PL.sd','Count'))
+
+ipBets1 %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(Return/Stakes,fmt="%1.4f%%"), PL.percent=sprintf(PL/Stakes,fmt="%1.4f%%"))
 
 lst <- ipBets1 %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(.,caption="Table 3.4.1A : Asian Handicap - InPlay Time Range Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
+
+rm(funs)
 ```
 
 *table 3.4.1a* `r llply(split(ipBets1,ipBets1$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[1]]`
@@ -445,23 +431,18 @@ rm(line.gvis)
 
 ```{r data-ip-summary-table2a, echo=FALSE, results='asis'}
 ## In-Play : time range, current score, current ah/ou and also picked home team or favorite team etc.
-#'@ ipBets2 <- tbl_df(subset(dat, CurScore!='No')) %>% group_by(HCap,AHOU,CurScore,ipRange,Picked,Picked2) %>% summarise(Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))
-#'@ ipBets2 <- ddply(subset(dat, CurScore!='No'), .(HCap,AHOU,CurScore,ipRange,Picked,Picked2), summarise, Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))
-#'@ ipBets2 <- ldply(split(dat, dat$InPlay2), function(x) { ddply(x, .(HCap,AHOU,CurScore,ipHCap,ipRange,Picked,Picked2), summarise, Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))})
+funs <- expression(sum,mean,median,sd,length)
+ipBets2 <- llply(funs, function(x)
+    ddply(dat, ~InPlay2+HCap+AHOU+CurScore+ipHCap+ipRange+Picked+Picked2, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('InPlay2','HCap','AHOU','CurScore','ipHCap','ipRange','Picked','Picked2')) %>% .[-c((ncol(.)-1):ncol(.))] %>% tbl_df
 
-ipBets2 <- data.frame(ddply(dat, ~InPlay2+HCap+AHOU+CurScore+ipHCap+ipRange+Picked+Picked2,
-                            .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL, na.rm=TRUE)),
-                      ddply(dat, ~InPlay2+HCap+AHOU+CurScore+ipHCap+ipRange+Picked+Picked2,
-                            .drop=TRUE, colwise(.fun=mean, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:8)],
-                      ddply(dat, ~InPlay2+HCap+AHOU+CurScore+ipHCap+ipRange+Picked+Picked2,
-                            .drop=TRUE, colwise(.fun=sd, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:8)],
-                      ddply(dat, ~InPlay2+HCap+AHOU+CurScore+ipHCap+ipRange+Picked+Picked2,
-                            .drop=TRUE, colwise(.fun=length, .cols=~Stakes))[-c(1:8)]) %>% tbl_df
-names(ipBets2) <- suppressWarnings(c('InPlay2','HCap','AHOU','CurScore','ipHCap','ipRange','Picked','Picked2','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.sd','R.sd','PL.sd','Count'))
-ipBets2 %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(sum(Return)/sum(Stakes),fmt="%1.4f%%"), PL.percent=sprintf(sum(PL)/sum(Stakes),fmt="%1.4f%%"))
+names(ipBets2) <- suppressWarnings(c('InPlay2','HCap','AHOU','CurScore','ipHCap','ipRange','Picked','Picked2','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.median','R.median','PL.median','S.sd','R.sd','PL.sd','Count'))
+
+ipBets2 %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(Return/Stakes,fmt="%1.4f%%"), PL.percent=sprintf(PL/Stakes,fmt="%1.4f%%"))
 
 lst <- ipBets2 %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(.,caption="Table 3.4.2A : Asian Handicap - InPlay Current Score and Handicap Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
+
+rm(funs)
 ```
 
 *table 3.4.2a* `r llply(split(ipBets2,ipBets2$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[1]]`

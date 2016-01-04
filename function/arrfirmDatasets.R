@@ -43,6 +43,7 @@ arrfirmDatasets <- function(dfmList, lProfile=c(AH=0.10,OU=0.12), parallel=FALSE
     mPrice <- mPrice[order(mPrice$EUPrice, decreasing=FALSE),]
     dfm$pHKRange <- cut(dfm$HKPrice, seq(floor(min(mPrice$HKPrice)), ceiling(max(mPrice$HKPrice)), 0.1))
     dfm$fHKPriceL <- ifelse(dfm$fMYPriceL<0, round(-1/dfm$fMYPriceL,3), round(dfm$fMYPriceL,3))
+    dfm$pMYRange <- cut(dfm$fMYPriceB, seq(floor(min(mPrice$fMYPriceB)), ceiling(max(mPrice$fMYPriceB)), 0.1))
     
     ## Categorize the selection by either 'favorite' or 'underdog', 'under' or 'over'
     dfm$Picked <- factor(ifelse(as.character(dfm$AHOU)=='AH' & as.numeric(dfm$HCap)>0,'underdog',

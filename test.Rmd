@@ -17,113 +17,63 @@ output:
 
 Testing output of the coding.
 
-```{r load-packages, include=FALSE}
-## Setup Options, Loading Required Libraries and Preparing Environment
-## Setup `knitr` options and loading the required libraries.
-
-## Setting to omit all warnings
-options(warn=-1)
-
-## Loading the packages
-if(!suppressPackageStartupMessages(require('devtools'))){
-  install.packages('devtools')}
-if(!suppressPackageStartupMessages(require('BBmisc'))){
-  install.packages('BBmisc')}
-if(!suppressPackageStartupMessages(require('BiocParallel'))){
-  devtools::install_github('Bioconductor/BiocParallel')}
-
-suppressPackageStartupMessages(library('BBmisc'))
-pkgs <- c('devtools','zoo','chron','stringr','stringi','reshape','reshape2','tbl_df','sparkline','data.table','DT','plyr','dplyr','magrittr','foreach','manipulate','ggplot2','ggthemes','proto','extrafont','directlabels','PerformanceAnalytics','plotly','doParallel','rvest','highlightHTML','knitr','rmarkdown','scales','lubridate','tidyr','whisker','gtable','grid','gridExtra','pander','arules','arulesViz','googleVis','rlist')
-#'@ c('memoise','RStudioAMI','parallel','BiocParallel','RSelenium','doMC','editR') #load if needed
-suppressAll(lib(pkgs)); rm(pkgs)
+```{r}
+## Loading the packages and setting adjustment
+source(paste0(getwd(),'/function/libs.R'))
 ```
 
-```{r setting}
-## Creating a parallel computing Cluster and support functions.
-
-## Preparing the parallel cluster using the cores
-doParallel::registerDoParallel(cores = 16)
-
-# Set the googleVis options first to change the behaviour of plot.gvis, so that only the chart component of the HTML file is written into the output file.
-op <- options(gvis.plot.tag='chart')
-```
-
-```{r read-data-summary-table, results='asis'}
+```{r}
 ## Read the datasets
 ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
-source(paste0(getwd(),'/function/readfirmDatasets.R'))
-source(paste0(getwd(),'/function/arrfirmDatasets.R'))
-years <- 2011:2014
+years <- seq(2011,2015)
 
+## Here I take the majority leagues setting profile which are "league-10-12"
+## fMYPriceB = Back with vigorish price; fMYPriceL = Lay with vigorish price
+## Here we term as Fair Odds
 lProfile <- c(AH=0.10,OU=0.12)
+
 mbase <- readfirmDatasets(years=years) %>% arrfirmDatasets(., lProfile=lProfile)
-r <- range(mbase$datasets$Stakes)
+
+## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
+## the stakes amount display as $1 = $10,000
+#'@ mbase$datasets[!(mbase$datasets$Home %in% mbase$corners)|!(mbase$datasets$Away %in% mbase$corners),]
+dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$others)) %>% mutate(Stakes=Stakes/10000, Return=Return/10000, PL=PL/10000, Month=month(ymd(Date), label=TRUE))
+
+#'@ pander(head(dat)) # exactly same layout with kable(x)
+#'@ kable(head(dat)) ## example of the dataset in the research paper
+
+dat %>% datatable(.,caption="Table 2.1.1 : Firm A Staking Data",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
+
+rm(years, readfirmDatasets, arrfirmDatasets)
+rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.
 ```
 
   Please refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) to see the firm A staking sample dataset.
   
-```{r data-hdp-summary-table1a, echo=FALSE, results='asis'}
-## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
-## the stakes amount display as $1 = $10,000
-#'@ mbase2 <- mbase[!(mbase$Home %in% corners)|!(mbase$Away %in% corners),]
-mbase2 <- mbase$datasets[!(mbase$datasets$Home %in% mbase$others)|!(mbase$datasets$Away %in% mbase$others),] %>% mutate(Stakes=Stakes/10000, Return=Return/10000, PL=PL/10000)
-```
-
-```{r data-ip-summary-table1a, echo=FALSE, results='asis'}
-## In-Play : time range
-#'@ ipBets1 <- tbl_df(subset(mbase2, CurScore!='No')) %>% group_by(AHOU,ipRange) %>% summarise(Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))
-#'@ ipBets1 <- ldply(split(mbase2, mbase2$InPlay2), function(x) {ddply(x, .(AHOU,ipRange), summarise, Stakes=sum(Stakes), S.median=median(Stakes), S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))})
-
-ipBets1 <- data.frame(ddply(mbase2, ~InPlay2+AHOU+ipRange,
-                            .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL, na.rm=TRUE)),
-                      ddply(mbase2, ~InPlay2+AHOU+ipRange,
-                            .drop=TRUE, colwise(.fun=mean, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:3)],
-                      ddply(mbase2, ~InPlay2+AHOU+ipRange,
-                            .drop=TRUE, colwise(.fun=sd, .cols=~Stakes+Return+PL, na.rm=TRUE))[-c(1:3)],
-                      ddply(mbase2, ~InPlay2+AHOU+ipRange,
-                            .drop=TRUE, colwise(.fun=length, .cols=~Stakes))[-c(1:3)])
-names(ipBets1) <- suppressWarnings(c('InPlay2','AHOU','ipRange','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.sd','R.sd','PL.sd','Count'))
-ipBets1 %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(sum(Return)/sum(Stakes),fmt="%1.4f%%"), PL.percent=sprintf(sum(PL)/sum(Stakes),fmt="%1.4f%%"))
-
-lst <- ipBets1 %>% dlply(.(AHOU))
-lst[[1]] %>% datatable(.,caption="Table 3.4.1A : Firm A Staking InPlay Data",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
-```
-
-*table 3.4.1a* `r llply(split(ipBets1,ipBets1$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[1]]`
-
-```{r data-ip-summary-table1b, echo=FALSE, results='asis'}
-lst[[2]] %>% datatable(.,caption="Table 3.4.1B : Firm A Staking InPlay Data",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
-```
-
-*table 3.4.1b* `r llply(split(ipBets1,ipBets1$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[2]]`
-  
-  The table above shows the breakdown stakes on `Breaks` includes pregames of Extra-Time (started 90 minutes games), Half-Time and Full-Time in both 90 minutes games and also Extra-Time, Injuries-Time, Breaks-Time etc (All stakes after blew game-start whistle and before final result). While `No` means pre-games stakes and P&L summary.
-
-```{r data-ip-summary-plots1a, echo=FALSE, results='asis'}
-## Plot the Stakes and P&L on AH handicap graphs
-## the stakes amount display as $1 = $10,000
-lst <- ipBets1 %>% select(AHOU, ipRange, Picked, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, Picked, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(tbl_df)
-
-gvis.options <- list(title="Asian Handicap Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'ipRange'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
-line.gvis <- gvisLineChart(xvar='ipRange', yvar=names(lst[[1]])[-c(1:2)], data=lst[[1]], options=gvis.options)
-plot(line.gvis)
-
-rm(ipBets1, line.gvis)
-```
-
-*graph 3.4.1a*
-
-```{r data-ip-summary-plots1b, echo=FALSE, results='asis'}
-## Plot the Stakes and P&L on OU handicap graphs
-## the stakes amount display as $1 = $10,000
-gvis.options <- list(title="Goal Line ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'ipRange'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
-line.gvis <- gvisLineChart(xvar='ipRange', yvar=names(lst[[2]])[-c(1:2)], data=lst[[2]], options=gvis.options)
-plot(line.gvis)
-
-rm(line.gvis)
+```{r}
+fuBets <- data.frame(ddply(dat, ~AHOU+pHKRange+pMYRange+Picked,
+                           .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL, na.rm=TRUE)),
+                     ddply(dat, ~AHOU+pHKRange+pMYRange+Picked,
+                           .drop=TRUE, colwise(.fun=mean, .cols=~Stakes+Return+PL, na.rm=TRUE)) %>% .[(ncol(.)-2):ncol(.)],
+                     ddply(dat, ~AHOU+pHKRange+pMYRange+Picked,
+                           .drop=TRUE, colwise(.fun=sd, .cols=~Stakes+Return+PL, na.rm=TRUE)) %>% .[(ncol(.)-2):ncol(.)],
+                     ddply(dat, ~AHOU+pHKRange+pMYRange+Picked,
+                           .drop=TRUE, colwise(.fun=length, .cols=~Stakes)) %>% .[(ncol(.)-2):ncol(.)]) %>% tbl_df
+names(fuBets) <- suppressWarnings(c('AHOU','pHKRange','pMYRange','Picked','Stakes','Return','PL','S.median','R.median','PL.median','S.mean','R.mean','PL.mean','S.sd','R.sd','PL.sd','Count'))
+fuBets %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(Return/Stakes,fmt="%1.4f%%"), PL.percent=sprintf(PL/Stakes,fmt="%1.4f%%"))
 ```
 
 *graph 3.4.1b*
+
+```{r}
+funs <- expression(sum,mean,median,sd,length)
+fuBets <- llply(funs, function(x)
+    ddply(dat, ~AHOU+pHKRange+pMYRange+Picked, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('AHOU','pHKRange','pMYRange','Picked')) %>% .[-c((ncol(.)-1):ncol(.))] %>% tbl_df
+
+names(fuBets) <- suppressWarnings(c('AHOU','pHKRange','pMYRange','Picked','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.median','R.median','PL.median','S.sd','R.sd','PL.sd','Count'))
+
+fuBets %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), Count=length(Stakes), R.percent=sprintf(Return/Stakes,fmt="%1.4f%%"), PL.percent=sprintf(PL/Stakes,fmt="%1.4f%%"))
+```
 
 ```{r, results='asis'}
 ## Set options back to original options
