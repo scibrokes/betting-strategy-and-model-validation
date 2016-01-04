@@ -19,8 +19,10 @@ Testing output of the coding.
 
 ```{r}
 ## Loading the packages and setting adjustment
-source(paste0(getwd(),'/function/libs.R'))
+suppressMessages(source(paste0(getwd(),'/function/libs.R')))
 ```
+
+1. [DT], 2. [DT](## DT), 3. [DT]: #DT
 
 ```{r}
 ## Read the datasets
@@ -48,32 +50,16 @@ rm(years, readfirmDatasets, arrfirmDatasets)
 rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.
 ```
 
-  Please refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) to see the firm A staking sample dataset.
+  Please refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) to see the firm A staking sample dataset. 
   
 ```{r}
-fuBets <- data.frame(ddply(dat, ~AHOU+pHKRange+pMYRange+Picked,
-                           .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL, na.rm=TRUE)),
-                     ddply(dat, ~AHOU+pHKRange+pMYRange+Picked,
-                           .drop=TRUE, colwise(.fun=mean, .cols=~Stakes+Return+PL, na.rm=TRUE)) %>% .[(ncol(.)-2):ncol(.)],
-                     ddply(dat, ~AHOU+pHKRange+pMYRange+Picked,
-                           .drop=TRUE, colwise(.fun=sd, .cols=~Stakes+Return+PL, na.rm=TRUE)) %>% .[(ncol(.)-2):ncol(.)],
-                     ddply(dat, ~AHOU+pHKRange+pMYRange+Picked,
-                           .drop=TRUE, colwise(.fun=length, .cols=~Stakes)) %>% .[(ncol(.)-2):ncol(.)]) %>% tbl_df
-names(fuBets) <- suppressWarnings(c('AHOU','pHKRange','pMYRange','Picked','Stakes','Return','PL','S.median','R.median','PL.median','S.mean','R.mean','PL.mean','S.sd','R.sd','PL.sd','Count'))
-fuBets %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), R.percent=sprintf(Return/Stakes,fmt="%1.4f%%"), PL.percent=sprintf(PL/Stakes,fmt="%1.4f%%"))
+
 ```
+
+## DT
 
 *graph 3.4.1b*
 
-```{r}
-funs <- expression(sum,mean,median,sd,length)
-fuBets <- llply(funs, function(x)
-    ddply(dat, ~AHOU+pHKRange+pMYRange+Picked, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('AHOU','pHKRange','pMYRange','Picked')) %>% .[-c((ncol(.)-1):ncol(.))] %>% tbl_df
-
-names(fuBets) <- suppressWarnings(c('AHOU','pHKRange','pMYRange','Picked','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.median','R.median','PL.median','S.sd','R.sd','PL.sd','Count'))
-
-fuBets %<>% mutate(Stakes=round(Stakes,2), Return=round(Return,2), PL=round(PL,2), S.mean=round(S.mean,2), R.mean=round(R.mean,2), PL.mean=round(PL.mean,2), S.sd=round(S.sd,2), R.sd=round(R.sd,2), PL.sd=round(PL.sd,2), Count=length(Stakes), R.percent=sprintf(Return/Stakes,fmt="%1.4f%%"), PL.percent=sprintf(PL/Stakes,fmt="%1.4f%%"))
-```
 
 ```{r, results='asis'}
 ## Set options back to original options

@@ -21,7 +21,11 @@ if(!suppressPackageStartupMessages(require('BiocParallel'))){
 #'@ install.packages('nycflights13')
 #'@ library(c('dplyrr','nycflights13'))
 
-pkgs <- c('devtools','zoo','chron','stringr','stringi','reshape','reshape2','data.table','sparkline','DT','plyr','dplyr','magrittr','foreach','manipulate','ggplot2','ggthemes','proto','extrafont','directlabels','PerformanceAnalytics','plotly','doParallel','rvest','highlightHTML','knitr','rmarkdown','scales','lubridate','tidyr','whisker','gtable','grid','gridExtra','pander','arules','arulesViz','googleVis')
+pkgs <- c('devtools','zoo','chron','stringr','stringi','reshape','reshape2','data.table','sparkline',
+          'DT','plyr','dplyr','purrr','sqldf','magrittr','foreach','manipulate','ggplot2','ggthemes',
+          'proto','extrafont','directlabels','PerformanceAnalytics','plotly','doParallel','rvest',
+          'highlightHTML','knitr','rmarkdown','scales','lubridate','tidyr','whisker','gtable','grid',
+          'gridExtra','pander','arules','arulesViz','googleVis')
 #'@ c('memoise','RStudioAMI','parallel','BiocParallel','RSelenium','doMC','editR') #load if needed
 suppressAll(lib(pkgs)); rm(pkgs)
 
@@ -37,7 +41,8 @@ doParallel::registerDoParallel(cores = 16)
 
 ## knitr configuration
 opts_knit$set(progress=FALSE)
-opts_chunk$set(echo=TRUE, message=FALSE, tidy=TRUE, comment=NA, fig.path="figure/", fig.keep="high", fig.width=10, fig.height=6, fig.align="center")
+opts_chunk$set(echo=TRUE, message=FALSE, tidy=TRUE, comment=NA, fig.path="figure/", fig.keep="high", 
+               fig.width=10, fig.height=6, fig.align="center")
 
 ## Table width setting
 panderOptions('table.split.table', Inf)
@@ -46,7 +51,8 @@ panderOptions('table.split.table', Inf)
 Sys.setenv('plotly_username'='englianhu')
 Sys.setenv('plotly_api_key'='xxxxxxxxx')
 
-# Set the googleVis options first to change the behaviour of plot.gvis, so that only the chart component of the HTML file is written into the output file.
+## Set the googleVis options first to change the behaviour of plot.gvis, so that only the chart 
+##  component of the HTML file is written into the output file.
 op <- options(gvis.plot.tag='chart')
 
 # Define image sizes
