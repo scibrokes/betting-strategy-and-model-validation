@@ -5,7 +5,7 @@ arrfirmDatasets <- function(dfmList, lProfile=c(AH=0.10,OU=0.12), parallel=FALSE
   
   ## Loading the packages
   library('BBmisc')
-  pkgs <- c('magrittr','plyr','dplyr','stringr','lubridate')
+  pkgs <- c('magrittr','plyr','dplyr','purrr','stringr','lubridate')
   suppressAll(lib(pkgs)); rm(pkgs)
   
   if(parallel==TRUE){
@@ -91,8 +91,12 @@ arrfirmDatasets <- function(dfmList, lProfile=c(AH=0.10,OU=0.12), parallel=FALSE
     lP <- ifelse(dfm$fMYPriceL<0, round(-1/dfm$fMYPriceL,3), round(dfm$fMYPriceL,3))
     
     ## Real Price / Net Price Back convert to net probabilities as applied in Dixon&Coles1996.
-    dfm$netProbB <- round(bP/(bP+lP),4); dfm$netProbL <- round(lP/(bP+lP),4)
+    dfm %<>% mutate(netProbB=round(bP/(bP+lP),4), netProbL=round(lP/(bP+lP),4))
     rm(bP, lP)
+    
+    ## To know the true value price of favorite/over or underdog/under 
+    dfm$favNetProb <- ifelse(dfm$Picked=='favorite'|dfm$Picked=='over' , dfm$netProbB, dfm$netProbL)
+    dfm$undNetProb <- ifelse(dfm$Picked=='underdog'|dfm$Picked=='under', dfm$netProbB, dfm$netProbL)
     
     dfmList$datasets <- dfm
     return(dfmList)

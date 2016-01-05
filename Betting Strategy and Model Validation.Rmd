@@ -49,6 +49,9 @@ suppressMessages(source(paste0(getwd(),'/function/libs.R')))
 
 ## 2. Dataset
 
+  * Section [2.1 Collect and Reprocess the Dataset] - Dataset from Firm A
+  * Section [2.2 Overrounds / Vigorish] - Odds Price and Overrounds Changared by Bookmakers
+
 
 ### 2.1 Collect and Reprocess the Dataset
 
@@ -82,7 +85,7 @@ rm(years, readfirmDatasets, arrfirmDatasets)
 rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.
 ```
 
-*table 2.1.1* `r paste(dim(dat), collapse=' x ')`
+*table 2.1.1* `r paste0(dim(dat), collapse=' x ')`
 
   In order to analyse the AHOU, here I've filtered out all soccer matches other than AHOU which is the table showing above (For example : Corners, Total League Goals etc.) for whole research paper. Please refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) to see the firm A staking raw data-set.
 
@@ -143,16 +146,22 @@ $$P_i^{HK_{Lay}} = 1/P_i^{HK_{Back}}-\nu_{j}$$   *equation 2.2.1*
 ## fMYPriceB adn fMYPriceL are MYPrice, here we term as Real Odds
 ## Please refer to function arrfirmDatasets()
 
-dat %>% select(No,EUPrice,HKPrice,fHKPriceL,fMYPriceB,fMYPriceL,netProbB,netProbL) %>% head %>% kable(.,caption='Table 2.2.1 : Sample data about virogish/overrounds and also odds price.')
+dat %>% select(No,EUPrice,HKPrice,fHKPriceL,fMYPriceB,fMYPriceL,netProbB,netProbL) %>% head %>% kable(.,caption='Table 2.2.1 : Sample Data of Virogish/Overrounds and Odds Price')
 ```
 
-*table 2.2.1* `r paste(dim(dat), collapse=' x ')`
+*table 2.2.1* `r paste0(dim(dat), collapse=' x ')`
 
-  Above *table 2.2.1* just provides some sample about the odds price and over-round while you can refer to [table 2.1.1] for details. Meanwhile, you can know more details about the *return of investment*, *convertion* and also *origin region* based on *same probabilities* among different Odds Types/Styles via [Betting Odds Converter](http://www.sportsbookreview.com/betting-tools/odds-converter/) or just simply google'ing.
+  Above *table 2.2.1* just provides some sample about the odds price and over-round while you can refer to *table 2.1.1* for details. Meanwhile, you can know more details about the *return of investment*, *convertion* and also *origin region* based on *same probabilities* among different Odds Types/Styles via [Betting Odds Converter](http://www.sportsbookreview.com/betting-tools/odds-converter/) or just simply google'ing.
 
 
 
-## 3. Analyse the Staking Model
+## 3. Summarise the Staking Model
+
+  * Section [3.1 Summarise Diversified Periodic Stakes] - Summarise the Stakes and Return
+  * Section [3.2 Summarise the Staking Handicap] - Summarise the Staking Handicap Breakdown
+  * Section [3.3 Summarise the Staking Prices] - Summarise the Staking Price Range Breakdown
+  * Section [3.4 Summarise the In-Play Staking Timing] - Summarise the In-Play Staking Breakdown by Time Range
+  * Section [3.5 Summarise the In-Play Staking Based on Current Score] - Summarise the In-Play Staking Breakdown by Current Score
 
 
 ### 3.1 Summarise Diversified Periodic Stakes
@@ -172,7 +181,7 @@ rm(m)
 
 *graph 3.1.1* *Annum stakes and return of firm A.*
   
-  From the graph above showing that the investment of firm A through agency A generates a positive return (profit). Please refer to [table 4.1.1] for more details about investment analysis.
+  From the graph above showing that the investment of firm A through agency A generates a positive return (profit). Please refer to *table 4.1.1* for more details about investment analysis.
   
 ```{r data-month-summary-table, echo=FALSE, results='asis'}
 ## Monthly summary table.
@@ -201,14 +210,14 @@ dt1
 rm(dt1, r)
 ```
 
-*table 3.1.1* `r paste(unlist(strsplit(as.character(ddim),' ')), collapse=' x ')`
+*table 3.1.1* `r paste0(ddim, collapse=' x ')`
 
   From the table above, we realized that the Asian agency A make profit by follow the British sports betting consultancy firm A every year. Since thousands of bets (and maximum bet limit setting, league profile setting, and also value betting which properly based on Kelly model, mean value will be kinda bias) placed per month, here we take median will be accurate than mean value.
 
 ```{r data-month-summary-plots, echo=FALSE, results='asis'}
 ## Monthly summary graph.
 ## the stakes amount display as $1 = $10,000
-m <- ddply(data.frame(Month=as.yearmon(dat$Date,'%b'),dat), .(Month), summarise, Stakes=sum(Stakes)/10000, Return=sum(Return)/10000, PL=sum(PL)/10000) %>% tbl_df %>% mutate(Month=as.character(Month)) # mutate Month as.character at last to make the Month hAxis arrange in order after summarise
+m <- ddply(data.frame(Month=as.yearmon(dat$Date,'%b'),dat), .(Month), summarise, Stakes=sum(Stakes), Return=sum(Return), PL=sum(PL)) %>% tbl_df %>% mutate(Month=as.character(Month)) # mutate Month as.character at last to make the Month hAxis arrange in order after summarise
 
 gvis.options <- list(title="Monthly Stakes & PL ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Month'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
 line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes','Return','PL'), data=m, options=gvis.options)
@@ -242,7 +251,7 @@ dt2
 rm(dt2, r, line_string, cb_line, box_string, cd, cb)
 ```
 
-*table 3.1.2* `r paste(unlist(strsplit(as.character(ddim),' ')), collapse=' x ')`
+*table 3.1.2* `r paste0(ddim, collapse=' x ')`
 
 ```{r data-daily-summary-plot, echo=FALSE, results='asis'}
 ## Daily summary graph.
@@ -259,7 +268,7 @@ rm(ddim, line.gvis, m)
   From the graph above, we can easily know the figure of Stakes, Returns and Profit & Lose while below table separate into daily breakdown. The table shows the daily stakes and also quantile values.
   
   
-### 3.2 Analyse the Staking Handicap
+### 3.2 Summarise the Staking Handicap
 
 ```{r data-hdp-summary-table1a, echo=FALSE, results='asis'}
 ## Handicap breakdown summary
@@ -276,17 +285,17 @@ lst <- ahBets %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(.,caption="Table 3.2.1A : Asian Handicap - Handicap Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
 ```
 
-*table 3.2.1a* `r dlply(ahBets,.(AHOU),dim) %>% .[[1]] %>% paste0(.,collapse=' x ')`
+*table 3.2.1a* `r paste0(dim(lst[[1]]), collapse=' x ')`
 
 ```{r data-hdp-summary-table1b, echo=FALSE, results='asis'}
 lst[[2]] %>% datatable(.,caption="Table 3.2.1B : Goal Line - Handicap Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
 ```
 
-*table 3.2.1b* `r dlply(ahBets,.(AHOU),dim) %>% .[[2]] %>% paste0(.,collapse=' x ')`
+*table 3.2.1b* `r paste0(dim(lst[[2]]), collapse=' x ')`
 
 ```{r data-hdp-summary-table1c, echo=FALSE, results='asis'}
-m <- ddply(dat, ~HCap+AHOU, .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL)) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%')) %>% dlply(., .(AHOU)) %>% llply(arrange, Stakes) %>% ldply(tail, .id=NULL)
-m %>% kable(., caption='Table 3.2.1c : Sample data about Handicap, Stakes and PL.')
+m <- ddply(dat, ~HCap+AHOU, .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL)) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%')) %>% dlply(., .(AHOU)) %>% llply(arrange, Stakes) %>% ldply(tail, 4, .id=NULL)
+m %>% kable(., caption='Table 3.2.1c : Sample data about Handicap, Stakes and PL')
 ```
 
 *table 3.2.1c* `r paste0(dim(m),collapse=' x ')`
@@ -304,7 +313,7 @@ gvis.options <- list(title="Asian Handicap - Handicap Breakdown ('0,000)", serie
 line.gvis <- gvisLineChart(xvar='HCap', yvar=names(lst[[1]])[-c(1:2)], data=lst[[1]], options=gvis.options)
 plot(line.gvis)
 
-rm(ahBets, line.gvis)
+rm(ahBets)
 ```
 
 *graph 3.2.1a*
@@ -324,7 +333,7 @@ rm(line.gvis)
   Now we look at the graph above, we can know the Stakes breakdown on both `r names(lProfile)[1]` and `r names(lProfile)[2]`.
 
 
-### 3.3 Analyse the Staking Prices
+### 3.3 Summarise the Staking Prices
 
 ```{r data-hdp-summary-table2a, echo=FALSE, results='asis'}
 ## Favorite or Underdog and price range breakdown
@@ -339,17 +348,17 @@ lst <- fuBets %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(.,caption="Table 3.3.1A : Asian Handicap - Price Range Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
 ```
 
-*table 3.3.1a* `r dlply(fuBets,.(AHOU),dim) %>% .[[1]] %>% paste0(.,collapse=' x ')`
+*table 3.3.1a* `r paste0(dim(lst[[1]]), collapse=' x ')`
 
 ```{r data-hdp-summary-table2b, echo=FALSE, results='asis'}
 lst[[2]] %>% datatable(.,caption="Table 3.3.1B : Goal Line - Price Range Breakdown ",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
 ```
 
-*table 3.3.1b* `r dlply(fuBets,.(AHOU),dim) %>% .[[2]] %>% paste0(.,collapse=' x ')`
+*table 3.3.1b* `r paste0(dim(lst[[2]]), collapse=' x ')`
 
 ```{r data-hdp-summary-table2c, echo=FALSE, results='asis'}
-m <- ddply(dat, ~pHKRange+pMYRange, .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL)) %>% mutate(R.percent=sprintf(Return/Stakes,fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes,fmt='%1.4f%%')) %>% .[6:12,] %>% tbl_df
-m %>% kable(.,caption='Table 3.3.1c : Sample data about Price Range, Stakes and PL.')
+m <- ddply(dat, ~pHKRange+pMYRange, .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL)) %>% mutate(R.percent=sprintf(Return/Stakes,fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes,fmt='%1.4f%%')) %>% arrange(Stakes) %>% tail %>% tbl_df
+m %>% kable(.,caption='Table 3.3.1c : Sample data about Price Range, Stakes and PL')
 ```
 
 *table 3.3.1c* `r paste0(dim(m),collapse=' x ')`
@@ -365,7 +374,7 @@ gvis.options <- list(title="Asian Handicap - Price Range Breakdown ('0,000)", se
 line.gvis <- gvisLineChart(xvar='pHKRange', yvar=names(lst[[1]])[-c(1:2)], data=lst[[1]], options=gvis.options)
 plot(line.gvis)
 
-rm(fuBets, line.gvis)
+rm(fuBets)
 ```
 
 *graph 3.3.1a*
@@ -382,12 +391,12 @@ rm(line.gvis)
 
 *graph 3.3.1b*
   
-  Above graph shows the Stakes and P&L on different price range in MY Odds style. In fact the MY Odds Style will be easier to count and understand in statistics as well as plot graph since the return (both won and lost) will be ONLY from `-1` to `1` while HK/Europe Odds Style will count from `-1` to `Inf`. However I keep both HKOdds and MYOdds Please refer to [table 2.2.1] for more details.
+  Above graph shows the Stakes and P&L on different price range in MY Odds style. In fact the MY Odds Style will be easier to count and understand in statistics as well as plot graph since the return (both won and lost) will be ONLY from `-1` to `1` while HK/Europe Odds Style will count from `-1` to `Inf`. However I keep both HKOdds and MYOdds Please refer to *table 2.2.1* for more details.
   
   However, due to consideration of the stakes amount, here I just simply use the HK in order to make the Stakes and Return/PL exactly same with the dataset.
 
 
-### 3.4 Analyse the In-Play Stakes
+### 3.4 Summarise the In-Play Staking Timing
 
 ```{r data-ip-summary-table1a, echo=FALSE, results='asis'}
 ## In-Play : time range
@@ -405,13 +414,13 @@ lst[[1]] %>% datatable(.,caption="Table 3.4.1A : Asian Handicap - InPlay Time Ra
 rm(funs)
 ```
 
-*table 3.4.1a* `r llply(split(ipBets1,ipBets1$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[1]]`
+*table 3.4.1a* `r paste0(dim(lst[[1]]), collapse=' x ')`
 
 ```{r data-ip-summary-table1b, echo=FALSE, results='asis'}
 lst[[2]] %>% datatable(.,caption="Table 3.4.1B : Goal Line - InPlay Time Range Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
 ```
 
-*table 3.4.1b* `r llply(split(ipBets1,ipBets1$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[2]]`
+*table 3.4.1b* `r paste0(dim(lst[[2]]), collapse=' x ')`
   
   The table above shows the breakdown stakes on `Breaks` includes pregames of Extra-Time (started 90 minutes games), Half-Time and Full-Time in both 90 minutes games and also Extra-Time, Injuries-Time, Breaks-Time etc (All stakes after blew game-start whistle and before final result). While `No` means pre-games stakes and P&L summary.
 
@@ -424,7 +433,7 @@ gvis.options <- list(title=" Asian Handicap - InPlay Time Range Breakdown ('0,00
 line.gvis <- gvisLineChart(xvar='ipRange', yvar=names(lst[[1]])[-c(1:2)], data=lst[[1]], options=gvis.options)
 plot(line.gvis)
 
-rm(ipBets1, line.gvis)
+rm(ipBets1)
 ```
 
 *graph 3.4.1a*
@@ -443,13 +452,16 @@ rm(line.gvis)
   
   From the above graph shows the In-Play stakes, the first `(0,10]` time range placed most stakes while `(55,60]` start dropping. The `<NA>` includes all stakes when the soccer players are not playing on the football field. (Pre-games, Half-Time, Full-Time, Extra-Time, Injuries Time, Breaks Time etc.)
 
+
+### 3.5 Summarise the In-Play Staking Based on Current Score
+
 ```{r data-ip-summary-table2a, echo=FALSE, results='asis'}
 ## In-Play : time range, current score, current ah/ou and also picked home team or favorite team etc.
 funs <- expression(sum, mean, median, sd, length)
 ipBets2 <- llply(funs, function(x)
-    ddply(dat, ~InPlay2+HCap+AHOU+CurScore+ipHCap+ipRange+Picked+Picked2, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('InPlay2','HCap','AHOU','CurScore','ipHCap','ipRange','Picked','Picked2')) %>% .[-c((ncol(.)-1):ncol(.))] %>% tbl_df
+    ddply(dat, ~AHOU+CurScore+ipHCap, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('AHOU','CurScore','ipHCap')) %>% .[-c((ncol(.)-1):ncol(.))] %>% tbl_df
 
-names(ipBets2) <- suppressWarnings(c('InPlay2','HCap','AHOU','CurScore','ipHCap','ipRange','Picked','Picked2','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.median','R.median','PL.median','S.sd','R.sd','PL.sd','Count'))
+names(ipBets2) <- suppressWarnings(c('AHOU','CurScore','ipHCap','Stakes','Return','PL','S.mean','R.mean','PL.mean','S.median','R.median','PL.median','S.sd','R.sd','PL.sd','Count'))
 
 ipBets2 %<>% map_if(is.numeric,round,2) %>% mutate(R.percent=sprintf(Return/Stakes,fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes,fmt='%1.4f%%'))
 
@@ -459,33 +471,29 @@ lst[[1]] %>% datatable(.,caption="Table 3.4.2A : Asian Handicap - InPlay Current
 rm(funs)
 ```
 
-*table 3.4.2a* `r llply(split(ipBets2,ipBets2$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[1]]`
+*table 3.5.1a* `r paste0(dim(lst[[1]]), collapse=' x ')`
 
 ```{r data-ip-summary-table2b, echo=FALSE, results='asis'}
 lst[[2]] %>% datatable(.,caption="Table 3.4.2B : Goal Line - InPlay Current Score and Handicap Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
 ```
 
-*table 3.4.2b* `r llply(split(ipBets2,ipBets2$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))[[2]]`
+*table 3.5.1b* `r paste0(dim(lst[[2]]), collapse=' x ')`
 
-  Above table shows a further details breakdown of In-Play stakes, includes the current scores and also current concedes/given handicap during In-Play while <NA> during Break means Break-Time or pre-Extra-Time etc. The complete data is dim(sample.data) `r llply(split(ipBets2,ipBets2$AHOU), function(x) paste(unlist(strsplit(as.character(dim(x)),' ')), collapse=' x '))` for both AH and OU.
+  Above table shows a further details breakdown of In-Play stakes, includes the current scores and also current concedes/given handicap during In-Play while `<NA>` during Break means Break-Time or pre-Extra-Time etc. The complete data is dim(sample.data) `r paste0(llply(lst,dim)[[1]], collapse=' x ')` and `r paste0(llply(lst,dim)[[2]], collapse=' x ')` for both AH and OU.
 
 ```{r data-ip-summary-plots2a, echo=FALSE, results='asis'}
 ## Plot the Stakes and P&L on AH handicap graphs
 ## the stakes amount display as $1 = $10,000
-
-##
-## Errors: need to be reviewed
-##
-#'@ lst <- ipBets2 %>% select(AHOU, CurScore, ipHCap, ipRange, Picked, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, Picked, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(tbl_df)
+lst <- ipBets2 %>% select(AHOU, CurScore, ipHCap, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, ipHCap, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(tbl_df)
 
 gvis.options <- list(title="Asian Handicap - InPlay Current Score and Handicap Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'CurScore'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
 line.gvis <- gvisLineChart(xvar='CurScore', yvar=names(lst[[1]])[-c(1:2)], data=lst[[1]], options=gvis.options)
 plot(line.gvis)
 
-rm(ipBets2, line.gvis)
+rm(ipBets2)
 ```
 
-*graph 3.4.2a*
+*graph 3.5.1a*
 
 ```{r data-ip-summary-plots2b, echo=FALSE, results='asis'}
 ## Plot the Stakes and P&L on OU handicap graphs
@@ -497,54 +505,65 @@ plot(line.gvis)
 rm(line.gvis)
 ```
 
-*graph 3.4.2b*
+*graph 3.5.1b*
+
+  Section 3 summarise breakdown tables and also graphs on the investment of firm A. Basically, soccer sports investment need to consider below criteria :
+
+- **Handicap** in [3.2 Summarise the Staking Handicap]
+- **Price** in [3.3 Summarise the Staking Prices]
+- **Timing** in [3.4 Summarise the In-Play Staking Timing]
+- **Current Score** in [3.5 Summarise the In-Play Staking Based on Current Score]
+
+  While the further linear model will also take above criteria for investment. You can also refer to my previous research which is [Odds Modelling and Testing Inefficiency of Sports-Bookmakers](https://www.dropbox.com/sh/ifwczokjptt6re0/AADv1VarJoQ6IgIitZBzG5c6a?dl=0).
 
 
 
 ## 4. Staking Model
 
+  * Section [4.1 Linear Model] - Analyse the Odds Price and Probabilities
+  * Section [4.2 Poisson Modelling] - aaaaa
+  * Section [4.3 Kelly Model] - aaaaa
+  * Section [4.4 Staking Modelling and Money Management] - aaaaa
+  * Section [4.5 Expectation Maximization and Staking Simulation] - aaaaa
+  
 
 ### 4.1 Linear Model
 
-  Before we start modelling, we look at the summary of investment return rates based on data-set `dat`.
+  Before we start modelling, we look at the summary of investment return rates.
 
 ```{r data-return-summary-table1, echo=FALSE, results='asis'}
 ## Get the investment return rates per annun
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
 ## value returnRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
 returnRates <- ddply(dat, .(Sess), summarise, Stakes=sum(Stakes), Return=sum(Return), n=length(Sess), returnRates=Return/Stakes)
-returnRates %>% kable(.,caption='Table 4.1.1 : Annual Return of Staking Data.')
+returnRates %>% kable(.,caption="Table 4.1.1 : Annual Return of Investment. ('0,000)")
 ```
 
-*table 4.1.1* `r paste(unlist(strsplit(as.character(dim(returnRates)),' ')), collapse=' x ')`
+*table 4.1.1* `r paste0(dim(returnRates), collapse=' x ')`
 
 $$\Re = \sum_{i=1}^{n}\rho_{i}^{EM}/\sum_{i=1}^{n}\rho_{i}^{BK}$$   *equation 4.1.1*
 
-  $\Re$ is the return rates of investment. The $\rho_i^{EM}$ is the estimated probabilities which is the calculated by firm A from match 1,2... until n matches while $\rho_{i}^{BK}$ is the net/pure probability (real odds) offer by bookmakers after we fit the *equation 4.1.2* into *equation 4.1.1*.
+  $\Re$ is the return rates of investment. The $\rho_i^{EM}$ is the estimated probabilities which is the calculated by firm A from match 1,2... until $n$ matches while $\rho_{i}^{BK}$ is the net/pure probability (real odds) offer by bookmakers after we fit the *equation 4.1.2* into *equation 4.1.1*.
 
 $$\rho_i = P_i^{Lay} / (P_i^{Back} + P_i^{Lay})$$   *equation 4.1.2*
 
 $P_i^{Back}$ and $P_i^{Lay}$ is the backed and layed fair price offer by bookmakers.
 
-  We can simply apply equation above to get the value $\Re$. From the table above we know that the EMPrice calculated by firm A **invested** at a threshold edge (price greater) `r returnRates$returnRates` than the prices offer by bookmakers. There are some description about $\Re$ on [Dixon&Coles1996](http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf).
+  We can simply apply equation above to get the value $\Re$. From the table above we know that the EMPrice calculated by firm A **invested** at a threshold edge (price greater) `r returnRates$returnRates` than the prices offer by bookmakers. There are some description about $\Re$ on [Dixon & Coles 1996](http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf).
 
 ```{r data-prob-table2, echo=FALSE, results='asis'}
+## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
+## value returnRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
+## Please refer to function arrfirmDatasets()
 dat$rEMProbB <- round(rep(returnRates$returnRates,returnRates$n)*dat$netProbB,4)
 dat$rEMProbL <- 1 - round(dat$rEMProbB,4)
 
-## To know the true value price of favorite/over or underdog/under 
-dat$favNetProb <- ifelse(dat$Picked=='favorite'|dat$Picked=='over' , dat$netProbB, dat$netProbL)
-dat$undNetProb <- ifelse(dat$Picked=='underdog'|dat$Picked=='under', dat$netProbB, dat$netProbL)
-
-#'@ dat$favNetProb*log(1+mbase$Return*dat$Stakes) + dat$undNetProb*log(1+dat$Return*dat$Stakes)
-#'@ dat[c('Stakes','Result','Return','PL','Rebates')]
-
-dat %>% select(No,EUPrice,HKPrice,fHKPriceL,fMYPriceB,fMYPriceL,netProbB,netProbL,rEMProbB,rEMProbL,favNetProb,undNetProb) %>% datatable(.,caption="Table 4.1.2 : Probabilities Table",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
+dat %>% select(No,EUPrice,HKPrice,fHKPriceL,fMYPriceB,fMYPriceL,netProbB,netProbL,rEMProbB,rEMProbL,favNetProb,undNetProb) %>% .[sample(1:nrow(.),6),] %>% tbl_df %>% kable(.,caption='Table 4.1.2 : Probabilities Table')
 ```
 
-*table 4.1.2* `r paste(unlist(strsplit(as.character(dim(dat)),' ')), collapse=' x ')`
+*table 4.1.2* `r paste0(dim(dat), collapse=' x ')`
 
-  The above table list the odds prices and probabilities of `i` soccer matches while `n` indicates the number of soccer matches.
+  Above table list a part of sample odds prices and probabilities of soccer match $i$ while $n$ indicates the number of soccer matches. We can know the values `rEMProbB`, `netProbB` and also .
 
 ```{r data-prob-plot2, echo=FALSE, results='asis'}
 ## Linear model
