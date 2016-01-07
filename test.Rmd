@@ -53,17 +53,45 @@ rm(mbase) ## We need to scrap the livescore data based on the raw data mbase wit
   Please refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) to see the firm A staking sample dataset. 
   
 ```{r}
-
+summary(lm(Return~pHKRange, data=dat))
 ```
 
-## DT
+### DT
 
-*graph 3.4.1b*
 
+Table summary
+
+```{r}
+summary(lm(Return~HCap, data=dat))
+```
+
+*graph 3.4.1b* *linear model*
+
+```{r}
+summary(lm(Return~pHKRange, data=dat))
+```
+
+### test
+
+```{r}
+summary(lm(Return~HCap+HKPrice, data=dat))
+```
+
+```{r}
+summary(lm(Return~ipRange, data=dat))
+```
+
+```{r}
+summary(lm(Return~CurScore+ipHCap, data=dat))
+```
+
+*graph 3.4.1c* *linear model*
 
 ```{r, results='asis'}
 ## Set options back to original options
 options(op)
 ```
+
+**Powered by - Copyright© Intellectual Property Rights of <img src='figure/Orchard.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)**
 
 

@@ -5,13 +5,13 @@
 options(warn=-1)
 
 ## Loading the packages
-if(!suppressPackageStartupMessages(require('BBmisc'))){
+if(!suppressMessages(require('BBmisc'))){
   install.packages('BBmisc')}
-suppressPackageStartupMessages(library('BBmisc'))
+suppressMessages(library('BBmisc'))
 
-if(!suppressPackageStartupMessages(require('devtools'))){
+if(!suppressAll(require('devtools'))){
   suppressAll(install.packages('devtools'))}
-if(!suppressPackageStartupMessages(require('BiocParallel'))){
+if(!suppressAll(require('BiocParallel'))){
   suppressAll(devtools::install_github('Bioconductor/BiocParallel'))}
 
 ## http://www.r-bloggers.com/new-package-dplyrr-utilities-for-comfortable-use-of-dplyr-with-databases
@@ -21,7 +21,7 @@ if(!suppressPackageStartupMessages(require('BiocParallel'))){
 #'@ install.packages('nycflights13')
 #'@ library(c('dplyrr','nycflights13'))
 
-pkgs <- c('devtools','zoo','chron','stringr','stringi','reshape','reshape2','data.table','sparkline',
+pkgs <- c('devtools','zoo','chron','stringr','reshape','reshape2','data.table','sparkline',
           'DT','plyr','dplyr','purrr','sqldf','magrittr','foreach','manipulate','ggplot2','ggthemes',
           'proto','extrafont','directlabels','PerformanceAnalytics','plotly','doParallel','rvest',
           'highlightHTML','knitr','rmarkdown','scales','lubridate','tidyr','whisker','gtable','grid',
@@ -30,9 +30,8 @@ pkgs <- c('devtools','zoo','chron','stringr','stringi','reshape','reshape2','dat
 suppressAll(lib(pkgs)); rm(pkgs)
 
 ## Load the functions
-funs <- c('readfirmDatasets.R','arrfirmDatasets.R','readSPBO.R')
-l_ply(funs, function(x) source(paste0(getwd(),'/function/',x))); rm(funs)
-
+funs <- c('readfirmDatasets.R', 'arrfirmDatasets.R', 'readSPBO.R')
+l_ply(funs, function(x) source(paste0(getwd(), '/function/', x))); rm(funs)
 
 ## Creating a parallel computing Cluster and support functions.
 ## Preparing the parallel cluster using the cores
