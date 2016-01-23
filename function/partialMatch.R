@@ -9,35 +9,35 @@ partialMatch <- function(x, y, levDist=0.1){
   require('plyr', quietly=TRUE)
   require('dplyr', quietly=TRUE)
   
-  source(paste0(getwd(),'/function/signature.R'))
-  xx <- data.frame(sign=sapply(x, signature),row.names=NULL)
-  yy <- data.frame(sign=sapply(y, signature),row.names=NULL)
+  source(paste0(getwd(), '/function/signature.R'))
+  xx <- data_frame(sign=sapply(x, signature), row.names=NULL)
+  yy <- data_frame(sign=sapply(y, signature), row.names=NULL)
   
   xx$raw <- x
   yy$raw <- y
-  xx <- subset(xx,subset=(sign!=''))
-  xy <- merge(xx,yy,by='sign',all=T)
+  xx <- subset(xx, subset=(sign!=''))
+  xy <- merge(xx, yy, by='sign', all=T)
   
   matched <- subset(xy,subset=(!(is.na(raw.x)) & !(is.na(raw.y))))
   matched$pass <- ifelse(nrow(matched)>0, 'Duplicate', NULL)
-  todo <- subset(xy,subset=(is.na(raw.y)),select=c(sign,raw.x))
-  colnames(todo) <- c('sign','raw')
-  todo$partials <- as.character(sapply(todo$sign, agrep, yy$sign,max.distance = levDist,value=TRUE))
-  todo <- merge(todo,yy,by.x='partials',by.y='sign')
+  todo <- subset(xy, subset=(is.na(raw.y)), select=c(sign, raw.x))
+  colnames(todo) <- c('sign', 'raw')
+  todo$partials <- as.character(sapply(todo$sign, agrep, yy$sign, max.distance = levDist,value=TRUE))
+  todo <- merge(todo, yy, by.x='partials', by.y='sign')
   
-  partial.matched <- subset(todo,subset=(!(is.na(raw.x)) & !(is.na(raw.y))),select=c('sign','raw.x','raw.y'))
+  partial.matched <- subset(todo, subset=(!(is.na(raw.x)) & !(is.na(raw.y))), select=c('sign', 'raw.x', 'raw.y'))
   partial.matched$pass <- ifelse(nrow(partial.matched)>0, 'Partial', NULL)
-  matched <- rbind(matched,partial.matched)
-  un.matched <- subset(todo,subset=(is.na(raw.x)),select=c('sign','raw.x','raw.y'))
+  matched <- rbind(matched, partial.matched)
+  un.matched <- subset(todo, subset=(is.na(raw.x)), select=c('sign', 'raw.x', 'raw.y'))
   
   if (nrow(un.matched)>0){
     un.matched$pass='Unmatched'
-    matched <- rbind(matched,un.matched)
+    matched <- rbind(matched, un.matched)
   }
-  matched <- subset(matched,select=c('raw.x','raw.y','pass'))
-  names(matched) <- c('teamID','spboID','Match')
+  matched <- subset(matched,select=c('raw.x', 'raw.y', 'pass'))
+  names(matched) <- c('teamID', 'spboID', 'Match')
   rownames(matched) <- NULL
-  matched <- matched  %>% tbl_df
+  matched <- matched  %>% data.frame %>% tbl_df
   
   return(matched)
 }

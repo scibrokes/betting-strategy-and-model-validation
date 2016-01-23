@@ -1,0 +1,389 @@
+---
+title: "Natural Language Analysis"
+author: "[®γσ, Eng Lian Hu](http://englianhu.wordpress.com) <img src='figure/ShirotoNorimichi.jpg' width='24'> 白戸則道®"
+date: "9/22/2015"
+output:
+  html_document:
+    fig_caption: yes
+    fig_height: 3
+    fig_width: 5
+    highlight: haddock
+    theme: cerulean
+    toc: yes
+---
+  
+  This is an natural language analysis on the matching soccer teams' name when I am doing research on [Betting Strategy and Model Validation](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation/blob/master/Betting%20Strategy%20and%20Model%20Validation.Rmd). The purpose of writing the functions just would like easier future scrap teams name for further calculation to reduce my workload.
+  
+  Where the subject/topic is that the last course [Data Science Capstone](https://www.coursera.org/course/dsscapstone) on Coursera (JHU Johns Hopkins University) which I have failed few times and will retake on this coming October-2015 (Next month).
+  
+  Note that the `echo = FALSE` and `include=FALSE` parameters were added to the code chunks below to prevent printing of the R code that generated the plots/tables. However you can feel free to see the source code via [Natural Language Analysis.Rmd](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation/Natural Language Analysis.Rmd).
+
+
+
+## 1. Setup Options, Loading Required Libraries and Preparing Environment
+
+  Setup `knitr` options and loading the required libraries.
+
+```{r libs, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
+## Loading the packages and setting adjustment
+suppressMessages(source('function/libs.R'))
+```
+
+
+
+## 2. Read and Process the Dataset
+
+  Read the dataset of World Wide soccer matches from year 2011 until 2015 from a British betting consultancy named firm A.
+
+```{r read-datasetA, echo=FALSE, results='asis'}
+## Read the datasets
+## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
+years <- seq(2011,2015)
+mbase <- readfirmDatasets(years=years)
+dateID <- sort(unique(as.Date(mbase$datasets$Date)))
+#'@ pander(head(mbase$datasets)) ## exactly same layout with kable(x)
+
+## example of the dataset in the research paper
+##   due to the data heavy and overload ,max 5mb while generated 79mb html file, here I just simply subset the head section
+mbase$datasets %>% head %>% datatable(., caption="Table 2.1 : Soccer Staking Data from Firm A", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+```
+
+*table 2.1* `r paste(unlist(strsplit(as.character(dim(mbase$datasets)), ' ')), collapse=' x ')`
+
+  Due to the dataset very big `r paste(unlist(strsplit(as.character(dim(mbase$datasets)), ' ')), collapse=' x ')` caused the webpage keep loading and unable open. Here I just only subset few rows from the data frame.
+
+  Read the dataset of World Wide soccer matches scrapped from year 2011 until 2015 from [spbo livescore website](http://www.spbo.com/eend0.htm).
+
+```{r read-datasetB, echo=FALSE, results='asis'}
+## Load the scraped spbo livescore datasets.
+spboData <- readSPBO(dateID=dateID, parallel=TRUE)$data
+
+spboData %>% head %>% datatable(., caption="Table 2.2 : SPBO Soccer Data", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+```
+
+*table 2.2* `r paste(unlist(strsplit(as.character(dim(spboData)), ' ')), collapse=' x ')`
+
+  Due to the dataset very big `r paste(unlist(strsplit(as.character(dim(spboData)), ' ')), collapse=' x ')` caused the webpage keep loading and unable open. Here I just only subset few rows from the data frame.
+
+
+
+## 3. Matching the team names
+
+
+### 3.1 Matching Duplicated Teams' Name
+
+  In order to matching a string. Firstly we can apply `match()` or `%in%` to matching the teams' name. Although, the capital letter different is not duplicated string in R programming while I apply the `tolower()` to match the teams' name since it is consider exactly matching teams' name in our real life.
+
+```{r matching-01, echo=FALSE, results='asis'}
+## Get and filter the teams' name
+## Filter and drop the first-half, corners and other games
+teamID <- sort(unique(c(as.character(mbase$datasets$Home), as.character(mbase$datasets$Away))))
+teamID <- teamID[!teamID %in% mbase$others]
+
+spboTeam <- sort(c(as.vector(spboData$Home), as.vector(spboData$Away)))
+spboTeamID <- sort(unique(spboTeam))
+
+df1 <- data_frame(team=teamID[tolower(teamID) %in% tolower(spboTeamID)], spbo=spboTeamID[tolower(spboTeamID) %in% tolower(teamID)]) %>% mutate(team=as.character(team),spbo=as.character(spbo),pass=ifelse(team==spbo, 'Duplicated', 'Capital Letters')) %>% arrange(pass)
+row.names(df1) <- NULL
+rbind(df1 %>% filter(pass=='Duplicated') %>% head(3), df1 %>% filter(pass=='Capital Letters') %>% head(3)) %>% kable(caption='Table 3.1.1 : Exactly match and capital letters difference.')
+```
+
+*table 3.1.1* `r paste(unlist(strsplit(as.character(dim(df1)), ' ')), collapse=' x ')`
+
+
+### 3.2 Apply amatch() and stringdist()
+
+  There has a concern which is noramlly second teams' name must be exactly same with first team but only add II, reserved etc to the first team name, for example : *Mainz 05* is first team but not fifth reserved team. More soccer matches data scrapped will be more accurate, for example if we only scrapped one day data, how can we matching the first team if let say only Chelsea reserved team play on that particular date.
+  
+  However there has another concern which is first team *TSV 1860 Munchen* but second/U19 team termed as *1860 Munchen II*, *1860 Munchen U19* etc. The *Lincoln* team name supposed to be matched with *Lincoln City* but not *Lincoln United* while *Lincoln City* will be most approximately matching to *Lincoln Xxitxx* compare to *Lincoln*.
+  
+  Besides, if I set the priority of matching the kick-off date and later team names, it will be a concern of possibilities of postponed staked matches (postponed after firm A placed bets, sometimes firm A will placed bets on Early market or the kick-off date accidentially changed/postponed before kick-off due to snowing/downpour/etc).
+  
+  I load the [`stringdist`](https://cran.r-project.org/web/packages/stringdist/index.html) package to apply the algorithmic matching `amatch()` the team names.
+  
+  * 01. [osa](https://en.wikipedia.org/wiki/Optimal_string_alignment) - Optimal string aligment, (restricted Damerau-Levenshtein distance).
+  * 02. [lv](https://en.wikipedia.org/wiki/Levenshtein_distance) - Levenshtein distance (as in R’s native adist).
+  * 03. [dl](https://en.wikipedia.org/wiki/Damerau%E2%80%93Levenshtein_distance) - Full Damerau-Levenshtein distance.
+  * 04. [hamming](https://en.wikipedia.org/wiki/Hamming_distance) - Hamming distance (a and b must have same nr of characters).
+  * 05. [lcs](https://en.wikipedia.org/wiki/Longest_common_subsequence_problem) - Longest common substring distance.
+  * 06. [qgram](https://en.wikipedia.org/wiki/N-gram) - q-gram distance.
+  * 07. cosine - cosine distance between q-gram profiles.
+  * 08. [jaccard](https://en.wikipedia.org/wiki/Jaccard_index) - Jaccard distance between q-gram profiles.
+  * 09. [jw](https://en.wikipedia.org/wiki/Jaro%E2%80%93Winkler_distance) - Jaro, or Jaro-Winker distance.
+  * 10. [soundex](https://en.wikipedia.org/wiki/Soundex) - Distance based on soundex encoding (see below).
+  
+  Lets take an example below.
+  
+```{r matching-02A, echo=FALSE, results='asis'}
+## Apply stringdist() to match the most approximate matching team names
+method=c('osa', 'lv', 'dl', 'hamming', 'lcs', 'qgram', 'cosine', 'jaccard', 'jw', 'soundex')
+#'@ levDist=0.1 # The default MaxDist inside stringdist() is 0.1.
+
+strList <- function(team_a, team_b, method, levDist=NULL){
+  unlist(llply(as.list(method), function(x){
+    if(is.null(levDist)){
+      levDist=min(stringdist(team_a, team_b, method=x))
+    }else if(is.numeric(levDist)){
+      levDist=levDist
+    }else{
+      stop('Please enter a numeric or just keep default NULL value on levDist!')
+    }
+    if(!method %in% c('osa', 'lv', 'dl', 'hamming', 'lcs', 'qgram', 'cosine', 'jaccard', 'jw', 'soundex')){
+      stop('Please enter value within "osa", "lv", "dl", "hamming", "lcs", "qgram", "cosine", "jaccard", "jw", "soundex")')
+    }
+    team_b[amatch(team_a, team_b, method=x, maxDist=levDist)]
+  }, .parallel=FALSE))
+}
+
+## Check how many teams' name includes string 'Lincoln'.
+teamID[grep('Lincoln',teamID)]
+
+lst <- list(uniqueID_0.1=strList('Lincoln', spboTeamID, method=method, levDist=0.1),
+            allElems_0.1=strList('Lincoln', spboTeam, method=method, levDist=0.1),
+            uniqueID_0.5=strList('Lincoln', spboTeamID, method=method, levDist=0.5),
+            allElems_0.5=strList('Lincoln', spboTeam, method=method, levDist=0.5),
+            uniqueID_1.0=strList('Lincoln', spboTeamID, method=method, levDist=1.0),
+            allElems_1.0=strList('Lincoln', spboTeam, method=method, levDist=1.0),
+            uniqueID_2.0=strList('Lincoln', spboTeamID, method=method, levDist=2.0),
+            allElems_2.0=strList('Lincoln', spboTeam, method=method, levDist=2.0),
+            uniqueID_Inf=strList('Lincoln', spboTeamID, method=method, levDist=Inf),
+            allElems_Inf=strList('Lincoln', spboTeam, method=method, levDist=Inf))
+len <- sapply(lst, length)
+n <- max(len)
+len <- n-len
+
+df2A <- mapply(function(x, y) c(x, rep(NA, y)), lst, len) %>% data.frame %>% mutate(Matching1='Lincoln', Matching2='Lincoln City', method=method) %>% select(Matching1, method, uniqueID_0.1, allElems_0.1, uniqueID_0.5, allElems_0.5, uniqueID_1.0, allElems_1.0, uniqueID_2.0, allElems_2.0, uniqueID_Inf, allElems_Inf) %>% mutate_each(funs(as.character))
+rm(lst, len, n)
+df2A %>% datatable(caption="Table 3.2.1 : StringDist Matching 'Lincoln'", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+```
+
+*table 3.2.1* `r paste(unlist(strsplit(as.character(dim(df2A)), ' ')), collapse=' x ')`
+
+  I simply matching the key words `Lincoln` in Home and Away teams' name data which get from firm A.
+
+```{r matching-02B, echo=FALSE, results='asis'}
+## We get 'Lincoln City' from teamID[grep('Lincoln', teamID)]
+lst <- list(uniqueID_0.1=strList('Lincoln City', spboTeamID, method=method, levDist=0.1),
+            allElems_0.1=strList('Lincoln City', spboTeam, method=method, levDist=0.1),
+            uniqueID_0.5=strList('Lincoln City', spboTeamID, method=method, levDist=0.5),
+            allElems_0.5=strList('Lincoln City', spboTeam, method=method, levDist=0.5),
+            uniqueID_1.0=strList('Lincoln City', spboTeamID, method=method, levDist=1.0),
+            allElems_1.0=strList('Lincoln City', spboTeam, method=method, levDist=1.0),
+            uniqueID_2.0=strList('Lincoln City', spboTeamID, method=method, levDist=2.0),
+            allElems_2.0=strList('Lincoln City', spboTeam, method=method, levDist=2.0),
+            uniqueID_Inf=strList('Lincoln City', spboTeamID, method=method, levDist=Inf),
+            allElems_Inf=strList('Lincoln City', spboTeam, method=method, levDist=Inf))
+len <- sapply(lst, length)
+n <- max(len)
+len <- n-len
+
+df2B <- mapply(function(x, y) c(x, rep(NA, y)), lst, len) %>% data.frame %>% mutate(Matching1='Lincoln', Matching2='Lincoln City', method=method) %>% select(Matching1, method, uniqueID_0.1, allElems_0.1, uniqueID_0.5, allElems_0.5, uniqueID_1.0, allElems_1.0, uniqueID_2.0, allElems_2.0, uniqueID_Inf, allElems_Inf) %>% mutate_each(funs(as.character))
+rm(lst, len, n)
+df2B %>% datatable(caption="Table 3.2.2 : StringDist Matching 'Lincoln City'", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+```
+
+*table 3.2.2* `r paste(unlist(strsplit(as.character(dim(df2B)), ' ')), collapse=' x ')`
+
+  From the two tables stated above, I apply stringdist by set the MaxDist to be default value `0.1`,`0.5`,`1.0`,`2.0` and also `Inf` and select all methods avaiable (10 methods stated above in section 3 before the run coding). Well, I dont pretend to know how does the algorimthic of `stringdist()` matching the string. Therefore I try both unique teams' name and also all elements (without filter to be unique).
+
+
+### 3.3 Apply agrep()
+  
+  I tried to simply apply the `agrep()` function to partially matching the teams' name.
+
+```{r matching-03, echo=FALSE, results='asis'}
+## Filter spboTeamID wihthout other games and 1st Half team names
+## Apply agrep() to match the most approximate matching team names
+## http://stackoverflow.com/questions/21103410/irregular-list-of-lists-to-dataframe
+lst <- list(team1=sort(unique(c(teamID[agrep('Lincoln', teamID)]))), spbo1=sort(unique(c(spboTeamID[agrep('Lincoln', spboTeamID)]))), team2=sort(unique(c(teamID[agrep('Lincoln City', teamID)]))), spbo2=sort(unique(c(spboTeamID[agrep('Lincoln City', spboTeamID)]))))
+len <- sapply(lst, length)
+n <- max(len)
+len <- n-len
+
+df3 <- mapply(function(x, y) c(x, rep(NA, y)), lst, len) %>% data.frame %>% mutate(Matching1='Lincoln', Matching2='Lincoln City') %>% select(Matching1, team1, spbo1, Matching2, team2, spbo2) %>% mutate_each(funs(as.character))
+rm(lst, len, n, len)
+df3 %>% kable(caption='Table 3.3.1 : Simply apply agrep().')
+```
+
+*table 3.3.1* `r paste(unlist(strsplit(as.character(dim(df3)), ' ')), collapse=' x ')`
+
+
+### 3.4 Apply partialMatch()
+  
+  Secondly, there is an article from [Merging Data Sets Based on Partially Matched Data Elements](http://www.r-bloggers.com/merging-data-sets-based-on-partially-matched-data-elements/) which apply subset to partial matching the teams' name.
+
+```{r matching-04A, echo=FALSE, results='asis'}
+## Load the partialMatch() function
+source(paste0(getwd(), '/function/partialMatch.R'))
+df4 <- partialMatch(iconv(teamID), spboTeamID)
+#'@ rbind(df4 %>% filter(pass=='Duplicate') %>% head(3), df4 %>% filter(pass=='Partial') %>% head(3)) %>% kable
+df4 %>% datatable(caption="Table 3.4.1 : Partial Matching Teams' Name.", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+```
+  
+  Below table simply display few matched teams' name which are not accurate.
+
+```{r matching-04B, echo=FALSE, results='asis'}
+df4 %>% filter((teamID %in% teamID[grep('Women|U[0-9]{2}', teamID)])|(spboID %in% spboID[grep('Women|U[0-9]{2}', spboID)]), Match=='Partial') %>% head %>% kable(caption='Table 3.4.2 : Inaccuracy of Matching Result.')
+```
+
+*table 3.4.2* `r paste(unlist(strsplit(as.character(dim(df4)), ' ')), collapse=' x ')`
+  
+  From the table above we all know that the team `AaB Aalborg` from firm A will match with `AaB Aalborg U17` from livescore website and `Airdrie United` match to `Airdrie United Women` while there are totally different team and will lead reasearcher calculate a wrong predictive figures for investment.
+
+  In order to maximized the soccer matches (observations) available for the research, here I seperates few steps to matching the teams' name by using `split()` and cross-matching each others to seperately rearrange the data prior to start the algorithmic matching function in **section 4 Reprocess the Data**.
+
+
+
+## 4. Reprocess the Data
+
+
+### 4.1 Dicission Tree
+
+```{r matching-05A, echo=FALSE, results='asis'}
+## Since the elements are not much enough but list quit a number, just set parallel=FALSE will be faster few minutes.
+dfm <- makeList(mbase, spboData, levDist=0.1, parallel=FALSE)
+```
+  
+  I would like to plot a hierarchical chart for spliting teams' name for `agrep`. However due to `rpart` and `randomForest` packages required numeric data while diagram doesn't special. Here I plot two dynamic graphs.
+
+```{r decission-tree-A, echo=FALSE, results='asis'}
+## Refered `rpart` and `randomForest` to plot the decision tree, showing how to match the teams' name but required numeric data and also static graph.
+## Here I using `d3Network`
+d3data <- dfm$partialData
+#'@ d3data %>% d3SimpleNetwork(.,width='automatic', height=400) ## https://github.com/christophergandrud/d3Network/issues/31
+#'@ d3data %>% as.list %>% d3Tree ## https://github.com/christophergandrud/d3Network/issues/31
+d3data[1:2] %>% simpleNetwork(width=400, height=400)
+```
+
+  Since the `simpleNetwork()` function only apply to 2 columns dataset, here I split to be 2 graphs.
+
+```{r decission-tree-B, echo=FALSE, results='asis'}
+d3data[3:4] %>% simpleNetwork(width='auto', height=800)
+```
+
+
+### 4.2 Filtering and Reprocess the Data
+  
+  Prior to start the algorithmic string matching, I am using the idea from `Apply signature() from country names to reduce some of the minor differences between strings. In this case, convert all characters to lower case, sort the words alphabetically, and then concatenate them with no spaces. So for example, United Kingdom would become kingdomunited` which inside the [Merging Data Sets Based on Partially Matched Data Elements](http://www.r-bloggers.com/merging-data-sets-based-on-partially-matched-data-elements/). It will minimize/reduce the string distance to maximize the matching result.
+  
+  Here I tried to `split` teams' name into list and simply apply `grep` and `agrep` to apply first filtering.
+  
+```{r matching-05B, echo=FALSE, results='asis'}
+d3data %>% datatable(caption="Table 4.2.1 : Reprocess the Teams' Name.", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+```
+
+
+### 4.3 StringDist Maximum Likelihood
+  
+  There is an good example from [How can I match fuzzy match strings from two datasets?](http://stackoverflow.com/questions/26405895/how-can-i-match-fuzzy-match-strings-from-two-datasets) which apply `expand.grid()` to build a data frame and then Expectation Maximization theory by using while loop on `stringdist()`.
+  
+```{r stringdist, echo=FALSE, results='asis'}
+suppressAll(source('function/arrTeamID.R'))
+strDF <- arrTeamID(mbase, spboData, levDist=0.1, parallel=FALSE)
+strDF$result %>% datatable(caption="Table 4.3.1 : StringDist Approximately Matched Teams' Name.",extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+```
+  
+  From the above table, I've matching the teams' name which is Section 2 Dataset inside [Betting Strategy and Model Validation](https://github.com/englianhu/Betting-Strategy-and-Model-Validation/blob/master/Betting%20Strategy%20and%20Model%20Validation.Rmd). Here I apply method = `r method` inside the `stringdist` function. You are feel free to apply the function to scrap and also re-arrange the teams' name and soccer scores data for your own odds price modelling.
+
+
+
+## 5. Result
+
+
+### 5.1 Checked and Filtered the Teams' Name
+  
+  Here I tried to manually check the teams' name and compile as a file to compare the accuracy of the stringDist().
+  
+```{r read-datasetC, echo=FALSE, results='asis'}
+tmIDdata <- read.csv(paste0(getwd(), '/datasets/teamID.csv'), header=TRUE, sep=', ') %>% data_frame %>% mutate_each(funs(as.character))
+## Kuban Krasnodar duplicated in tmID but different in spbo column.
+#'@ dp <- tmIDdata %>% filter(tmID==agrep('Kuban', tmID, value=TRUE))
+tmIDdata <- tmIDdata %>% filter(spbo!='Kuban Krasnodar')
+
+tmIDdata %>% datatable(caption="Table 5.1.1 : Table of Teams Name (Manually Checked)", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+```
+
+
+### 5.2 Comparison of the Model
+  
+  Firstly, we try to filter-up the teams' name.
+  
+```{r compare-datasetA, echo=FALSE, results='asis'}
+comp1 <- tmIDdata %>% filter(., .$teamID %in% strDF$result$teamID & !duplicated(.$teamID)) %>% merge(., strDF$result) %>% data_frame %>% .[c('teamID', 'spbo', method)] %>% mutate_each(funs(as.character))
+
+comp1 %>% datatable(caption="Table 5.2.1 : Table of Teams Name (stringDistList)", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+```
+  
+  Secondly, we simply compare the accuracy and also number of teams.
+  
+```{r compare-datasetB, echo=FALSE, results='asis'}
+res1 <- sapply(seq(2, ncol(comp1)), function(i) sum(as.numeric(comp1[2]==comp1[i])))
+names(res1) <- c('spbo', method)
+data_frame(match=names(res1), rate=res1/res1[1], n=res1) %>% kable(caption='Table 5.2.2 : Summary of Matching Result 1')
+```
+  
+  Same with above, we simply filter the `PartialMatch` function.
+  
+```{r compare-datasetC, echo=FALSE, results='asis'}
+comp2 <- tmIDdata %>% subset(., .$teamID %in% df4$teamID & !duplicated(.$teamID)) %>% merge(.,df4) %>% data_frame %>% .[c('teamID', 'spbo', 'spboID')] %>% mutate_each(funs(as.character))
+
+comp2 %>% datatable(caption="Table 5.2.3 : Table of Teams Name (PartialMatch)", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+```
+  
+  Here we also summarized the table.
+  
+```{r compare-datasetD, echo=FALSE, results='asis'}
+res2 <- sapply(seq(2, ncol(comp2)), function(i) sum(as.numeric(comp2[2]==comp2[i])))
+names(res2) <- c('spbo', 'PartialMatch')
+data_frame(match=names(res2), rate=res2/res2[1],n=res2) %>% kable(caption='Table 5.2.4 : Summary of Matching Result 2')
+```
+  
+  Based from the above two functions, we know that modified `stringdist()` which is `stringDistList()` has correctly gather `r res1[2]` teams from `r res1[1]` teams. Meanwhile `partialMatch()` has matched `r res2[2]` teams from `r res2[1]` teams. More teams correctly gathered the information to diversify the investment opportunity on different leagues.
+
+
+### 5.3 Future Works
+  
+  There will be more accurate to approximately matching if I apply multivariate matching kick-off time and also both home team and away team at once. I was initially tried to match the teams name by criteria kick-off time but the kick-off time will sometimes unexpected change few hours prior to kick-off.
+  
+  I will also write as a package to easier load and log.
+
+
+
+## 6. Appendices
+
+  
+### 6.1 Documenting File Creation 
+
+It's useful to record some information about how your file was created.
+  
+  * File creation date: 2015-10-29
+  * `r R.version.string`
+  * R version (short form): `r getRversion()`
+  * `rmarkdown` package version: `r packageVersion('rmarkdown')`
+  * File version: 1.0.3
+  * File latest updated date: `r Sys.Date()`
+  * Author Profile: [®γσ, Eng Lian Hu](http://rpubs.com/englianhu/ryoeng)
+  * GitHub: [Source Code](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation)
+  * Additional session information
+  
+```{r echo=FALSE, results='asis'}
+lubridate::now()
+devtools::session_info()$platform
+Sys.info()
+```
+
+
+### 6.2 References
+
+  * [Merging Data Sets Based on Partially Matched Data Elements](http://www.r-bloggers.com/merging-data-sets-based-on-partially-matched-data-elements/)
+  * [How can I match fuzzy match strings from two datasets?](http://stackoverflow.com/questions/26405895/how-can-i-match-fuzzy-match-strings-from-two-datasets)
+  * [Fuzzy String Matching – a survival skill to tackle unstructured information](http://www.r-bloggers.com/fuzzy-string-matching-a-survival-skill-to-tackle-unstructured-information/)
+  * [Compute Levenshtein distance using R](http://www.yimizhao.com/#!Compute-Levenshtein-distance-using-R/cu6k/55249b460cf215f35a4a815d)
+  * [d3Network](http://christophergandrud.github.io/d3Network/)
+  * [Tables with htmlTable and some alternatives](https://cran.r-project.org/web/packages/htmlTable/vignettes/tables.html)
+  * [DT: An R interface to the DataTables library](http://blog.rstudio.org/2015/06/24/dt-an-r-interface-to-the-datatables-library/)
+  * Rstudio Blog - [DT: An R interface to the DataTables library](https://rstudio.github.io/DT/)
+
+**Powered by - Copyright© Intellectual Property Rights of <img src='/figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)個人の経営企業**
+
+  

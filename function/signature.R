@@ -7,7 +7,7 @@ signature <- function(x){
   ## So for example, United Kingdom would become kingdomunited
   ## We might also remove stopwords such as 'the' and 'of'.
   
-  sign <- paste(sort(unlist(strsplit(tolower(x)," "))),collapse='')
+  sign <- paste(sort(unlist(strsplit(tolower(x), " "))), collapse='')
   return(sign)
   }
 

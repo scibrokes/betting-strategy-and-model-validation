@@ -42,11 +42,11 @@ scrapSPBO <- function(lnk=lnk, dateID=dateID, path=path, parallel=FALSE){
     ## regex(dataElem,'[0-9]{10}'); grep(dataElem,'[0-9]{10}') to match the location of the 
     ##  element within a vector
     ncolID.df <- dataElem %>% str_detect(., '[0-9]{10}') %>% matrix(., dimnames=list(NULL, 'V1')) %>% 
-      data.frame %>% subset(., V1==TRUE) %>% rownames %>% as.numeric
+      data_frame %>% subset(., V1==TRUE) %>% rownames %>% as.numeric
     irng <- c(ncolID.df,length(dataElem))
     ncol.df <- diff(irng)
     dfm <- as.matrix(rbind_all(llply(seq(1, length(ncol.df)), function(j) {
-      data.frame(matrix(dataElem[irng[j]:(irng[j+1]-1)], byrow=TRUE, ncol=ncol.df[[j]]))}, 
+      data_frame(matrix(dataElem[irng[j]:(irng[j+1]-1)], byrow=TRUE, ncol=ncol.df[[j]]))}, 
       .parallel=parallel)))
     
     #'@ dfm[(dfm[, 04]==0)&(dfm[, 05]==0), c(07, 10, 12:ncol(dfm))] <- dfm[(dfm[, 04]==0)&(dfm[, 05]==0), 
@@ -76,7 +76,7 @@ scrapSPBO <- function(lnk=lnk, dateID=dateID, path=path, parallel=FALSE){
     HTGoal <- str_split_fixed(dfm[, 12], ' - ', 2); HTGoal[HTGoal[, 02]=='', 02] <- 0
     dfm <- cbind(dfm[, 01:05], dfm[, 07], dfm[, 10], dfm[, 08:09], HTGoal, dfm[, 06], dfm[, 11], 
                  dfm[, 13:ncol(dfm)])
-    dfm <- data.frame(dfm); rm(HTGoal)
+    dfm <- data_frame(dfm); rm(HTGoal)
     dfnames <- c('matchID', 'LeagueColor', 'League', 'Date', 'Finished', 'Home', 'Away', 'FTHG', 'FTAG', 
                  'HTHG', 'HTAG', 'H.Card', 'A.Card', 'HT.matchID', 'HT.graph1', 'HT.graph2')
     names(dfm) <- dfnames
@@ -99,8 +99,8 @@ scrapSPBO <- function(lnk=lnk, dateID=dateID, path=path, parallel=FALSE){
     #'@ }
     
     ## Replace all space which at the first and also last character inside elements.
-    dfm <- llply(dfm, function(x){gsub('^\\s{1,}|\\s{1,}$', '', x)}, .parallel=parallel) %>% data.frame %>% 
-      tbl_df %>% mutate_each(funs(as.character))
+    dfm <- llply(dfm, function(x){gsub('^\\s{1,}|\\s{1,}$', '', x)}, .parallel=parallel) %>% data_frame %>% 
+      mutate_each(funs(as.character))
     
     ## Save livescores data into folder
     dir.create(file.path(paste0(getwd(), '/datasets/', path)))

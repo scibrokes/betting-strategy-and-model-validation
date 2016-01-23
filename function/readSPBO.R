@@ -17,9 +17,21 @@ readSPBO <- function(dateID=dateID, parallel=FALSE){
     #'@ doParallel::registerDoParallel(makeCluster(detectCores(logical=TRUE)))
   }
   
-  dfm <- rbind_all(llply(as.list(dateID), function(x){
-    data.frame(read.csv(paste0(getwd(),'/datasets/livescore/', x, '.csv'), header=TRUE, sep=','))},
-    .parallel=parallel))
+  ## unzip spbo livescore datasets.
+  if(dir.exists('datasets/livescore')==FALSE){
+    unzip('datasets/livescore.zip', exdir='datasets')
+  }
+  
+  dateID <- as.character(as.Date(dateID))
+  dateIDdir <- str_replace_all(dir(paste0(getwd(), '/datasets/livescore')), '.csv', '')
+  dateIDin <- dateID[dateID %in% dateIDdir]
+  dateIDex <- dateID[!dateID %in% dateIDdir]
+  
+  ## Read spbo livescore datasets.
+  dfm <- rbind_all(llply(as.list(dateIDin), function(x){
+    data.frame(read.csv(file=paste0(getwd(), '/datasets/livescore/', x, '.csv')))}, .parallel=parallel))
+  
+  unlink('datasets/livescore', recursive=TRUE)
   
   ## change all columns' class at once
   ## http://stackoverflow.com/questions/27668266/dplyr-change-many-data-types#_=_
@@ -32,14 +44,17 @@ readSPBO <- function(dateID=dateID, parallel=FALSE){
                   Date=as.Date(str_split_fixed(Date, ' ', 2)[, 01]), Finished=as.numeric(Finished), 
                   Home=factor(Home), Away=factor(Away), FTHG=as.numeric(FTHG), FTAG=as.numeric(FTAG), 
                   HTHG=as.numeric(HTHG), HTAG=as.numeric(HTAG), H.Card=as.numeric(H.Card), 
-                  A.Card=as.numeric(A.Card), HT.matchID=factor(HT.matchID), HT.graph1=as.numeric(HT.graph1), 
-                  HT.graph2=as.numeric(HT.graph2))
+                  A.Card=as.numeric(A.Card), HT.matchID=factor(HT.matchID), 
+                  HT.graph1=as.numeric(HT.graph1), HT.graph2=as.numeric(HT.graph2))
   
-  dfm %<>% select(No, X, matchID, LeagueColor, League, DateUK, Date, Time, Finished, Home, Away, FTHG, FTAG, 
-                  HTHG, HTAG, H.Card, A.Card, HT.matchID, HT.graph1, HT.graph2) %>% 
-    mutate(DateUK=ymd_hms(DateUK), Date=ymd(Date), Time=hm(Time)) %>% tbl_df
+  dfm %<>% select(No, X, matchID, LeagueColor, League, DateUK, Date, Time, Finished, Home, Away, 
+                  FTHG, FTAG, HTHG, HTAG, H.Card, A.Card, HT.matchID, HT.graph1, HT.graph2) %>% 
+    mutate(DateUK=ymd_hms(DateUK), Date=ymd(Date), Time=hm(Time)) %>% map_if(is.numeric, round, 2) %>% 
+    map_if(is.character, factor) %>% data.frame %>% tbl_df
   
-  return(dfm)
+  dfLst <- list(data=dfm, dir.dateID=dateIDdir, includes.dateID=dateIDin, excludes.dateID=dateIDex)
+  
+  return(dfLst)
 }
 
 

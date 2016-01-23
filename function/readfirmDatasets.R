@@ -1,9 +1,9 @@
-readfirmDatasets <- function(years=years, parallel=FALSE){
+readfirmDatasets <- function(years=years, parallel=TRUE){
   ## Loading the packages
-  if(!suppressWarnings(require('BBmisc',quietly=TRUE))){
-    suppressWarnings(install.packages('BBmisc'))}
+  if(!suppressMessages(require('BBmisc'))){
+    suppressMessages(install.packages('BBmisc'))}
   
-  suppressMessages(require('BBmisc', quietly=TRUE))
+  suppressMessages(require('BBmisc'))
   pkgs <- c('magrittr', 'plyr', 'dplyr', 'purrr', 'stringr', 'lubridate', 'doParallel')
   suppressAll(lib(pkgs)); rm(pkgs)
   
@@ -32,18 +32,18 @@ readfirmDatasets <- function(years=years, parallel=FALSE){
   ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
   dfm <- rbind_all(llply(years, function(x) {
     data.frame(Sess=x, read.csv(paste0(getwd(), '/datasets/', x, '.csv'), header=TRUE, sep=','))}, 
-    .parallel=parallel)) %>% tbl_df
+    .parallel=parallel))
   
   ## Data processing and clearing
   matchID <- dfm$Match %>% as.character %>% str_extract_all('[[:alnum:]\\(.\\) ]{1,}[[:alnum:].: ]{1,}') %>% 
-    ldply(.parallel=parallel) %>% mutate(V2=str_replace_all(V2, '\\(', '')) %>% tbl_df
+    ldply(.parallel=parallel) %>% mutate(V2=str_replace_all(V2, '\\(', ''))
   
   ## Checking if the strings length match
   #' @laply(matchID,length)
   #' @which(laply(matchID,length)!=4)
   #' @matchID[laply(matchID,length)!=4]
   
-  matchID$V1 %<>% str_split(' vs ') %>% ldply(.parallel=parallel) %>% tbl_df
+  matchID$V1 %<>% str_split(' vs ') %>% ldply(.parallel=parallel)
   matchID <- data.frame(matchID$V1, matchID[-1])
   matchID[str_detect(matchID$V2, '\\('),]$V2 <- paste0(matchID[str_detect(matchID$V2, '\\('),]$V2, ')')
   
@@ -57,9 +57,9 @@ readfirmDatasets <- function(years=years, parallel=FALSE){
   #'@ InPlay <- str_extract_all(as.character(dfm$In.R.), '[^\\?(]{1,}[0-9a-zA-Z]{1,}')
   InPlay <- str_extract_all(as.character(dfm$In.R.), '[^\\?]{1,}[0-9a-zA-Z]{1,}')
   mx <- max(laply(InPlay, length))
-  InPlay <- ldply(InPlay, function(x) rep(x, mx)[1:mx]) %>% mutate(V2=gsub('[^0-9a-zA-Z]', '', V2)) %>% tbl_df
+  InPlay <- ldply(InPlay, function(x) rep(x, mx)[1:mx]) %>% mutate(V2=gsub('[^0-9a-zA-Z]', '', V2))
   dfm$Match <- NULL
-  dfm <- data.frame(cbind(dfm[c(2:1)], matchID, dfm[3:6], InPlay, dfm[8:ncol(dfm)])) %>% tbl_df
+  dfm <- data.frame(cbind(dfm[c(2:1)], matchID, dfm[3:6], InPlay, dfm[8:ncol(dfm)]))
   names(dfm) <- c('No', 'Sess', 'Home', 'Away', 'Day', 'Date', 'Time', 'Selection', 'HCap', 'EUPrice', 
                   'Stakes', 'CurScore', 'Mins', 'Result', 'PL', 'Rebates')
   rm(mx, matchID, InPlay)
@@ -84,15 +84,15 @@ readfirmDatasets <- function(years=years, parallel=FALSE){
   dfm %<>% llply(., function(x){gsub('^\\s{1,}|\\s{1,}$', '', x)}, .parallel=parallel) %>% data.frame %>% 
     mutate_each(funs(as.character)) %>% select(No, Sess, Month, Day, DateUK, Date, Time, Home, Away, Selection, 
                                                HCap, EUPrice, HKPrice, Stakes, CurScore, Mins, Result, 
-                                               Return, PL, Rebates) %>% tbl_df
+                                               Return, PL, Rebates)
   
   dfm %<>% mutate(No=as.numeric(No), Sess=as.numeric(Sess), Month=month(Date), 
-                  Day=factor(Day), DateUK=ymd_hms(DateUK), Date=ymd_hms(Date), Time=hm(Time), 
-                  Home=factor(Home), Away=factor(Home), Selection=factor(Selection), HCap=as.numeric(HCap), 
-                  EUPrice=as.numeric(EUPrice), HKPrice=as.numeric(HKPrice), Stakes=as.numeric(Stakes), 
-                  CurScore=factor(CurScore), Mins=factor(Mins), Result=factor(Result), PL=as.numeric(PL), 
-                  Rebates=as.numeric(Rebates), Return=as.numeric(Return)) %>% tbl_df
-  #'@ %>% map_if(is.numeric, round, 2) %>% map_if(is.character, factor) ## purr::map_if suddenly unable work
+                 Day=factor(Day), DateUK=ymd_hms(DateUK), Date=ymd_hms(Date), Time=hm(Time), 
+                 Home=factor(Home), Away=factor(Home), Selection=factor(Selection), HCap=as.numeric(HCap), 
+                 EUPrice=as.numeric(EUPrice), HKPrice=as.numeric(HKPrice), Stakes=as.numeric(Stakes), 
+                 CurScore=factor(CurScore), Mins=factor(Mins), Result=factor(Result), PL=as.numeric(PL), 
+                 Rebates=as.numeric(Rebates), Return=as.numeric(Return)) %>% map_if(is.numeric, round, 2) %>% 
+    map_if(is.character, factor) %>% data.frame %>% tbl_df
   
   res <- list(datasets=dfm, others=others, corners=corners)
   

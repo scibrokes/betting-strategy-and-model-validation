@@ -1,6 +1,6 @@
 ---
-title: "テスト <img src='http://datemasamune.com/history/images/top_img_01.jpg' width='28'>"
-author: "伊達正宗 <img src='http://z.abang.com/f/rxwanju/1/3/s/B/0/-/FIG-IPN-1490_02.jpg' width='22'>"
+title: "テスト <img src='http://datemasamune.com/history/images/top_img_01.jpg' width='36'>"
+author: "An soccer odds researcher <img src='http://z.abang.com/f/rxwanju/1/3/s/B/0/-/FIG-IPN-1490_02.jpg' width='22'>"
 date: "October 25, 2015"
 output: 
   html_document: 
@@ -19,7 +19,7 @@ Testing output of the coding.
 
 ```{r}
 ## Loading the packages and setting adjustment
-suppressMessages(source(paste0(getwd(),'/function/libs.R')))
+suppressMessages(source('function/libs.R'))
 ```
 
 1. [DT], 2. [DT](## DT), 3. [DT]: #DT

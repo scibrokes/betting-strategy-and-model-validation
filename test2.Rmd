@@ -1,0 +1,51 @@
+---
+title: "test2"
+author: "Ryo, Eng Lian Hu"
+date: "1/22/2016"
+output: html_document
+---
+
+  This is an natural language analysis on the matching soccer teams' name when I am doing research on [Betting Strategy and Model Validation](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation/blob/master/Betting%20Strategy%20and%20Model%20Validation.Rmd). The purpose of writing the functions just would like easier future scrap teams name for further calculation to reduce my workload.
+  
+  Where the subject/topic is that the last course [Data Science Capstone](https://www.coursera.org/course/dsscapstone) on Coursera (JHU Johns Hopkins University) which I have failed few times and will retake on this coming October-2015 (Next month).
+  
+  Note that the `echo = FALSE` and `include=FALSE` parameters were added to the code chunks below to prevent printing of the R code that generated the plots/tables. However you can feel free to see the source code via [Natural Language Analysis.Rmd](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation/Natural Language Analysis.Rmd).
+
+
+
+## 1. Setup Options, Loading Required Libraries and Preparing Environment
+
+  Setup `knitr` options and loading the required libraries.
+
+```{r libs, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
+## Loading the packages and setting adjustment
+suppressMessages(source('function/libs.R'))
+```
+
+
+
+## 2. Read and Process the Dataset
+
+  Read the dataset of World Wide soccer matches from year 2011 until 2015 from a British betting consultancy named firm A.
+
+```{r read-datasetA, echo=FALSE, results='asis'}
+## Read the datasets
+## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
+years <- seq(2011,2015)
+mbase <- readfirmDatasets(years=years)
+dateID <- sort(unique(as.Date(mbase$datasets$Date)))
+```
+
+*table 2.1* `r paste(unlist(strsplit(as.character(dim(mbase$datasets)), ' ')), collapse=' x ')`
+
+  Due to the dataset very big `r paste(unlist(strsplit(as.character(dim(mbase$datasets)), ' ')), collapse=' x ')` caused the webpage keep loading and unable open. Here I just only subset few rows from the data frame.
+
+  Read the dataset of World Wide soccer matches scrapped from year 2011 until 2015 from [spbo livescore website](http://www.spbo.com/eend0.htm).
+
+```{r read-datasetB, echo=FALSE, results='asis'}
+## Load the scraped spbo livescore datasets.
+spboData <- readSPBO(dateID=dateID, parallel=TRUE)$data
+spboData
+```
+
+

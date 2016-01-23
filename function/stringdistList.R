@@ -1,4 +1,4 @@
-stringdistList <- function(method=c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex'), 
+stringdistList <- function(method=c('osa', 'lv', 'dl', 'hamming', 'lcs', 'qgram', 'cosine', 'jaccard', 'jw', 'soundex'), 
                            tmID_A=as.character(tmID_A), tmID_B=as.character(tmID_B), parallel=FALSE) {
   ## levDist=Inf, levDist=0.1 stringdist() depreciated and auto turned to maxDist=Inf, here I omit to set levDist
   ## 
@@ -26,7 +26,7 @@ stringdistList <- function(method=c('osa','lv','dl','hamming','lcs','qgram','cos
   suppressPackageStartupMessages(require('dplyr', quietly=TRUE))
   suppressPackageStartupMessages(require('tidyr', quietly=TRUE))
   
-  methd <- c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')
+  methd <- c('osa', 'lv', 'dl', 'hamming', 'lcs', 'qgram', 'cosine', 'jaccard', 'jw', 'soundex')
   if(!all(method %in% methd)){
     stop('Please select one or more stringdist.method from above:',cat(methd))
   }
@@ -45,7 +45,7 @@ stringdistList <- function(method=c('osa','lv','dl','hamming','lcs','qgram','cos
     #'@ doParallel::registerDoParallel(makeCluster(detectCores(logical=TRUE)))
   }
   
-  source(paste0(getwd(),'/function/signature.R'))
+  source(paste0(getwd(), '/function/signature.R'))
   ## Apply signature() which will re-arrange the strings for increased the accuracy of Levenstein or 
   ##   or string distance calculation.
   names(tmID_A) <- sapply(tmID_A, signature)
@@ -71,13 +71,13 @@ stringdistList <- function(method=c('osa','lv','dl','hamming','lcs','qgram','cos
       x[dm$teamID==a_sel & dm$spboID == b_sel] <- 1
       x[x==0 & (dm$teamID==a_sel|dm$spboID==b_sel)] <- -1
     }
-    data.frame(teamID=dm$teamID[x==1],spboID=dm$spboID[x==1],dist=dm$dist[x==1])
+    data_frame(teamID=dm$teamID[x==1],spboID=dm$spboID[x==1],dist=dm$dist[x==1])
   }
   ## ---------------------------------------------------------------------------------------------
   strList <- llply(as.list(method),function(x){
-    res <- greedyAssign(dm) %>% data.frame %>% tbl_df
+    res <- greedyAssign(dm) %>% data_frame
     names(res) <- c('teamID',x,paste0('dist.',x))
     return(res)
-    },.parallel=parallel) %>% Reduce(function(x, y) merge(x, y, by='teamID'), .) %>% tbl_df
+    },.parallel=parallel) %>% Reduce(function(x, y) merge(x, y, by='teamID'), .) %>% data_frame
   
   return(strList)}
