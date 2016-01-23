@@ -44,7 +44,7 @@ dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$oth
 #'@ pander(head(dat)) # exactly same layout with kable(x)
 #'@ kable(head(dat)) ## example of the dataset in the research paper
 
-dat %>% datatable(.,caption="Table 2.1.1 : Firm A Staking Data",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
+#'@ dat %>% datatable(.,caption="Table 2.1.1 : Firm A Staking Data",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
 
 rm(years, readfirmDatasets, arrfirmDatasets)
 rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.
@@ -54,6 +54,7 @@ rm(mbase) ## We need to scrap the livescore data based on the raw data mbase wit
   
 ```{r}
 summary(lm(Return~pHKRange, data=dat))
+<<<<<<< HEAD
 ```
 
 ### DT
@@ -75,6 +76,35 @@ summary(lm(Return~pHKRange, data=dat))
 
 ```{r}
 summary(lm(Return~HCap+HKPrice, data=dat))
+=======
+>>>>>>> 8c8a740b2768e7c450af85ace180489785115091
+```
+
+```{r}
+summary(lm(Return~ipRange, data=dat))
+```
+
+<<<<<<< HEAD
+```{r}
+summary(lm(Return~CurScore+ipHCap, data=dat))
+```
+
+=======
+
+Table summary
+
+```{r}
+summary(lm(Return~HCap, data=dat))
+```
+
+*graph 3.4.1b* *linear model*
+
+```{r}
+summary(lm(Return~pHKRange, data=dat))
+```
+
+```{r}
+summary(lm(Return~HCap+HKPrice, data=dat))
 ```
 
 ```{r}
@@ -85,6 +115,7 @@ summary(lm(Return~ipRange, data=dat))
 summary(lm(Return~CurScore+ipHCap, data=dat))
 ```
 
+>>>>>>> 8c8a740b2768e7c450af85ace180489785115091
 *graph 3.4.1c* *linear model*
 
 ```{r, results='asis'}
