@@ -19,7 +19,7 @@ readSPBO <- function(dateID=dateID, parallel=FALSE){
   
   ## unzip spbo livescore datasets.
   if(dir.exists('datasets/livescore')==FALSE){
-    unzip('datasets/livescore.zip', exdir='datasets')
+    unzip('datasets/livescore.zip')#, exdir='datasets')
   }
   
   dateID <- as.character(as.Date(dateID))

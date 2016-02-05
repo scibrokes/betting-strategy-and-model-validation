@@ -32,9 +32,9 @@ arrTeamID <- function(mbase, spboData, method=c('osa', 'lv', 'dl', 'hamming',
                      ## levDist=0.1 depreciated but auto turned to Inf, here I omit to set levDist
          
   df1 <- dfm$matchData %>% .[2:ncol(.)] %>% as.list %>% rep(., 10) %>% 
-         data_frame(dfm$matchData[, 1], .)
+         data.frame(dfm$matchData[, 1], .)
   names(df1) <- names(df2)
-  dfm <- rbind(df1, df2) %>% mutate_each(funs(as.character))
+  dfm <- rbind(df1, df2) %>% mutate_each(funs(as.character)) %>% tbl_df
   rm(df1, df2)
   
   return(list(result=dfm, method=method, levDist=levDist))

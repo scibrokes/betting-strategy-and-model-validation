@@ -66,14 +66,14 @@ arrfirmDatasets <- function(dfmList, lProfile=c(AH=0.10, OU=0.12), parallel=FALS
     dfm$InPlay2 <- factor(ifelse(dfm$Mins2 == 'HT'|dfm$Mins2 == 'FT'|dfm$Mins2 == 0, 'Break', as.character(dfm$InPlay)))
     
     dfm <- llply(split(dfm, dfm$InPlay2), function(x) {
-      data_frame(x, ipRange=str_replace_na(suppressWarnings(cut(as.numeric(
+      data.frame(x, ipRange=str_replace_na(suppressWarnings(cut(as.numeric(
       as.character(x$Mins2)), breaks=seq(0, 90, 5)))), 'No')}, .parallel=parallel) %>% rbind_all %>% mutate(
         ipRange=ifelse(ipRange == 'NA', as.character(Mins2), ipRange) %>% ifelse(. == 0, as.character(InPlay), .))
     
     ## 2. Set the current handicap right before scoring a goal
     ##
     SC <- ldply(strsplit(ifelse(dfm$CurScore == 'No', '0-0', as.character(dfm$CurScore)), '-'))
-    SC <- data_frame(lapply(SC, as.numeric))
+    SC <- data.frame(lapply(SC, as.numeric))
     names(SC) <- c('HG', 'AG')
     dfm$HG <- SC$HG; dfm$AG <- SC$AG; rm(SC, mPrice)
     
@@ -100,7 +100,7 @@ arrfirmDatasets <- function(dfmList, lProfile=c(AH=0.10, OU=0.12), parallel=FALS
     dfm$favNetProb <- ifelse(dfm$Picked=='favorite'|dfm$Picked=='over' , dfm$netProbB, dfm$netProbL)
     dfm$undNetProb <- ifelse(dfm$Picked=='underdog'|dfm$Picked=='under', dfm$netProbB, dfm$netProbL)
     
-    dfmList$datasets <- dfm
+    dfmList$datasets <- dfm %>% tbl_df
     return(dfmList)
   }
 }

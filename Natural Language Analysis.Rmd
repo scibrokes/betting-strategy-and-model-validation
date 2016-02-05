@@ -11,23 +11,33 @@ output:
     theme: cerulean
     toc: yes
 ---
-  
-  This is an natural language analysis on the matching soccer teams' name when I am doing research on [Betting Strategy and Model Validation](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation/blob/master/Betting%20Strategy%20and%20Model%20Validation.Rmd). The purpose of writing the functions just would like easier future scrap teams name for further calculation to reduce my workload.
-  
-  Where the subject/topic is that the last course [Data Science Capstone](https://www.coursera.org/course/dsscapstone) on Coursera (JHU Johns Hopkins University) which I have failed few times and will retake on this coming October-2015 (Next month).
-  
-  Note that the `echo = FALSE` and `include=FALSE` parameters were added to the code chunks below to prevent printing of the R code that generated the plots/tables. However you can feel free to see the source code via [Natural Language Analysis.Rmd](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation/Natural Language Analysis.Rmd).
-
-
-
-## 1. Setup Options, Loading Required Libraries and Preparing Environment
-
-  Setup `knitr` options and loading the required libraries.
 
 ```{r libs, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
+## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
+suppressMessages(library('utils'))
 suppressMessages(source('function/libs.R'))
+suppressAll(lib('networkD3'))
 ```
+
+
+
+## Abtract
+
+  This is an natural language analysis on the matching soccer teams' name when I am doing research on [Betting Strategy and Model Validation](https://rpubs.com/englianhu/Betting-Strategy-and-Model-Validation). The purpose of writing the functions just would like easier future scrap teams name for further calculation to reduce my workload.
+
+
+
+## 1. Natural Language
+
+  As we know there are always different bookmakers using different teams' name since they all are independence. There are quite a lot hedging application which also apply regular expression method to match the scrapped data from websites, somemore apply real-time API connection in order to hedge the odds price among bookmakers on spot or provides real-time information service to clients. For example :
+
+  * [4lowin](http://www.4lowin.com/)
+  * [bεtradar](https://www.betradar.com/)
+  * [NowGoal](http://www.nowgoal.net/)
+  * [PunterProfits](http://www.punterprofits.com/system-portfolio.php) etc.
+  
+  Today I am trying to scrap and matching the teams name with R.
 
 
 
@@ -38,27 +48,36 @@ suppressMessages(source('function/libs.R'))
 ```{r read-datasetA, echo=FALSE, results='asis'}
 ## Read the datasets
 ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
-years <- seq(2011,2015)
+years <- seq(2011, 2015)
 mbase <- readfirmDatasets(years=years)
-dateID <- sort(unique(as.Date(mbase$datasets$Date)))
 #'@ pander(head(mbase$datasets)) ## exactly same layout with kable(x)
 
 ## example of the dataset in the research paper
-##   due to the data heavy and overload ,max 5mb while generated 79mb html file, here I just simply subset the head section
-mbase$datasets %>% head %>% datatable(., caption="Table 2.1 : Soccer Staking Data from Firm A", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+##   due to the data heavy and overload, max 5mb while generated 79mb html file, here I just simply subset the head section
+mbase$datasets %>% head %>% datatable(., caption="Table 2.1 : Soccer Staking Data from Firm A", extensions=c('ColReorder', 'ColVis'), options=list(dom='TC<"clear">rfrtip', colVis=list(exclude=c(0), activate='mouseover'), scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 2.1* `r paste(unlist(strsplit(as.character(dim(mbase$datasets)), ' ')), collapse=' x ')`
 
   Due to the dataset very big `r paste(unlist(strsplit(as.character(dim(mbase$datasets)), ' ')), collapse=' x ')` caused the webpage keep loading and unable open. Here I just only subset few rows from the data frame.
 
+```{r collect-datasetB, echo=FALSE, results='asis'}
+## kick-off time(GMT+8) - 12hrs since livescore website start count a day from 12pm(GMT+8)
+dateID <- as.Date(sort(unique(mbase$datasets$Date)-hm('12:00'))); spboDate <- gsub('-','',dateID)
+#'@ lnk <- paste0('http://www8.spbo.com/history.plex?day=', spboDate, '&l=en')
+
+## Scrap data from SPBO website.
+#'@ suppressAll(source('function/scrapSPBO.R'))
+#'@ scrapSPBO(lnk=lnk, dateID=dateID, path='livescore', parallel=TRUE)
+```
+  
   Read the dataset of World Wide soccer matches scrapped from year 2011 until 2015 from [spbo livescore website](http://www.spbo.com/eend0.htm).
 
 ```{r read-datasetB, echo=FALSE, results='asis'}
 ## Load the scraped spbo livescore datasets.
-spboData <- readSPBO(dateID=dateID, parallel=TRUE)$data
+spboData <- readSPBO(dateID=dateID)$data
 
-spboData %>% head %>% datatable(., caption="Table 2.2 : SPBO Soccer Data", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+spboData %>% head %>% datatable(., caption="Table 2.2 : SPBO Soccer Data", extensions=c('ColReorder', 'ColVis'), options=list(dom='TC<"clear">rfrtip', colVis=list(exclude=c(0), activate='mouseover'), scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 2.2* `r paste(unlist(strsplit(as.character(dim(spboData)), ' ')), collapse=' x ')`
@@ -68,6 +87,11 @@ spboData %>% head %>% datatable(., caption="Table 2.2 : SPBO Soccer Data", exten
 
 
 ## 3. Matching the team names
+
+  * [3.1 Matching Duplicated Teams' Name]
+  * [3.2 Apply amatch() and stringdist()]
+  * [3.3 Apply agrep()]
+  * [3.4 Apply partialMatch()]
 
 
 ### 3.1 Matching Duplicated Teams' Name
@@ -83,16 +107,19 @@ teamID <- teamID[!teamID %in% mbase$others]
 spboTeam <- sort(c(as.vector(spboData$Home), as.vector(spboData$Away)))
 spboTeamID <- sort(unique(spboTeam))
 
-df1 <- data_frame(team=teamID[tolower(teamID) %in% tolower(spboTeamID)], spbo=spboTeamID[tolower(spboTeamID) %in% tolower(teamID)]) %>% mutate(team=as.character(team),spbo=as.character(spbo),pass=ifelse(team==spbo, 'Duplicated', 'Capital Letters')) %>% arrange(pass)
+df1 <- data.frame(team=teamID[tolower(teamID) %in% tolower(spboTeamID)], spbo=spboTeamID[tolower(spboTeamID) %in% tolower(teamID)]) %>% mutate(team=as.character(team),spbo=as.character(spbo),pass=ifelse(team==spbo, 'Duplicated', 'Capital Letters')) %>% arrange(pass) %>% tbl_df
 row.names(df1) <- NULL
 rbind(df1 %>% filter(pass=='Duplicated') %>% head(3), df1 %>% filter(pass=='Capital Letters') %>% head(3)) %>% kable(caption='Table 3.1.1 : Exactly match and capital letters difference.')
 ```
 
 *table 3.1.1* `r paste(unlist(strsplit(as.character(dim(df1)), ' ')), collapse=' x ')`
 
+```{r clear, include=FALSE}
+gc()
+```
 
 ### 3.2 Apply amatch() and stringdist()
-
+  
   There has a concern which is noramlly second teams' name must be exactly same with first team but only add II, reserved etc to the first team name, for example : *Mainz 05* is first team but not fifth reserved team. More soccer matches data scrapped will be more accurate, for example if we only scrapped one day data, how can we matching the first team if let say only Chelsea reserved team play on that particular date.
   
   However there has another concern which is first team *TSV 1860 Munchen* but second/U19 team termed as *1860 Munchen II*, *1860 Munchen U19* etc. The *Lincoln* team name supposed to be matched with *Lincoln City* but not *Lincoln United* while *Lincoln City* will be most approximately matching to *Lincoln Xxitxx* compare to *Lincoln*.
@@ -115,6 +142,9 @@ rbind(df1 %>% filter(pass=='Duplicated') %>% head(3), df1 %>% filter(pass=='Capi
   Lets take an example below.
   
 ```{r matching-02A, echo=FALSE, results='asis'}
+## removed used object to save memory
+rm(df1)
+
 ## Apply stringdist() to match the most approximate matching team names
 method=c('osa', 'lv', 'dl', 'hamming', 'lcs', 'qgram', 'cosine', 'jaccard', 'jw', 'soundex')
 #'@ levDist=0.1 # The default MaxDist inside stringdist() is 0.1.
@@ -154,14 +184,33 @@ len <- n-len
 
 df2A <- mapply(function(x, y) c(x, rep(NA, y)), lst, len) %>% data.frame %>% mutate(Matching1='Lincoln', Matching2='Lincoln City', method=method) %>% select(Matching1, method, uniqueID_0.1, allElems_0.1, uniqueID_0.5, allElems_0.5, uniqueID_1.0, allElems_1.0, uniqueID_2.0, allElems_2.0, uniqueID_Inf, allElems_Inf) %>% mutate_each(funs(as.character))
 rm(lst, len, n)
-df2A %>% datatable(caption="Table 3.2.1 : StringDist Matching 'Lincoln'", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+df2A %>% datatable(
+  caption = "Table 3.2.1 : StringDist Matching 'Lincoln'", 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 3.2.1* `r paste(unlist(strsplit(as.character(dim(df2A)), ' ')), collapse=' x ')`
 
+```{r clear, include=FALSE}
+```
+
   I simply matching the key words `Lincoln` in Home and Away teams' name data which get from firm A.
 
 ```{r matching-02B, echo=FALSE, results='asis'}
+## removed used object to save memory
+rm(df2A)
+
 ## We get 'Lincoln City' from teamID[grep('Lincoln', teamID)]
 lst <- list(uniqueID_0.1=strList('Lincoln City', spboTeamID, method=method, levDist=0.1),
             allElems_0.1=strList('Lincoln City', spboTeam, method=method, levDist=0.1),
@@ -179,10 +228,26 @@ len <- n-len
 
 df2B <- mapply(function(x, y) c(x, rep(NA, y)), lst, len) %>% data.frame %>% mutate(Matching1='Lincoln', Matching2='Lincoln City', method=method) %>% select(Matching1, method, uniqueID_0.1, allElems_0.1, uniqueID_0.5, allElems_0.5, uniqueID_1.0, allElems_1.0, uniqueID_2.0, allElems_2.0, uniqueID_Inf, allElems_Inf) %>% mutate_each(funs(as.character))
 rm(lst, len, n)
-df2B %>% datatable(caption="Table 3.2.2 : StringDist Matching 'Lincoln City'", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+df2B %>% datatable(
+  caption="Table 3.2.2 : StringDist Matching 'Lincoln City'",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 3.2.2* `r paste(unlist(strsplit(as.character(dim(df2B)), ' ')), collapse=' x ')`
+
+```{r clear, include=FALSE}
+```
 
   From the two tables stated above, I apply stringdist by set the MaxDist to be default value `0.1`,`0.5`,`1.0`,`2.0` and also `Inf` and select all methods avaiable (10 methods stated above in section 3 before the run coding). Well, I dont pretend to know how does the algorimthic of `stringdist()` matching the string. Therefore I try both unique teams' name and also all elements (without filter to be unique).
 
@@ -192,6 +257,9 @@ df2B %>% datatable(caption="Table 3.2.2 : StringDist Matching 'Lincoln City'", e
   I tried to simply apply the `agrep()` function to partially matching the teams' name.
 
 ```{r matching-03, echo=FALSE, results='asis'}
+## removed used object to save memory
+rm(df2B)
+
 ## Filter spboTeamID wihthout other games and 1st Half team names
 ## Apply agrep() to match the most approximate matching team names
 ## http://stackoverflow.com/questions/21103410/irregular-list-of-lists-to-dataframe
@@ -207,26 +275,59 @@ df3 %>% kable(caption='Table 3.3.1 : Simply apply agrep().')
 
 *table 3.3.1* `r paste(unlist(strsplit(as.character(dim(df3)), ' ')), collapse=' x ')`
 
+```{r clear, include=FALSE}
+```
+
 
 ### 3.4 Apply partialMatch()
   
   Secondly, there is an article from [Merging Data Sets Based on Partially Matched Data Elements](http://www.r-bloggers.com/merging-data-sets-based-on-partially-matched-data-elements/) which apply subset to partial matching the teams' name.
 
 ```{r matching-04A, echo=FALSE, results='asis'}
+## removed used object to save memory
+rm(df3)
+
 ## Load the partialMatch() function
-source(paste0(getwd(), '/function/partialMatch.R'))
+suppressAll(source('function/partialMatch.R'))
+
 df4 <- partialMatch(iconv(teamID), spboTeamID)
 #'@ rbind(df4 %>% filter(pass=='Duplicate') %>% head(3), df4 %>% filter(pass=='Partial') %>% head(3)) %>% kable
-df4 %>% datatable(caption="Table 3.4.1 : Partial Matching Teams' Name.", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+
+df4 %>% datatable(
+  caption="Table 3.4.1 : Partial Matching Teams' Name.",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+
+## removed used object to save memory
+rm(spboTeamID)
+```
+  
+```{r clear, include=FALSE}
 ```
   
   Below table simply display few matched teams' name which are not accurate.
 
 ```{r matching-04B, echo=FALSE, results='asis'}
 df4 %>% filter((teamID %in% teamID[grep('Women|U[0-9]{2}', teamID)])|(spboID %in% spboID[grep('Women|U[0-9]{2}', spboID)]), Match=='Partial') %>% head %>% kable(caption='Table 3.4.2 : Inaccuracy of Matching Result.')
+
+## removed used object to save memory
+rm(teamID)
 ```
 
 *table 3.4.2* `r paste(unlist(strsplit(as.character(dim(df4)), ' ')), collapse=' x ')`
+
+```{r clear, include=FALSE}
+```
   
   From the table above we all know that the team `AaB Aalborg` from firm A will match with `AaB Aalborg U17` from livescore website and `Airdrie United` match to `Airdrie United Women` while there are totally different team and will lead reasearcher calculate a wrong predictive figures for investment.
 
@@ -236,11 +337,17 @@ df4 %>% filter((teamID %in% teamID[grep('Women|U[0-9]{2}', teamID)])|(spboID %in
 
 ## 4. Reprocess the Data
 
+  * [4.1 Dicission Tree]
+  * [4.2 Filtering and Reprocess the Data]
+  * [4.3 StringDist Maximum Likelihood]
+
 
 ### 4.1 Dicission Tree
 
 ```{r matching-05A, echo=FALSE, results='asis'}
 ## Since the elements are not much enough but list quit a number, just set parallel=FALSE will be faster few minutes.
+## Load the makeList() function
+suppressAll(source('function/makeList.R'))
 dfm <- makeList(mbase, spboData, levDist=0.1, parallel=FALSE)
 ```
   
@@ -249,6 +356,7 @@ dfm <- makeList(mbase, spboData, levDist=0.1, parallel=FALSE)
 ```{r decission-tree-A, echo=FALSE, results='asis'}
 ## Refered `rpart` and `randomForest` to plot the decision tree, showing how to match the teams' name but required numeric data and also static graph.
 ## Here I using `d3Network`
+suppressAll(library('networkD3'))
 d3data <- dfm$partialData
 #'@ d3data %>% d3SimpleNetwork(.,width='automatic', height=400) ## https://github.com/christophergandrud/d3Network/issues/31
 #'@ d3data %>% as.list %>% d3Tree ## https://github.com/christophergandrud/d3Network/issues/31
@@ -269,7 +377,26 @@ d3data[3:4] %>% simpleNetwork(width='auto', height=800)
   Here I tried to `split` teams' name into list and simply apply `grep` and `agrep` to apply first filtering.
   
 ```{r matching-05B, echo=FALSE, results='asis'}
-d3data %>% datatable(caption="Table 4.2.1 : Reprocess the Teams' Name.", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+d3data %>% datatable(
+  caption="Table 4.2.1 : Reprocess the Teams' Name.",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+
+## removed used object to save memory
+rm(dfm, d3data)
+```
+
+```{r clear, include=FALSE}
 ```
 
 
@@ -280,7 +407,27 @@ d3data %>% datatable(caption="Table 4.2.1 : Reprocess the Teams' Name.", extensi
 ```{r stringdist, echo=FALSE, results='asis'}
 suppressAll(source('function/arrTeamID.R'))
 strDF <- arrTeamID(mbase, spboData, levDist=0.1, parallel=FALSE)
-strDF$result %>% datatable(caption="Table 4.3.1 : StringDist Approximately Matched Teams' Name.",extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+
+strDF$result %>% datatable(
+  caption="Table 4.3.1 : StringDist Approximately Matched Teams' Name.",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+
+## removed used object to save memory
+rm(mbase, spboData)
+```
+
+```{r clear, include=FALSE}
 ```
   
   From the above table, I've matching the teams' name which is Section 2 Dataset inside [Betting Strategy and Model Validation](https://github.com/englianhu/Betting-Strategy-and-Model-Validation/blob/master/Betting%20Strategy%20and%20Model%20Validation.Rmd). Here I apply method = `r method` inside the `stringdist` function. You are feel free to apply the function to scrap and also re-arrange the teams' name and soccer scores data for your own odds price modelling.
@@ -289,18 +436,35 @@ strDF$result %>% datatable(caption="Table 4.3.1 : StringDist Approximately Match
 
 ## 5. Result
 
+  * [5.1 Checked and Filtered the Teams' Name]
+  * [5.2 Comparison of the Model]
+  * [5.3 Future Works]
+
 
 ### 5.1 Checked and Filtered the Teams' Name
   
   Here I tried to manually check the teams' name and compile as a file to compare the accuracy of the stringDist().
   
 ```{r read-datasetC, echo=FALSE, results='asis'}
-tmIDdata <- read.csv(paste0(getwd(), '/datasets/teamID.csv'), header=TRUE, sep=', ') %>% data_frame %>% mutate_each(funs(as.character))
+tmIDdata <- read.csv(paste0(getwd(), '/datasets/teamID.csv'), header=TRUE, sep=',') %>% data.frame %>% mutate_each(funs(as.character)) %>% tbl_df
 ## Kuban Krasnodar duplicated in tmID but different in spbo column.
 #'@ dp <- tmIDdata %>% filter(tmID==agrep('Kuban', tmID, value=TRUE))
 tmIDdata <- tmIDdata %>% filter(spbo!='Kuban Krasnodar')
 
-tmIDdata %>% datatable(caption="Table 5.1.1 : Table of Teams Name (Manually Checked)", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+tmIDdata %>% datatable(
+  caption="Table 5.1.1 : Table of Teams Name (Manually Checked)",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 
@@ -309,9 +473,22 @@ tmIDdata %>% datatable(caption="Table 5.1.1 : Table of Teams Name (Manually Chec
   Firstly, we try to filter-up the teams' name.
   
 ```{r compare-datasetA, echo=FALSE, results='asis'}
-comp1 <- tmIDdata %>% filter(., .$teamID %in% strDF$result$teamID & !duplicated(.$teamID)) %>% merge(., strDF$result) %>% data_frame %>% .[c('teamID', 'spbo', method)] %>% mutate_each(funs(as.character))
+comp1 <- tmIDdata %>% subset(., .$teamID %in% strDF$result$teamID & !duplicated(.$teamID)) %>% merge(., strDF$result) %>% data.frame %>% .[c('teamID', 'spbo', method)] %>% mutate_each(funs(as.character)) %>% tbl_df
 
-comp1 %>% datatable(caption="Table 5.2.1 : Table of Teams Name (stringDistList)", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+comp1 %>% datatable(
+  caption="Table 5.2.1 : Table of Teams Name (stringDistList)",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 ```
   
   Secondly, we simply compare the accuracy and also number of teams.
@@ -319,23 +496,48 @@ comp1 %>% datatable(caption="Table 5.2.1 : Table of Teams Name (stringDistList)"
 ```{r compare-datasetB, echo=FALSE, results='asis'}
 res1 <- sapply(seq(2, ncol(comp1)), function(i) sum(as.numeric(comp1[2]==comp1[i])))
 names(res1) <- c('spbo', method)
-data_frame(match=names(res1), rate=res1/res1[1], n=res1) %>% kable(caption='Table 5.2.2 : Summary of Matching Result 1')
+data.frame(match=names(res1), rate=res1/res1[1], n=res1) %>% kable(caption='Table 5.2.2 : Summary of Matching Result 1')
+
+## removed used object to save memory
+rm(comp1)
+```
+
+```{r clear, include=FALSE}
 ```
   
   Same with above, we simply filter the `PartialMatch` function.
   
 ```{r compare-datasetC, echo=FALSE, results='asis'}
-comp2 <- tmIDdata %>% subset(., .$teamID %in% df4$teamID & !duplicated(.$teamID)) %>% merge(.,df4) %>% data_frame %>% .[c('teamID', 'spbo', 'spboID')] %>% mutate_each(funs(as.character))
+comp2 <- tmIDdata %>% subset(., .$teamID %in% df4$teamID & !duplicated(.$teamID)) %>% merge(.,df4) %>% data.frame %>% .[c('teamID', 'spbo', 'spboID')] %>% mutate_each(funs(as.character)) %>% tbl_df
 
-comp2 %>% datatable(caption="Table 5.2.3 : Table of Teams Name (PartialMatch)", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+comp2 %>% datatable(
+  caption="Table 5.2.3 : Table of Teams Name (PartialMatch)",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+
+## removed used object to save memory
+rm(df4)
 ```
-  
+
+```{r clear, include=FALSE}
+```
+
   Here we also summarized the table.
   
 ```{r compare-datasetD, echo=FALSE, results='asis'}
 res2 <- sapply(seq(2, ncol(comp2)), function(i) sum(as.numeric(comp2[2]==comp2[i])))
 names(res2) <- c('spbo', 'PartialMatch')
-data_frame(match=names(res2), rate=res2/res2[1],n=res2) %>% kable(caption='Table 5.2.4 : Summary of Matching Result 2')
+data.frame(match=names(res2), rate=res2/res2[1],n=res2) %>% kable(caption='Table 5.2.4 : Summary of Matching Result 2')
 ```
   
   Based from the above two functions, we know that modified `stringdist()` which is `stringDistList()` has correctly gather `r res1[2]` teams from `r res1[1]` teams. Meanwhile `partialMatch()` has matched `r res2[2]` teams from `r res2[1]` teams. More teams correctly gathered the information to diversify the investment opportunity on different leagues.
@@ -347,12 +549,24 @@ data_frame(match=names(res2), rate=res2/res2[1],n=res2) %>% kable(caption='Table
   
   I will also write as a package to easier load and log.
 
+```{r clear, include=FALSE}
+```
+
+```{r rm, echo=FALSE}
+rm(comp2, res2)
+```
+
 
 
 ## 6. Appendices
 
+  * [6.1 Documenting File Creation]
+  * [6.2 Versions' Log]
+  * [6.3 Speech and Blooper]
+  * [6.4 References]
+
   
-### 6.1 Documenting File Creation 
+### 6.1 Documenting File Creation
 
 It's useful to record some information about how your file was created.
   
@@ -362,18 +576,42 @@ It's useful to record some information about how your file was created.
   * `rmarkdown` package version: `r packageVersion('rmarkdown')`
   * File version: 1.0.3
   * File latest updated date: `r Sys.Date()`
-  * Author Profile: [®γσ, Eng Lian Hu](http://rpubs.com/englianhu/ryoeng)
+  * Author Profile: [®γσ, Eng Lian Hu](https://rpubs.com/englianhu/ryoeng)
   * GitHub: [Source Code](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation)
   * Additional session information
   
-```{r echo=FALSE, results='asis'}
+```{r info, echo=FALSE, results='asis'}
 lubridate::now()
 devtools::session_info()$platform
 Sys.info()
 ```
 
 
-### 6.2 References
+### 6.2 Versions' Log
+  
+  - File version: 1.0.0
+    - file created
+    - Applied regular expression to filter and approximately matching the soccer teams name.
+  - File version: 1.0.1
+    - Changed to use datatble from **DT** package to make the tables be dynamic.
+  - File version: 1.0.2 - *"2015-11-22 09:41:49 JST"*
+    - Added Blooper since retest the coding
+    - Added Section [5. Result] which make comparison between models.
+  - File version: 1.0.3 - *"2016-02-05 05:24:35 EST"*
+    - Modified datatable to make the documents can be save as xls/csv file by refer to [How to set multiple option list and extensions in DT::datatable](http://stackoverflow.com/questions/33432174/how-to-set-multiple-option-list-and-extensions-in-dtdatatable/35200721#35200721).
+    - Added log file for version upgraded
+
+
+### 6.3 Speech and Blooper
+
+  There are quite some errors when I **knit HTML**:
+  
+  * let say always stuck (which is not response and consider as completed) at 29%. I tried couple times while sometimes prompt me different errors (upgrade Droplet to larger RAM memory space doesn't helps) and eventually apply `rm() and gc()` to remove the object after use and also clear the memory space.
+
+  * Need to reload the package `suppressAll(library('networkD3'))` which in chunk `decission-tree-A` prior to apply function `simpleNetwork` while I load it in chunk `libs` at the beginning of the section 1. Otherwise cannot found that particlar function.
+
+
+### 6.4 References
 
   * [Merging Data Sets Based on Partially Matched Data Elements](http://www.r-bloggers.com/merging-data-sets-based-on-partially-matched-data-elements/)
   * [How can I match fuzzy match strings from two datasets?](http://stackoverflow.com/questions/26405895/how-can-i-match-fuzzy-match-strings-from-two-datasets)
@@ -383,7 +621,8 @@ Sys.info()
   * [Tables with htmlTable and some alternatives](https://cran.r-project.org/web/packages/htmlTable/vignettes/tables.html)
   * [DT: An R interface to the DataTables library](http://blog.rstudio.org/2015/06/24/dt-an-r-interface-to-the-datatables-library/)
   * Rstudio Blog - [DT: An R interface to the DataTables library](https://rstudio.github.io/DT/)
+  * [D3 JavaScript Network Graphs from R](https://christophergandrud.github.io/networkD3/)
 
-**Powered by - Copyright© Intellectual Property Rights of <img src='/figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)個人の経営企業**
+**Powered by - Copyright© Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)個人の経営企業**
 
   

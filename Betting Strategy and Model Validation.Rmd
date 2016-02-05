@@ -75,7 +75,20 @@ dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$oth
 #'@ pander(head(dat)) # exactly same layout with kable(x)
 #'@ kable(head(dat)) ## example of the dataset in the research paper
 
-dat %>% datatable(., caption="Table 2.1.1 : Firm A Staking Data", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+dat %>% datatable(
+  caption="Table 2.1.1 : Firm A Staking Data",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 
 rm(years, readfirmDatasets, arrfirmDatasets)
 rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.
@@ -84,7 +97,9 @@ rm(mbase) ## We need to scrap the livescore data based on the raw data mbase wit
 *table 2.1.1* : `r paste0(dim(dat), collapse=' x ')` : *Sample data collected for the research.*
 
   In order to analyse the AHOU, here I've filtered out all soccer matches other than AHOU which is the table showing above (For example : Corners, Total League Goals etc.) for whole research paper. Please refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) to see the firm A staking raw data-set.
-
+  
+  You are feel free to read [Asian Handicap](http://www.bettingarbitrage.eu/asian-handicap.html) and [Arbitrage of Synthetic Asian Handicap Bets](http://www.sportstradingnetwork.com/arbitrage-synthetic-asian-handicap-bets/) for some basic lession about Asian Handicap Bets.
+  
 
 ### 2.2 Overrounds / Vigorish
 
@@ -93,8 +108,7 @@ rm(mbase) ## We need to scrap the livescore data based on the raw data mbase wit
   **Overround**: Also called vigorish (or vig for short) in American sports betting, the over-round is a measure of the bookmaker’s edge over the gambler. The bookmaker will never offer fair odds on a market. In practice, the payout offered on each selection will be reduced, which in turn increases the reflected probability of an event. When odds have been adjusted in this way the sum of the probabilities for all events will exceed 1 `(100%)`. The over-round is the amount by which the sum of all
 probabilities exceeds `100%` and it is the bookmaker’s profit margin.
 
-  For example, if we had a market with two possible outcomes {A, B}, where $P(A) = P(B) = 0.5$, the fair odds on each selection would be `2.00`. However, the bookmaker may offer payouts of `1.85` on each selection. The corresponding probabilities for each selection are now 1/1.85 = `r 1/1.85`, and the sum of the probabilities for all outcomes is `r 1/1.85` x 2 = `r 1/1.85*2`. The over-round is `8.1%`, and for every `$100` paid out by gamblers the bookmaker expects to make a profit of `8.1` dollars, assuming that there
-are balanced bets on both A and B.
+  For example, if we had a market with two possible outcomes {A, B}, where $P(A) = P(B) = 0.5$, the fair odds on each selection would be `2.00`. However, the bookmaker may offer payouts of `1.85` on each selection. The corresponding probabilities for each selection are now 1/1.85 = `r 1/1.85`, and the sum of the probabilities for all outcomes is `r 1/1.85` x 2 = `r 1/1.85*2`. The over-round is `8.1%`, and for every `$100` paid out by gamblers the bookmaker expects to make a profit of `8.1` dollars, assuming that there are balanced bets on both A and B.
 
 ```{r scrap-data, echo=FALSE, cache=TRUE, results='asis'}
 ## Scrape the leagues and also overrounds which provides by a sportsbookmaker named Firm B
@@ -111,7 +125,7 @@ dateID <- as.Date(sort(unique(dat$Date)-hm('12:00'))); spboDate <- gsub('-','',d
 
 ## Due to the scrapSPBO function scrapped unmatched data, example lnk[827],
 ##  therefore I rewrite the function as scrapSPBO2
-#'@ source(paste0(getwd(),'/function/scrapSPBO2.R'))
+#'@ suppressAll(source('function/scrapSPBO2.R'))
 #'@ scrapSPBO2(lnk=lnk, dateID=dateID, path='livescore', parallel=TRUE)
 
 ## Read spbo livescore datasets.
@@ -194,7 +208,20 @@ cd <- list(list(targets=15, render=JS("function(data, type, full){ return '<span
 
 cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = "")
 
-dt1 %<>% datatable(., caption="Table 3.1.1 : Summary of Monthly Stakes and Return. ('0,000)", extensions=c('ColReorder','ColVis','TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
+dt1 %<>% datatable(
+  caption="Table 3.1.1 : Summary of Monthly Stakes and Return. ('0,000)", rownames=FALSE,
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
 
 ## convert the data into inline graph
 dt1$dependencies <- append(dt1$dependencies, htmlwidgets:::getDependency('sparkline'))
@@ -235,7 +262,20 @@ cb_line <- JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))')
 
 cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = "")
 
-dt2 %<>% datatable(.,caption="Table 3.1.2 : Summary of Daily Stakes and Return. ('0,000)", rownames=FALSE, extensions=c('ColReorder','ColVis','TableTools'), options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE,scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
+dt2 %<>% datatable(
+  caption="Table 3.1.2 : Summary of Daily Stakes and Return. ('0,000)", rownames=FALSE,
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
 
 ## convert the data into inline graph
 dt2$dependencies <- append(dt2$dependencies, htmlwidgets:::getDependency('sparkline'))
@@ -275,13 +315,39 @@ names(ahBets) <- suppressWarnings(c('HCap', 'AHOU', 'Picked', 'Stakes', 'Return'
 ahBets %<>% map_if(is.numeric,round,2) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%'))
 
 lst <- ahBets %>% dlply(.(AHOU))
-lst[[1]] %>% datatable(., caption="Table 3.2.1A : Asian Handicap - Handicap Breakdown ('0,000)",  extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),  activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+lst[[1]] %>% datatable(
+  caption="Table 3.2.1A : Asian Handicap - Handicap Breakdown ('0,000)",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 3.2.1a* : `r paste0(dim(lst[[1]]), collapse=' x ')` : *Asian Handicap - handicap breakdown table.*
 
 ```{r data-hdp-summary-table1b, echo=FALSE, results='asis'}
-lst[[2]] %>% datatable(., caption="Table 3.2.1B : Goal Line - Handicap Breakdown ('0,000)", extensions=c('ColReorder',  'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'),  tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+lst[[2]] %>% datatable(
+  caption="Table 3.2.1B : Goal Line - Handicap Breakdown ('0,000)",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 3.2.1b* : `r paste0(dim(lst[[2]]), collapse=' x ')` : *Goal Line - handicap breakdown table.*
@@ -338,13 +404,39 @@ names(fuBets) <- suppressWarnings(c('AHOU', 'pHKRange', 'Picked', 'Stakes', 'Ret
 fuBets %<>% map_if(is.numeric, round, 2) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%'))
 
 lst <- fuBets %>% dlply(.(AHOU))
-lst[[1]] %>% datatable(caption="Table 3.3.1A : Asian Handicap - Price Range Breakdown ('0,000)",  extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip',  colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+lst[[1]] %>% datatable(
+  caption="Table 3.3.1A : Asian Handicap - Price Range Breakdown ('0,000)",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 3.3.1a* : `r paste0(dim(lst[[1]]), collapse=' x ')` : *Asian Handicap - price range breakdown table.*
 
 ```{r data-hdp-summary-table2b, echo=FALSE, results='asis'}
-lst[[2]] %>% datatable(caption="Table 3.3.1B : Goal Line - Price Range Breakdown ", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
+lst[[2]] %>% datatable(
+  caption="Table 3.3.1B : Goal Line - Price Range Breakdown ",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 3.3.1b* : `r paste0(dim(lst[[2]]), collapse=' x ')` : *Goal Line - price range breakdown table.*
@@ -402,11 +494,21 @@ names(ipBets1) <- suppressWarnings(c('InPlay2', 'AHOU', 'ipRange', 'Stakes', 'Re
 ipBets1 %<>% map_if(is.numeric, round, 2) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%'))
 
 lst <- ipBets1 %>% dlply(.(AHOU))
-<<<<<<< HEAD
-lst[[1]] %>% datatable(caption="Table 3.4.1A : Asian Handicap - In-Play Time Range Breakdown ('0,000)", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
-=======
-lst[[1]] %>% datatable(.,caption="Table 3.4.1A : Asian Handicap - In-Play Time Range Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
+
+lst[[1]] %>% datatable(
+  caption="Table 3.4.1A : Asian Handicap - In-Play Time Range Breakdown ('0,000)",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 
 rm(funs)
 ```
@@ -414,11 +516,20 @@ rm(funs)
 *table 3.4.1a* : `r paste0(dim(lst[[1]]), collapse=' x ')` : *Asian Handicap - In-Play time range breakdown table.*
 
 ```{r data-ip-summary-table1b, echo=FALSE, results='asis'}
-<<<<<<< HEAD
-lst[[2]] %>% datatable(caption="Table 3.4.1B : Goal Line - In-Play Time Range Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
-=======
-lst[[2]] %>% datatable(.,caption="Table 3.4.1B : Goal Line - In-Play Time Range Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
+lst[[2]] %>% datatable(
+  caption="Table 3.4.1B : Goal Line - In-Play Time Range Breakdown ('0,000)",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 3.4.1b* : `r paste0(dim(lst[[2]]), collapse=' x ')` : *Goal Line - In-Play time range breakdown table.*
@@ -430,11 +541,8 @@ lst[[2]] %>% datatable(.,caption="Table 3.4.1B : Goal Line - In-Play Time Range 
 ## the stakes amount display as $1 = $10,000
 lst <- ipBets1 %>% select(InPlay2, AHOU, ipRange, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, InPlay2, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(data_frame)
 
-<<<<<<< HEAD
 gvis.options <- list(title=" Asian Handicap - In-Play Time Range Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis="{title:'ipRange'}", vAxis="{title:'Stakes'},{title:'PL'}", width='automatic', height='automatic')
-=======
-gvis.options <- list(title=" Asian Handicap - In-Play Time Range Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'ipRange'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
+
 line.gvis <- gvisLineChart(xvar='ipRange', yvar=names(lst[[1]])[-c(1:2)], data=lst[[1]], options=gvis.options)
 plot(line.gvis)
 
@@ -446,11 +554,8 @@ rm(ipBets1)
 ```{r data-ip-summary-plots1b, echo=FALSE, results='asis'}
 ## Plot the Stakes and P&L on OU handicap graphs
 ## the stakes amount display as $1 = $10,000
-<<<<<<< HEAD
 gvis.options <- list(title="Goal Line - In-Play Time Range Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis="{title:'ipRange'}", vAxis="{title:'Stakes'},{title:'PL'}", width='automatic', height='automatic')
-=======
-gvis.options <- list(title="Goal Line - In-Play Time Range Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'ipRange'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
+
 line.gvis <- gvisLineChart(xvar='ipRange', yvar=names(lst[[2]])[-c(1:2)], data=lst[[2]], options=gvis.options)
 plot(line.gvis)
 
@@ -475,11 +580,21 @@ names(ipBets2) <- suppressWarnings(c('AHOU', 'CurScore', 'ipHCap', 'Stakes', 'Re
 ipBets2 %<>% map_if(is.numeric, round, 2) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%'))
 
 lst <- ipBets2 %>% dlply(.(AHOU))
-<<<<<<< HEAD
-lst[[1]] %>% datatable(caption="Table 3.4.2A : Asian Handicap - In-Play Current Score and Handicap Breakdown ('0,000)", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
-=======
-lst[[1]] %>% datatable(.,caption="Table 3.4.2A : Asian Handicap - In-Play Current Score and Handicap Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
+
+lst[[1]] %>% datatable(
+  caption="Table 3.4.2A : Asian Handicap - In-Play Current Score and Handicap Breakdown ('0,000)",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 
 rm(funs)
 ```
@@ -487,11 +602,20 @@ rm(funs)
 *table 3.5.1a* : `r paste0(dim(lst[[1]]), collapse=' x ')` : *Asian Handicap - In-Play state-space staking breakdown table.*
 
 ```{r data-ip-summary-table2b, echo=FALSE, results='asis'}
-<<<<<<< HEAD
-lst[[2]] %>% datatable(caption="Table 3.4.2B : Goal Line - In-Play Current Score and Handicap Breakdown ('0,000)", extensions=c('ColReorder', 'ColVis', 'TableTools'), options=list(dom='TC<"clear">rlfrtip', colVis=list(exclude=c(0), activate='mouseover'), tableTools=list(sSwfPath=copySWF(pdf=TRUE)), scrollX=TRUE, scrollCollapse=TRUE))
-=======
-lst[[2]] %>% datatable(.,caption="Table 3.4.2B : Goal Line - In-Play Current Score and Handicap Breakdown ('0,000)",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
+lst[[2]] %>% datatable(
+  caption="Table 3.4.2B : Goal Line - In-Play Current Score and Handicap Breakdown ('0,000)",
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+  options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools=list(
+                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons=list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 3.5.1b* : `r paste0(dim(lst[[2]]), collapse=' x ')` : *Goal Line - In-Play state-space staking breakdown table.*
@@ -503,11 +627,8 @@ lst[[2]] %>% datatable(.,caption="Table 3.4.2B : Goal Line - In-Play Current Sco
 ## the stakes amount display as $1 = $10,000
 lst <- ipBets2 %>% select(AHOU, CurScore, ipHCap, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, ipHCap, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(data_frame)
 
-<<<<<<< HEAD
 gvis.options <- list(title="Asian Handicap - In-Play Current Score and Handicap Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis="{title:'CurScore'}", vAxis="{title:'Stakes'},{title:'PL'}", width='automatic', height='automatic')
-=======
-gvis.options <- list(title="Asian Handicap - In-Play Current Score and Handicap Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'CurScore'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
+
 line.gvis <- gvisLineChart(xvar='CurScore', yvar=names(lst[[1]])[-c(1:2)], data=lst[[1]], options=gvis.options)
 plot(line.gvis)
 
@@ -519,11 +640,8 @@ rm(ipBets2)
 ```{r data-ip-summary-plots2b, echo=FALSE, results='asis'}
 ## Plot the Stakes and P&L on OU handicap graphs
 ## the stakes amount display as $1 = $10,000
-<<<<<<< HEAD
 gvis.options <- list(title="Goal Line - In-Play Current Score and Handicap Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis="{title:'CurScore'}", vAxis="{title:'Stakes'},{title:'PL'}", width='automatic', height='automatic')
-=======
-gvis.options <- list(title="Goal Line - In-Play Current Score and Handicap Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'CurScore'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
+
 line.gvis <- gvisLineChart(xvar='CurScore', yvar=names(lst[[2]])[-c(1:2)], data=lst[[2]], options=gvis.options)
 plot(line.gvis)
 
@@ -561,11 +679,8 @@ rm(line.gvis)
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
 ## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
 m <- ddply(dat, .(Sess), summarise, Stakes=sum(Stakes), Return=sum(Return), n=length(Sess), rRates=Return/Stakes)
-<<<<<<< HEAD
+
 m %>% kable(caption="Table 4.1.1 : Annual Return of Investment. ('0,000)")
-=======
-m %>% kable(.,caption="Table 4.1.1 : Annual Return of Investment. ('0,000)")
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
 ```
 
 *table 4.1.1* : `r paste0(dim(m), collapse=' x ')` : *Return of annually investment summary table.*
@@ -608,11 +723,8 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 
 #'@ ggplot(dat, aes(x = netProbB, y = rEMProbB)) + geom_point(aes(y = netProbB, color = 'netProbB')) + geom_point(aes(y = rEMProbB, color = 'rEMProbB')) + xlab('Bookmaker Backed Net Prob') + ylab('Calculated EM Backed Prob') + theme_economist(base_family='Verdana') + scale_colour_economist() + ggtitle('Bookmaker Net Probabilities -vs- Firm A EM Probabilities')
 
-<<<<<<< HEAD
 gvis.options <- list(title="Bookmaker Net Probabilities -vs- Firm A EM Probabilities", series="[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis="{title:'Bookmaker Backed Net Prob'}", vAxis="{title:'rEMProbB'},{title:'netProbB'}", width='automatic', height='automatic')
-=======
-gvis.options <- list(title="Bookmaker Net Probabilities -vs- Firm A EM Probabilities", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Bookmaker Backed Net Prob'}", vAxis="{title:'rEMProbB'},{title:'netProbB'}",width='automatic', height='automatic')
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
+
 line.gvis <- gvisLineChart(xvar='netProbB', yvar='rEMProbB', data=dat, options=gvis.options)
 plot(line.gvis)
 
@@ -633,19 +745,12 @@ rm(line.gvis)
 ## library('gmodels')
 ## CrossTable(dat$HCap, dat$Result)
 ##
-<<<<<<< HEAD
-m <- ddply(dat, .(Result), summarise, Stakes=sum(Stakes), Return=sum(Return), Rates=Return/Stakes, n=length(Sess)) %>% data_frame %>% mutate(S.prop=round(Stakes/sum(Stakes), 4), R.prop=round(Return/sum(Return), 4), prop=round(n/sum(n), 4))
-tv <- c('Total', colSums(m[-1])); tv[4] <- as.numeric(tv[3])/as.numeric(tv[2])
-m <- suppressWarnings(rbind(m,tv))
-m$Result <- factor(c(as.character(m$Result)[-length(m$Result)], 'Total')); rm(tv)
-m %>% kable(caption='Table 4.1.3 : Summary of Betting Results')
-=======
+
 m <- ddply(dat, .(Result), summarise, Stakes=sum(Stakes), Return=sum(Return), Rates=Return/Stakes, n=length(Sess)) %>% tbl_df %>% mutate(S.prop=round(Stakes/sum(Stakes),4), R.prop=round(Return/sum(Return),4), prop=round(n/sum(n),4))
 tv <- c('Total',colSums(m[-1])); tv[4] <- as.numeric(tv[3])/as.numeric(tv[2])
 m <- suppressWarnings(rbind(m,tv))
 m$Result <- factor(c(as.character(m$Result)[-length(m$Result)],'Total')); rm(tv)
 m %>% kable(.,caption='Table 4.1.3 : Summary of Betting Results')
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
 ```
 
 *table 4.1.3* : `r paste0(dim(m), collapse=' x ')` : *Summary of betting results.*
@@ -858,7 +963,7 @@ It's useful to record some information about how your file was created.
   * GitHub: [Source Code](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation)
   * Additional session information
   
-```{r echo=FALSE, results='asis'}
+```{r info, echo=FALSE, results='asis'}
 lubridate::now()
 devtools::session_info()$platform
 Sys.info()

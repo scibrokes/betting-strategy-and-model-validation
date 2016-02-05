@@ -10,8 +10,8 @@ partialMatch <- function(x, y, levDist=0.1){
   require('dplyr', quietly=TRUE)
   
   source(paste0(getwd(), '/function/signature.R'))
-  xx <- data_frame(sign=sapply(x, signature), row.names=NULL)
-  yy <- data_frame(sign=sapply(y, signature), row.names=NULL)
+  xx <- data.frame(sign=sapply(x, signature), row.names=NULL)
+  yy <- data.frame(sign=sapply(y, signature), row.names=NULL)
   
   xx$raw <- x
   yy$raw <- y
@@ -22,7 +22,7 @@ partialMatch <- function(x, y, levDist=0.1){
   matched$pass <- ifelse(nrow(matched)>0, 'Duplicate', NULL)
   todo <- subset(xy, subset=(is.na(raw.y)), select=c(sign, raw.x))
   colnames(todo) <- c('sign', 'raw')
-  todo$partials <- as.character(sapply(todo$sign, agrep, yy$sign, max.distance = levDist,value=TRUE))
+  todo$partials <- as.character(sapply(todo$sign, agrep, yy$sign, max.distance=levDist, value=TRUE))
   todo <- merge(todo, yy, by.x='partials', by.y='sign')
   
   partial.matched <- subset(todo, subset=(!(is.na(raw.x)) & !(is.na(raw.y))), select=c('sign', 'raw.x', 'raw.y'))

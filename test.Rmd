@@ -27,7 +27,7 @@ suppressMessages(source('function/libs.R'))
 ```{r}
 ## Read the datasets
 ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
-years <- seq(2011,2015)
+years <- seq(2011, 2015)
 
 ## Here I take the majority leagues setting profile which are "league-10-12"
 ## fMYPriceB = Back with vigorish price; fMYPriceL = Lay with vigorish price
@@ -39,12 +39,20 @@ mbase <- readfirmDatasets(years=years) %>% arrfirmDatasets(., lProfile=lProfile)
 ## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
 ## the stakes amount display as $1 = $10,000
 #'@ mbase$datasets[!(mbase$datasets$Home %in% mbase$corners)|!(mbase$datasets$Away %in% mbase$corners),]
-dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$others)) %>% mutate(Stakes=Stakes/10000, Return=Return/10000, PL=PL/10000, Month=month(ymd(Date), label=TRUE))
-
-#'@ pander(head(dat)) # exactly same layout with kable(x)
-#'@ kable(head(dat)) ## example of the dataset in the research paper
-
-#'@ dat %>% datatable(.,caption="Table 2.1.1 : Firm A Staking Data",extensions=c('ColReorder','ColVis','TableTools'),options=list(dom='TC<"clear">rlfrtip',colVis=list(exclude=c(0),activate='mouseover'),tableTools=list(sSwfPath=copySWF(pdf=TRUE)),scrollX=TRUE,scrollCollapse=TRUE))
+dat %>% datatable(., caption="Table 2.1.1 : Firm A Staking Data",
+    extensions = list("ColReorder"=NULL,
+                      "ColVis"=NULL,
+                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                      ), 
+    options = list(autoWidth=TRUE,
+                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                   oTableTools = list(
+                   sSwfPath = "//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                   aButtons = list("copy", "print",
+                                   list(sExtends="collection",
+                                        sButtonText="Save",
+                                        aButtons=c("csv","xls")))),
+               dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
 
 rm(years, readfirmDatasets, arrfirmDatasets)
 rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.
@@ -54,7 +62,6 @@ rm(mbase) ## We need to scrap the livescore data based on the raw data mbase wit
   
 ```{r}
 summary(lm(Return~pHKRange, data=dat))
-<<<<<<< HEAD
 ```
 
 ### DT
@@ -76,15 +83,12 @@ summary(lm(Return~pHKRange, data=dat))
 
 ```{r}
 summary(lm(Return~HCap+HKPrice, data=dat))
-=======
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
 ```
 
 ```{r}
 summary(lm(Return~ipRange, data=dat))
 ```
 
-<<<<<<< HEAD
 ```{r}
 summary(lm(Return~CurScore+ipHCap, data=dat))
 ```
@@ -115,7 +119,6 @@ summary(lm(Return~ipRange, data=dat))
 summary(lm(Return~CurScore+ipHCap, data=dat))
 ```
 
->>>>>>> 8c8a740b2768e7c450af85ace180489785115091
 *graph 3.4.1c* *linear model*
 
 ```{r, results='asis'}
@@ -123,6 +126,6 @@ summary(lm(Return~CurScore+ipHCap, data=dat))
 options(op)
 ```
 
-**Powered by - Copyright© Intellectual Property Rights of <img src='figure/Orchard.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)**
+**Powered by - Copyright© Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)**
 
 

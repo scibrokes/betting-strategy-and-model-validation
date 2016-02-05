@@ -7,20 +7,21 @@ scrapSPBO <- function(lnk=lnk, dateID=dateID, path=path, parallel=FALSE){
   options(warn=-1)
   
   lnk <- lnk; dateID <- dateID; path <- path; parallel <- parallel
-  if(length(lnk)!=length(dateID)){ stop('The length of url links and date id not tally !!!') }
+  if(length(lnk)!=length(dateID)){
+    stop('The length of url links and date id not tally !!!') }
   n <- seq(1:length(lnk))
   
   ## Web scrapping on leagues and teams
   ## Loading the packages
-  if(!suppressWarnings(require('BBmisc', quietly=TRUE))){
-    suppressWarnings(install.packages('BBmisc'))}
+  if(suppressMessages(!require('BBmisc', quietly=TRUE))){
+    suppressMessages(install.packages('BBmisc'))}
   
   ## Might load RSeleniumUtilities package if needed
   ##  https://github.com/greenore/RSeleniumUtilities
   suppressMessages(require('BBmisc', quietly=TRUE))
-  pkgs <- c('magrittr', 'reshape', 'plyr', 'dplyr', 'purrr', 'rvest', 'XML', 'RCurl', 'stringr', 'doParallel', 
-            'grDevices')
-  suppressPackageStartupMessages(lib(pkgs)); rm(pkgs)
+  pkgs <- c('magrittr', 'reshape', 'plyr', 'dplyr', 'purrr', 'rvest', 'XML', 'RCurl', 
+            'stringr', 'doParallel', 'grDevices')
+  suppressMessages(lib(pkgs)); rm(pkgs)
   
   if(parallel==TRUE){
     ## Preparing the parallel cluster using the cores
@@ -34,27 +35,29 @@ scrapSPBO <- function(lnk=lnk, dateID=dateID, path=path, parallel=FALSE){
   }
   
   llply(n, function(i){
-    dataElem <- html_session(lnk[i]) %>% html_nodes('script') %>% .[[1]] %>% html_text %>% 
-      str_split(',') %>% .[[1]] %>% str_extract_all(., '[#0-9a-zA-Z].*') %>% .[sapply(., length)==1] %>% 
-      .[!str_detect(., '[\u4e00-\u9fa5]')] %>% unlist %>% gsub('(var bf=\")|([0-9]{1}!)', '', .) %>% 
-      .[!str_detect(., '=')]
+    dataElem <- html_session(lnk[i]) %>% html_nodes('script') %>% .[[1]] %>% 
+      html_text %>% str_split(',') %>% .[[1]] %>% str_extract_all(., '[#0-9a-zA-Z].*') %>% 
+      .[sapply(., length)==1] %>% .[!str_detect(., '[\u4e00-\u9fa5]')] %>% 
+      unlist %>% gsub('(var bf=\")|([0-9]{1}!)', '', .) %>% .[!str_detect(., '=')]
     
     ## regex(dataElem,'[0-9]{10}'); grep(dataElem,'[0-9]{10}') to match the location of the 
     ##  element within a vector
-    ncolID.df <- dataElem %>% str_detect(., '[0-9]{10}') %>% matrix(., dimnames=list(NULL, 'V1')) %>% 
-      data_frame %>% subset(., V1==TRUE) %>% rownames %>% as.numeric
+    ncolID.df <- dataElem %>% str_detect(., '[0-9]{10}') %>% 
+      matrix(., dimnames=list(NULL, 'V1')) %>% data.frame %>% subset(., V1==TRUE) %>% 
+      rownames %>% as.numeric
     irng <- c(ncolID.df,length(dataElem))
     ncol.df <- diff(irng)
     dfm <- as.matrix(rbind_all(llply(seq(1, length(ncol.df)), function(j) {
-      data_frame(matrix(dataElem[irng[j]:(irng[j+1]-1)], byrow=TRUE, ncol=ncol.df[[j]]))}, 
+      data.frame(matrix(dataElem[irng[j]:(irng[j+1]-1)], byrow=TRUE, ncol=ncol.df[[j]]))}, 
       .parallel=parallel)))
     
-    #'@ dfm[(dfm[, 04]==0)&(dfm[, 05]==0), c(07, 10, 12:ncol(dfm))] <- dfm[(dfm[, 04]==0)&(dfm[, 05]==0), 
-    #'@                                                                    c(06, 07, 08:11)]
+    #'@ dfm[(dfm[, 04]==0)&(dfm[, 05]==0), 
+    #'@     c(07, 10, 12:ncol(dfm))] <- dfm[(dfm[, 04]==0)&(dfm[, 05]==0), c(06, 07, 08:11)]
     if((dfm[, 04]==0)&(dfm[, 05]==0)){
-      dfm[(dfm[, 04]==0)&(dfm[, 05]==0), c((ncol(dfm)-8), (ncol(dfm)-5), (ncol(dfm)-3):ncol(dfm))] <- 
+      dfm[(dfm[, 04]==0)&(dfm[, 05]==0), c((ncol(dfm)-8), (ncol(dfm)-5), 
+                                           (ncol(dfm)-3):ncol(dfm))] <- 
         dfm[(dfm[, 04]==0)&(dfm[, 05]==0), c(06:(ncol(dfm)-4))]
-      dfm[(dfm[, 04]==0)&(dfm[, 05]==0), c(06, 08, 09)] <- 0 # no card since match have'nt started
+      dfm[(dfm[, 04]==0)&(dfm[, 05]==0), c(06, 08, 09)] <- 0 # no card since match not yet started
     }
     if((dfm[, 04]!=0)&(nchar(dfm[, 04])==1)){
       dfm[(dfm[, 04]!=0)&(nchar(dfm[, 04])==1), 5:ncol(dfm)] <- 
@@ -76,17 +79,21 @@ scrapSPBO <- function(lnk=lnk, dateID=dateID, path=path, parallel=FALSE){
     HTGoal <- str_split_fixed(dfm[, 12], ' - ', 2); HTGoal[HTGoal[, 02]=='', 02] <- 0
     dfm <- cbind(dfm[, 01:05], dfm[, 07], dfm[, 10], dfm[, 08:09], HTGoal, dfm[, 06], dfm[, 11], 
                  dfm[, 13:ncol(dfm)])
-    dfm <- data_frame(dfm); rm(HTGoal)
-    dfnames <- c('matchID', 'LeagueColor', 'League', 'Date', 'Finished', 'Home', 'Away', 'FTHG', 'FTAG', 
-                 'HTHG', 'HTAG', 'H.Card', 'A.Card', 'HT.matchID', 'HT.graph1', 'HT.graph2')
+    dfm <- data.frame(dfm); rm(HTGoal)
+    dfnames <- c('matchID', 'LeagueColor', 'League', 'Date', 'Finished', 'Home', 'Away', 
+                 'FTHG', 'FTAG', 'HTHG', 'HTAG', 'H.Card', 'A.Card', 'HT.matchID', 
+                 'HT.graph1', 'HT.graph2')
     names(dfm) <- dfnames
     dfm <- dfm[!duplicated(dfm), dfnames]
-    dfm <- dfm[!((is.na(as.numeric(as.character(dfm$FTHG))))|(is.na(as.numeric(as.character(dfm$FTAG))))|
-                   (is.na(as.numeric(as.character(dfm$HTHG))))|(is.na(as.numeric(as.character(dfm$HTAG))))|
-                   (is.na(as.numeric(as.character(dfm$H.Card))))|(is.na(as.numeric(as.character(dfm$A.Card))))|
-                   (is.na(as.numeric(as.character(dfm$HT.matchID))))|
-                   (is.na(as.numeric(as.character(dfm$HT.graph1))))|
-                   (is.na(as.numeric(as.character(dfm$HT.graph2))))),]
+    dfm <- dfm[!((is.na(as.numeric(as.character(dfm$FTHG))))|
+                  (is.na(as.numeric(as.character(dfm$FTAG))))|
+                  (is.na(as.numeric(as.character(dfm$HTHG))))|
+                  (is.na(as.numeric(as.character(dfm$HTAG))))|
+                  (is.na(as.numeric(as.character(dfm$H.Card))))|
+                  (is.na(as.numeric(as.character(dfm$A.Card))))|
+                  (is.na(as.numeric(as.character(dfm$HT.matchID))))|
+                  (is.na(as.numeric(as.character(dfm$HT.graph1))))|
+                  (is.na(as.numeric(as.character(dfm$HT.graph2))))),]
     dfm %<>% mutate(Home=str_replace_all(as.character(Home), '^0', 'NA'), 
                     Away=str_replace_all(as.character(Away), '^0', 'NA'))
     
@@ -99,17 +106,24 @@ scrapSPBO <- function(lnk=lnk, dateID=dateID, path=path, parallel=FALSE){
     #'@ }
     
     ## Replace all space which at the first and also last character inside elements.
-    dfm <- llply(dfm, function(x){gsub('^\\s{1,}|\\s{1,}$', '', x)}, .parallel=parallel) %>% data_frame %>% 
-      mutate_each(funs(as.character))
+    dfm <- llply(dfm, function(x){gsub('^\\s{1,}|\\s{1,}$', '', x)}, .parallel=parallel) %>% 
+      data.frame %>% mutate_each(funs(as.character)) %>% tbl_df
     
     ## Save livescores data into folder
-    dir.create(file.path(paste0(getwd(), '/datasets/', path)))
+    if(dir.exists('datasets/livescore')==FALSE){
+      dir.create(file.path('datasets/', path))
+    }
     
     ## Introduce to ff and ffbase for large datasets
     ## http://www.r-bloggers.com/if-you-are-into-large-data-and-work-a-lot-with-package-ff/
-    ## In order to easier manipulate (read/write) the data, here I just keep the csv file seperately by dateID.
+    ## In order to easier manipulate (read/write) the data, 
+    ##  here I just keep the csv file seperately by dateID.
     write.csv(dfm, file=paste0(getwd(), '/datasets/', path, '/', dateID[i], '.csv'))
     cat(i, paste0(' Wrote ', dateID[i], '.csv'), '\n')}, .parallel=parallel)
+  
+  ## zip the dataset s. 
+  zip('datasets/livescore.zip', 'datasets/livescore')
+  unlink('datasets/livescore', recursive=TRUE)
   }
 
 

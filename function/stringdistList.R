@@ -71,13 +71,13 @@ stringdistList <- function(method=c('osa', 'lv', 'dl', 'hamming', 'lcs', 'qgram'
       x[dm$teamID==a_sel & dm$spboID == b_sel] <- 1
       x[x==0 & (dm$teamID==a_sel|dm$spboID==b_sel)] <- -1
     }
-    data_frame(teamID=dm$teamID[x==1],spboID=dm$spboID[x==1],dist=dm$dist[x==1])
+    data.frame(teamID=dm$teamID[x==1], spboID=dm$spboID[x==1], dist=dm$dist[x==1]) %>% tbl_df
   }
   ## ---------------------------------------------------------------------------------------------
   strList <- llply(as.list(method),function(x){
-    res <- greedyAssign(dm) %>% data_frame
-    names(res) <- c('teamID',x,paste0('dist.',x))
+    res <- greedyAssign(dm)
+    names(res) <- c('teamID', x, paste0('dist.', x))
     return(res)
-    },.parallel=parallel) %>% Reduce(function(x, y) merge(x, y, by='teamID'), .) %>% data_frame
+    },.parallel=parallel) %>% Reduce(function(x, y) merge(x, y, by='teamID'), .) %>% tbl_df
   
   return(strList)}

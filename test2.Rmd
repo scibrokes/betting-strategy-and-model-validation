@@ -28,24 +28,21 @@ suppressMessages(source('function/libs.R'))
 
   Read the dataset of World Wide soccer matches from year 2011 until 2015 from a British betting consultancy named firm A.
 
-```{r read-datasetA, echo=FALSE, results='asis'}
-## Read the datasets
-## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
-years <- seq(2011,2015)
-mbase <- readfirmDatasets(years=years)
-dateID <- sort(unique(as.Date(mbase$datasets$Date)))
+```{r clear, include=FALSE}
+gc()
 ```
 
-*table 2.1* `r paste(unlist(strsplit(as.character(dim(mbase$datasets)), ' ')), collapse=' x ')`
+1
 
-  Due to the dataset very big `r paste(unlist(strsplit(as.character(dim(mbase$datasets)), ' ')), collapse=' x ')` caused the webpage keep loading and unable open. Here I just only subset few rows from the data frame.
-
-  Read the dataset of World Wide soccer matches scrapped from year 2011 until 2015 from [spbo livescore website](http://www.spbo.com/eend0.htm).
-
-```{r read-datasetB, echo=FALSE, results='asis'}
-## Load the scraped spbo livescore datasets.
-spboData <- readSPBO(dateID=dateID, parallel=TRUE)$data
-spboData
+```{r clear}
 ```
+
+2
+
+```{r clear}
+```
+
+
+**Powered by - Copyright© Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)**
 
 
