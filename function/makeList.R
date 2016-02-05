@@ -2,7 +2,7 @@ makeList <- function(mbase, spboData, levDist=0.1, parallel=FALSE){
   ## If agrep==TRUE will partial match the strings and generate output, always adjust with levDist for 
   ##   max.distance in agrep()
   
-  if((!is.list(mbase)) & (names(mbase)!= c('datasets', 'others', 'corners')) & (!is.data_frame(spboData))){
+  if((!is.list(mbase)) & (names(mbase)!= c('datasets', 'others', 'corners')) & (!is.data.frame(spboData))){
     stop('Please apply readf1irmDatasets() to get the firm A data and readSPBO2() to get the spboData 
          livescore data !')}
   
@@ -248,16 +248,16 @@ makeList <- function(mbase, spboData, levDist=0.1, parallel=FALSE){
                   mt = t(mapply(function(x,y) c(x, rep(NA, y)), tm[[i]][[j]],
                        len[[i]][[j]])) %>% as.matrix
                   rownames(mt) = NULL
-                  mt %>% data_frame
+                  mt %>% data.frame
               })})
   
   dfm <- llply(df.agrep, rbind_all) %>% rbind_all %>% cbind(Sex=substr(names(unlist(tmID6)), 1, 2),
          List=str_replace_all(substring(names(unlist(tmID6)), 4), '\\.\\S+', '') %>% unlist,
-         tmID=unlist(tmID6), .) %>% data_frame %>% filter(!is.na(tmID))
+         tmID=unlist(tmID6), .) %>% data.frame %>% filter(!is.na(tmID))
   rm(len, mx)
   
-  matchbase <- data_frame(tmID=c(tmID1A,tmID2A), spbo=c(spboTM1A, spboTM2A), match=as.numeric(c(rep(0,
-               length(tmID1A)), rep(1, length(tmID2A)))))
+  matchbase <- data.frame(tmID=c(tmID1A,tmID2A), spbo=c(spboTM1A, spboTM2A), match=as.numeric(c(rep(0,
+               length(tmID1A)), rep(1, length(tmID2A))))) %>% tbl_df
   
   return(list(tmID=tmID6, spbo=spboTM6, matchData=matchbase, partialData=dfm, partialDataList=tm))
 }
