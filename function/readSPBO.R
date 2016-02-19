@@ -29,7 +29,7 @@ readSPBO <- function(dateID=dateID, parallel=FALSE){
   
   ## Read spbo livescore datasets.
   dfm <- rbind_all(llply(as.list(dateIDin), function(x){
-    data.frame(read.csv(file=paste0(getwd(), '/datasets/livescore/', x, '.csv')))}, .parallel=parallel))
+    data.frame(read.csv(file=paste0('datasets/livescore/', x, '.csv')))}, .parallel=parallel))
   
   unlink('datasets/livescore', recursive=TRUE)
   

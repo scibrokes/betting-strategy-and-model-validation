@@ -54,7 +54,10 @@ mbase <- readfirmDatasets(years=years)
 
 ## example of the dataset in the research paper
 ##   due to the data heavy and overload, max 5mb while generated 79mb html file, here I just simply subset the head section
-mbase$datasets %>% head %>% datatable(., caption="Table 2.1 : Soccer Staking Data from Firm A", extensions=c('ColReorder', 'ColVis'), options=list(dom='TC<"clear">rfrtip', colVis=list(exclude=c(0), activate='mouseover'), scrollX=TRUE, scrollCollapse=TRUE))
+mbase$datasets %>% head %>% datatable(
+  caption="Table 2.1 : Soccer Staking Data from Firm A", extensions=c('ColReorder', 'ColVis'),
+  options=list(dom='TC<"clear">rfrtip', colVis=list(exclude=c(0), activate='mouseover'),
+               scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 2.1* `r paste(unlist(strsplit(as.character(dim(mbase$datasets)), ' ')), collapse=' x ')`
@@ -63,7 +66,7 @@ mbase$datasets %>% head %>% datatable(., caption="Table 2.1 : Soccer Staking Dat
 
 ```{r collect-datasetB, echo=FALSE, results='asis'}
 ## kick-off time(GMT+8) - 12hrs since livescore website start count a day from 12pm(GMT+8)
-dateID <- as.Date(sort(unique(mbase$datasets$Date)-hm('12:00'))); spboDate <- gsub('-','',dateID)
+dateID <- as.Date(sort(unique(mbase$datasets$Date)-hm('12:00'))); spboDate <- gsub('-', '', dateID)
 #'@ lnk <- paste0('http://www8.spbo.com/history.plex?day=', spboDate, '&l=en')
 
 ## Scrap data from SPBO website.
@@ -77,12 +80,14 @@ dateID <- as.Date(sort(unique(mbase$datasets$Date)-hm('12:00'))); spboDate <- gs
 ## Load the scraped spbo livescore datasets.
 spboData <- readSPBO(dateID=dateID)$data
 
-spboData %>% head %>% datatable(., caption="Table 2.2 : SPBO Soccer Data", extensions=c('ColReorder', 'ColVis'), options=list(dom='TC<"clear">rfrtip', colVis=list(exclude=c(0), activate='mouseover'), scrollX=TRUE, scrollCollapse=TRUE))
+spboData %>% head %>% datatable(
+  caption="Table 2.2 : SPBO Soccer Data", extensions=c('ColReorder', 'ColVis'),
+  options=list(dom='TC<"clear">rfrtip', colVis=list(exclude=c(0), activate='mouseover'), scrollX=TRUE, scrollCollapse=TRUE))
 ```
 
 *table 2.2* `r paste(unlist(strsplit(as.character(dim(spboData)), ' ')), collapse=' x ')`
 
-  Due to the dataset very big `r paste(unlist(strsplit(as.character(dim(spboData)), ' ')), collapse=' x ')` caused the webpage keep loading and unable open. Here I just only subset few rows from the data frame.
+  Due to the livescore dataset contains alot of unrelated soccer matches `r paste(unlist(strsplit(as.character(dim(spboData)), ' ')), collapse=' x ')`, here I only subset few rows from the data frame for viewing purpose.
 
 
 
@@ -186,18 +191,19 @@ df2A <- mapply(function(x, y) c(x, rep(NA, y)), lst, len) %>% data.frame %>% mut
 rm(lst, len, n)
 df2A %>% datatable(
   caption = "Table 3.2.1 : StringDist Matching 'Lincoln'", 
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 ```
 
 *table 3.2.1* `r paste(unlist(strsplit(as.character(dim(df2A)), ' ')), collapse=' x ')`
@@ -230,18 +236,19 @@ df2B <- mapply(function(x, y) c(x, rep(NA, y)), lst, len) %>% data.frame %>% mut
 rm(lst, len, n)
 df2B %>% datatable(
   caption="Table 3.2.2 : StringDist Matching 'Lincoln City'",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 ```
 
 *table 3.2.2* `r paste(unlist(strsplit(as.character(dim(df2B)), ' ')), collapse=' x ')`
@@ -295,18 +302,19 @@ df4 <- partialMatch(iconv(teamID), spboTeamID)
 
 df4 %>% datatable(
   caption="Table 3.4.1 : Partial Matching Teams' Name.",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 
 ## removed used object to save memory
 rm(spboTeamID)
@@ -379,18 +387,19 @@ d3data[3:4] %>% simpleNetwork(width='auto', height=800)
 ```{r matching-05B, echo=FALSE, results='asis'}
 d3data %>% datatable(
   caption="Table 4.2.1 : Reprocess the Teams' Name.",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 
 ## removed used object to save memory
 rm(dfm, d3data)
@@ -410,18 +419,19 @@ strDF <- arrTeamID(mbase, spboData, levDist=0.1, parallel=FALSE)
 
 strDF$result %>% datatable(
   caption="Table 4.3.1 : StringDist Approximately Matched Teams' Name.",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 
 ## removed used object to save memory
 rm(mbase, spboData)
@@ -453,18 +463,19 @@ tmIDdata <- tmIDdata %>% filter(spbo!='Kuban Krasnodar')
 
 tmIDdata %>% datatable(
   caption="Table 5.1.1 : Table of Teams Name (Manually Checked)",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 ```
 
 
@@ -478,17 +489,18 @@ comp1 <- tmIDdata %>% subset(., .$teamID %in% strDF$result$teamID & !duplicated(
 comp1 %>% datatable(
   caption="Table 5.2.1 : Table of Teams Name (stringDistList)",
   extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+                    "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 ```
   
   Secondly, we simply compare the accuracy and also number of teams.
@@ -512,18 +524,19 @@ comp2 <- tmIDdata %>% subset(., .$teamID %in% df4$teamID & !duplicated(.$teamID)
 
 comp2 %>% datatable(
   caption="Table 5.2.3 : Table of Teams Name (PartialMatch)",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 
 ## removed used object to save memory
 rm(df4)

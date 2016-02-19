@@ -1,6 +1,9 @@
 base
+methods
+utils
 BBmisc
 devtools
+stats
 zoo
 chron
 stringr
@@ -25,6 +28,7 @@ xts
 PerformanceAnalytics
 plotly
 iterators
+parallel
 doParallel
 xml2
 rvest
@@ -34,10 +38,14 @@ scales
 lubridate
 tidyr
 whisker
+grid
 gtable
 gridExtra
 Matrix
 arules
 arulesViz
 googleVis
+datasets
+grDevices
+graphics
 networkD3

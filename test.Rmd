@@ -39,6 +39,8 @@ mbase <- readfirmDatasets(years=years) %>% arrfirmDatasets(., lProfile=lProfile)
 ## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
 ## the stakes amount display as $1 = $10,000
 #'@ mbase$datasets[!(mbase$datasets$Home %in% mbase$corners)|!(mbase$datasets$Away %in% mbase$corners),]
+
+dat <- mbase$data
 dat %>% datatable(., caption="Table 2.1.1 : Firm A Staking Data",
     extensions = list("ColReorder"=NULL,
                       "ColVis"=NULL,
@@ -52,7 +54,8 @@ dat %>% datatable(., caption="Table 2.1.1 : Firm A Staking Data",
                                    list(sExtends="collection",
                                         sButtonText="Save",
                                         aButtons=c("csv","xls")))),
-               dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+               dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+               colVis=list(exclude=c(0), activate='mouseover')))
 
 rm(years, readfirmDatasets, arrfirmDatasets)
 rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.

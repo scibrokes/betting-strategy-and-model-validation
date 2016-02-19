@@ -1,4 +1,4 @@
-readfirmDatasets <- function(years=years, parallel=TRUE){
+readfirmDatasets <- function(years=years, parallel=FALSE){
   ## Loading the packages
   if(!suppressMessages(require('BBmisc'))){
     suppressMessages(install.packages('BBmisc'))}
@@ -31,7 +31,7 @@ readfirmDatasets <- function(years=years, parallel=TRUE){
   ## Read the datasets
   ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
   dfm <- rbind_all(llply(years, function(x) {
-    data.frame(Sess=x, read.csv(paste0(getwd(), '/datasets/', x, '.csv'), header=TRUE, sep=','))}, 
+    data.frame(Sess=x, read.csv(paste0('datasets/', x, '.csv'), header=TRUE, sep=','))}, 
     .parallel=parallel))
   
   ## Data processing and clearing

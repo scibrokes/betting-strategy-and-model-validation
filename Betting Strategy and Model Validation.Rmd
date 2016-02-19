@@ -29,7 +29,9 @@ output:
   This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the [Dixon and Pope (2003)](http://www.sciencedirect.com/science/article/pii/S016920700400010X), due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the [Wrangling F1 Data With R](http://www.r-bloggers.com/wrangling-f1-data-with-r-f1datajunkie-book/) if you are getting interest to write a data analysis on Sports-book.
 
 ```{r libs, message=FALSE, warning=FALSE, cache=TRUE, include=FALSE}
+## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
+suppressMessages(library('utils'))
 suppressMessages(source('function/libs.R'))
 ```
 
@@ -55,7 +57,7 @@ suppressMessages(source('function/libs.R'))
   
   I tried to apply `RSelenium` on [**RStudio Server Centos7**](http://rstudio.scibrokes.com) to scrape the data from live-score website includes the odds price but the binary [phantomjs](https://github.com/ariya/phantomjs/issues/12948#issuecomment-131267076) is not available for Linux, and I also not familiar with the installation of `Java` as well as setting of the path for `rJava`. Kindly refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) for more information about the teams name matching.
 
-```{r read-data-summary-table, echo=FALSE, cache=TRUE, results='asis'}
+```{r read-data-summary-table, echo=FALSE, results='asis'}
 ## Read the datasets
 ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
 years <- seq(2011, 2015)
@@ -77,18 +79,19 @@ dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$oth
 
 dat %>% datatable(
   caption="Table 2.1.1 : Firm A Staking Data",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 
 rm(years, readfirmDatasets, arrfirmDatasets)
 rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.
@@ -110,7 +113,7 @@ probabilities exceeds `100%` and it is the bookmaker’s profit margin.
 
   For example, if we had a market with two possible outcomes {A, B}, where $P(A) = P(B) = 0.5$, the fair odds on each selection would be `2.00`. However, the bookmaker may offer payouts of `1.85` on each selection. The corresponding probabilities for each selection are now 1/1.85 = `r 1/1.85`, and the sum of the probabilities for all outcomes is `r 1/1.85` x 2 = `r 1/1.85*2`. The over-round is `8.1%`, and for every `$100` paid out by gamblers the bookmaker expects to make a profit of `8.1` dollars, assuming that there are balanced bets on both A and B.
 
-```{r scrap-data, echo=FALSE, cache=TRUE, results='asis'}
+```{r scrap-data, echo=FALSE, results='asis'}
 ## Scrape the leagues and also overrounds which provides by a sportsbookmaker named Firm B
 #'@ lnk <- 'http://data.nowgoal.com/history/handicap.htm'
 ## Above website provides odds price history but sendkeyElements cannot work in RSelenium, will follow-up
@@ -129,13 +132,13 @@ dateID <- as.Date(sort(unique(dat$Date)-hm('12:00'))); spboDate <- gsub('-','',d
 #'@ scrapSPBO2(lnk=lnk, dateID=dateID, path='livescore', parallel=TRUE)
 
 ## Read spbo livescore datasets.
-spboData <- readSPBO(dateID=dateID, parallel=FALSE)
+spboData <- readSPBO(dateID=dateID, parallel=FALSE)$data
 
 ## Apply stringdist() to 'exactly matching' and 'approximate matching' team names
 #'@ method <- c('osa','lv','dl','hamming','lcs','qgram','cosine','jaccard','jw','soundex')
 #'@ source(paste0(getwd(),'/function/arrTeamID.R'))
 #'@ tmID <- arrTeamID(mbase, spboData, parallel=FALSE)
-tmIDdata <- read.csv('datasets/teamID.csv', header=TRUE, sep=',') %>% mutate_each(funs(as.character)) %>% data_frame %>% filter(spbo!='Kuban Krasnodar')
+tmIDdata <- read.csv('datasets/teamID.csv', header=TRUE, sep=',') %>% mutate_each(funs(as.character)) %>% data.frame %>% tbl_df %>% filter(spbo!='Kuban Krasnodar')
 spboData %<>% filter((Home %in% tmIDdata$spbo)|(Away %in% tmIDdata$spbo))
 
 rm(dateID, spboDate, readSPBO)
@@ -177,7 +180,7 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
   
 ```{r data-annum-summary-plot, echo=FALSE, results='asis'}
 ## Annual summry graph.
-m <- ddply(dat, .(Sess), summarise, Stakes=sum(Stakes), Return=sum(Return), PL=sum(PL)) %>% data_frame
+m <- ddply(dat, .(Sess), summarise, Stakes=sum(Stakes), Return=sum(Return), PL=sum(PL)) %>% data.frame %>% tbl_df
 
 gvis.options <- list(title="Annum Stakes & PL ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]",hAxis="{title:'Year'}", vAxis="{title:'Stakes'},{title:'PL'}",width='automatic', height='automatic')
 col.gvis <- gvisColumnChart(xvar='Sess', yvar=c('Stakes','Return','PL'), data=m, options=gvis.options)
@@ -210,18 +213,19 @@ cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas)
 
 dt1 %<>% datatable(
   caption="Table 3.1.1 : Summary of Monthly Stakes and Return. ('0,000)", rownames=FALSE,
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover'), columnDefs=cd, fnDrawCallback=cb))
 
 ## convert the data into inline graph
 dt1$dependencies <- append(dt1$dependencies, htmlwidgets:::getDependency('sparkline'))
@@ -237,7 +241,7 @@ rm(dt1, r)
 ```{r data-month-summary-plots, echo=FALSE, results='asis'}
 ## Monthly summary graph.
 ## the stakes amount display as $1 = $10,000
-m <- ddply(data_frame(Month=as.yearmon(dat$Date,'%b'), dat), .(Month), summarise, Stakes=sum(Stakes), Return=sum(Return), PL=sum(PL)) %>% mutate(Month=as.character(Month)) # mutate Month as.character() at last to make the Month hAxis arrange in order after summarise
+m <- ddply(data.frame(Month=as.yearmon(dat$Date,'%b'), dat), .(Month), summarise, Stakes=sum(Stakes), Return=sum(Return), PL=sum(PL)) %>% mutate(Month=as.character(Month)) %>% tbl_df # mutate Month as.character() at last to make the Month hAxis arrange in order after summarise
 
 gvis.options <- list(title="Monthly Stakes & PL ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis="{title:'Month'}", vAxis="{title:'Stakes'},{title:'PL'}", width='automatic', height='automatic')
 line.gvis <- gvisLineChart(xvar='Month', yvar=c('Stakes', 'Return', 'PL'), data=m, options=gvis.options)
@@ -264,18 +268,19 @@ cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas)
 
 dt2 %<>% datatable(
   caption="Table 3.1.2 : Summary of Daily Stakes and Return. ('0,000)", rownames=FALSE,
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE, columnDefs=cd, fnDrawCallback=cb))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover'), columnDefs=cd, fnDrawCallback=cb))
 
 ## convert the data into inline graph
 dt2$dependencies <- append(dt2$dependencies, htmlwidgets:::getDependency('sparkline'))
@@ -308,27 +313,28 @@ rm(ddim, line.gvis, m)
 funs <- expression(sum, mean, median, sd, length)
 
 ahBets <- llply(funs, function(x)
-    ddply(dat, ~HCap+AHOU+Picked, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('HCap', 'AHOU', 'Picked')) %>% .[-c((ncol(.)-1):ncol(.))] %>% data_frame
+    ddply(dat, ~HCap+AHOU+Picked, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('HCap', 'AHOU', 'Picked')) %>% .[-c((ncol(.)-1):ncol(.))] %>% data.frame
 
 names(ahBets) <- suppressWarnings(c('HCap', 'AHOU', 'Picked', 'Stakes', 'Return', 'PL', 'S.mean', 'R.mean', 'PL.mean',  'S.median', 'R.median', 'PL.median', 'S.sd', 'R.sd', 'PL.sd', 'Count'))
 
-ahBets %<>% map_if(is.numeric,round,2) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%'))
+ahBets %<>% map_if(is.numeric,round,2) %>% data.frame %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%')) %>% tbl_df
 
 lst <- ahBets %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(
   caption="Table 3.2.1A : Asian Handicap - Handicap Breakdown ('0,000)",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 ```
 
 *table 3.2.1a* : `r paste0(dim(lst[[1]]), collapse=' x ')` : *Asian Handicap - handicap breakdown table.*
@@ -336,18 +342,19 @@ lst[[1]] %>% datatable(
 ```{r data-hdp-summary-table1b, echo=FALSE, results='asis'}
 lst[[2]] %>% datatable(
   caption="Table 3.2.1B : Goal Line - Handicap Breakdown ('0,000)",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 ```
 
 *table 3.2.1b* : `r paste0(dim(lst[[2]]), collapse=' x ')` : *Goal Line - handicap breakdown table.*
@@ -366,7 +373,7 @@ m %>% kable(caption='Table 3.2.1c : Sample data about Handicap, Stakes and PL')
 ```{r data-hdp-summary-plot1a, echo=FALSE, results='asis'}
 ## Plot the Stakes and P&L on AH handicap graphs
 ## the stakes amount display as $1 = $10,000
-lst <- ahBets %>% select(HCap, AHOU, Picked, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, Picked, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(data_frame)
+lst <- ahBets %>% select(HCap, AHOU, Picked, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, Picked, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(., function(x) tbl_df(data.frame(x)))
 
 gvis.options <- list(title="Asian Handicap - Handicap Breakdown ('0,000)",  series="[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis="{title:'HCap'}", vAxis="{title:'Stakes'},{title:'PL'}", width='automatic', height='automatic')
 line.gvis <- gvisLineChart(xvar='HCap', yvar=names(lst[[1]])[-c(1:2)], data=lst[[1]], options=gvis.options)
@@ -397,27 +404,28 @@ rm(line.gvis)
 ```{r data-hdp-summary-table2a, echo=FALSE, results='asis'}
 ## Favorite or Underdog and price range breakdown
 fuBets <- llply(funs, function(x)
-    ddply(dat, ~AHOU+pHKRange+Picked, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('AHOU', 'pHKRange', 'Picked')) %>% .[-c((ncol(.)-1):ncol(.))] %>% date_frame
+    ddply(dat, ~AHOU+pHKRange+Picked, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('AHOU', 'pHKRange', 'Picked')) %>% .[-c((ncol(.)-1):ncol(.))] %>% data.frame
 
 names(fuBets) <- suppressWarnings(c('AHOU', 'pHKRange', 'Picked', 'Stakes', 'Return', 'PL', 'S.mean', 'R.mean', 'PL.mean', 'S.median', 'R.median', 'PL.median', 'S.sd', 'R.sd', 'PL.sd', 'Count'))
 
-fuBets %<>% map_if(is.numeric, round, 2) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%'))
+fuBets %<>% map_if(is.numeric, round, 2) %>% data.frame %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%')) %>% tbl_df
 
 lst <- fuBets %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(
   caption="Table 3.3.1A : Asian Handicap - Price Range Breakdown ('0,000)",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 ```
 
 *table 3.3.1a* : `r paste0(dim(lst[[1]]), collapse=' x ')` : *Asian Handicap - price range breakdown table.*
@@ -425,24 +433,25 @@ lst[[1]] %>% datatable(
 ```{r data-hdp-summary-table2b, echo=FALSE, results='asis'}
 lst[[2]] %>% datatable(
   caption="Table 3.3.1B : Goal Line - Price Range Breakdown ",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 ```
 
 *table 3.3.1b* : `r paste0(dim(lst[[2]]), collapse=' x ')` : *Goal Line - price range breakdown table.*
 
 ```{r data-hdp-summary-table2c, echo=FALSE, results='asis'}
-m <- ddply(dat, ~pHKRange+pMYRange, .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL)) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%')) %>% arrange(Stakes) %>% tail %>% data_frame
+m <- ddply(dat, ~pHKRange+pMYRange, .drop=TRUE, colwise(.fun=sum, .cols=~Stakes+Return+PL)) %>% tbl_df %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%')) %>% arrange(Stakes) %>% tail
 m %>% kable(caption='Table 3.3.1c : Sample data about Price Range, Stakes and PL')
 ```
 
@@ -453,7 +462,7 @@ m %>% kable(caption='Table 3.3.1c : Sample data about Price Range, Stakes and PL
 ```{r data-hdp-summary-plot2a, echo=FALSE, results='asis'}
 ## Plot the Stakes and P&L on AH handicap graphs
 ## the stakes amount display as $1 = $10,000
-lst <- fuBets %>% select(AHOU, pHKRange, Picked, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, Picked, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(data_frame)
+lst <- fuBets %>% select(AHOU, pHKRange, Picked, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, Picked, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(., function(x) tbl_df(data.frame(x)))
 
 gvis.options <- list(title="Asian Handicap - Price Range Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis="{title:'pHKRange'}", vAxis="{title:'Stakes'},{title:'PL'}", width='automatic', height='automatic')
 line.gvis <- gvisLineChart(xvar='pHKRange', yvar=names(lst[[1]])[-c(1:2)], data=lst[[1]], options=gvis.options)
@@ -487,28 +496,28 @@ rm(line.gvis)
 ## In-Play : time range
 funs <- expression(sum, mean, median, sd, length)
 ipBets1 <- llply(funs, function(x)
-    ddply(dat, ~InPlay2+AHOU+ipRange, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('InPlay2', 'AHOU', 'ipRange')) %>% .[-c((ncol(.)-1):ncol(.))] %>% data_frame
+    ddply(dat, ~InPlay2+AHOU+ipRange, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('InPlay2', 'AHOU', 'ipRange')) %>% .[-c((ncol(.)-1):ncol(.))] %>% data.frame
 
 names(ipBets1) <- suppressWarnings(c('InPlay2', 'AHOU', 'ipRange', 'Stakes', 'Return', 'PL', 'S.mean', 'R.mean', 'PL.mean', 'S.median', 'R.median', 'PL.median', 'S.sd', 'R.sd', 'PL.sd', 'Count'))
 
-ipBets1 %<>% map_if(is.numeric, round, 2) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%'))
+ipBets1 %<>% map_if(is.numeric, round, 2) %>% data.frame %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%')) %>% tbl_df
 
 lst <- ipBets1 %>% dlply(.(AHOU))
-
 lst[[1]] %>% datatable(
   caption="Table 3.4.1A : Asian Handicap - In-Play Time Range Breakdown ('0,000)",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 
 rm(funs)
 ```
@@ -518,18 +527,19 @@ rm(funs)
 ```{r data-ip-summary-table1b, echo=FALSE, results='asis'}
 lst[[2]] %>% datatable(
   caption="Table 3.4.1B : Goal Line - In-Play Time Range Breakdown ('0,000)",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 ```
 
 *table 3.4.1b* : `r paste0(dim(lst[[2]]), collapse=' x ')` : *Goal Line - In-Play time range breakdown table.*
@@ -539,7 +549,7 @@ lst[[2]] %>% datatable(
 ```{r data-ip-summary-plots1a, echo=FALSE, results='asis'}
 ## Plot the Stakes and P&L on AH handicap graphs
 ## the stakes amount display as $1 = $10,000
-lst <- ipBets1 %>% select(InPlay2, AHOU, ipRange, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, InPlay2, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(data_frame)
+lst <- ipBets1 %>% select(InPlay2, AHOU, ipRange, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, InPlay2, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(., function(x) tbl_df(data.frame(x)))
 
 gvis.options <- list(title=" Asian Handicap - In-Play Time Range Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis="{title:'ipRange'}", vAxis="{title:'Stakes'},{title:'PL'}", width='automatic', height='automatic')
 
@@ -573,28 +583,28 @@ rm(line.gvis)
 ## In-Play : time range, current score, current ah/ou and also picked home team or favorite team etc.
 funs <- expression(sum, mean, median, sd, length)
 ipBets2 <- llply(funs, function(x)
-    ddply(dat, ~AHOU+CurScore+ipHCap, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('AHOU', 'CurScore', 'ipHCap')) %>% .[-c((ncol(.)-1):ncol(.))] %>% data_frame
+    ddply(dat, ~AHOU+CurScore+ipHCap, .drop=TRUE, colwise(.fun=x, .cols=~Stakes+Return+PL))) %>% join_all(by=c('AHOU', 'CurScore', 'ipHCap')) %>% .[-c((ncol(.)-1):ncol(.))] %>% data.frame
 
 names(ipBets2) <- suppressWarnings(c('AHOU', 'CurScore', 'ipHCap', 'Stakes', 'Return', 'PL', 'S.mean', 'R.mean', 'PL.mean', 'S.median', 'R.median', 'PL.median', 'S.sd', 'R.sd', 'PL.sd', 'Count'))
 
-ipBets2 %<>% map_if(is.numeric, round, 2) %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%'))
+ipBets2 %<>% map_if(is.numeric, round, 2) %>% data.frame %>% mutate(R.percent=sprintf(Return/Stakes, fmt='%1.4f%%'), PL.percent=sprintf(PL/Stakes, fmt='%1.4f%%')) %>% tbl_df
 
 lst <- ipBets2 %>% dlply(.(AHOU))
-
 lst[[1]] %>% datatable(
   caption="Table 3.4.2A : Asian Handicap - In-Play Current Score and Handicap Breakdown ('0,000)",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 
 rm(funs)
 ```
@@ -604,18 +614,19 @@ rm(funs)
 ```{r data-ip-summary-table2b, echo=FALSE, results='asis'}
 lst[[2]] %>% datatable(
   caption="Table 3.4.2B : Goal Line - In-Play Current Score and Handicap Breakdown ('0,000)",
-  extensions = list("ColReorder"=NULL, "ColVis"=NULL,
-                      "TableTools"=NULL #, "FixedColumns"=list(leftColumns=2)
-                      ), 
+  extensions = list("ColReorder"=NULL, "ColVis"=NULL, "TableTools"=NULL
+                    #, "FixedColumns"=list(leftColumns=2)
+                    ), 
   options = list(autoWidth=TRUE,
-                   oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
-                   oTableTools=list(
-                   sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
-                   aButtons=list("copy", "print",
-                                   list(sExtends="collection",
-                                        sButtonText="Save",
-                                        aButtons=c("csv","xls")))),
-                   dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE))
+                 oColReorder=list(realtime=TRUE), #oColVis=list(exclude=c(0, 1), activate='mouseover'),
+                 oTableTools=list(
+                 sSwfPath="//cdnjs.cloudflare.com/ajax/libs/datatables-tabletools/2.1.5/swf/copy_csv_xls.swf",
+                 aButtons=list("copy", "print",
+                               list(sExtends="collection",
+                                    sButtonText="Save",
+                                    aButtons=c("csv","xls")))),
+                 dom='CRTrilftp', scrollX=TRUE, scrollCollapse=TRUE,
+                 colVis=list(exclude=c(0), activate='mouseover')))
 ```
 
 *table 3.5.1b* : `r paste0(dim(lst[[2]]), collapse=' x ')` : *Goal Line - In-Play state-space staking breakdown table.*
@@ -625,7 +636,7 @@ lst[[2]] %>% datatable(
 ```{r data-ip-summary-plots2a, echo=FALSE, results='asis'}
 ## Plot the Stakes and P&L on AH handicap graphs
 ## the stakes amount display as $1 = $10,000
-lst <- ipBets2 %>% select(AHOU, CurScore, ipHCap, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, ipHCap, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(data_frame)
+lst <- ipBets2 %>% select(AHOU, CurScore, ipHCap, Stakes, Return, PL) %>% dlply(.(AHOU), gather, Type, Stakes, Stakes:PL) %>% llply(unite, Category, ipHCap, Type, sep='.') %>% llply(spread, Category, Stakes) %>% llply(., function(x) tbl_df(data.frame(x)))
 
 gvis.options <- list(title="Asian Handicap - In-Play Current Score and Handicap Breakdown ('0,000)", series="[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis="{title:'CurScore'}", vAxis="{title:'Stakes'},{title:'PL'}", width='automatic', height='automatic')
 
@@ -750,7 +761,7 @@ m <- ddply(dat, .(Result), summarise, Stakes=sum(Stakes), Return=sum(Return), Ra
 tv <- c('Total',colSums(m[-1])); tv[4] <- as.numeric(tv[3])/as.numeric(tv[2])
 m <- suppressWarnings(rbind(m,tv))
 m$Result <- factor(c(as.character(m$Result)[-length(m$Result)],'Total')); rm(tv)
-m %>% kable(.,caption='Table 4.1.3 : Summary of Betting Results')
+m %>% kable(caption='Table 4.1.3 : Summary of Betting Results')
 ```
 
 *table 4.1.3* : `r paste0(dim(m), collapse=' x ')` : *Summary of betting results.*
@@ -761,7 +772,7 @@ m %>% kable(.,caption='Table 4.1.3 : Summary of Betting Results')
 ##
 ## Calculate the proportional model on the results, which are 'Cancelled', 'Half-Loss', 'Half-Win', 'Loss', 'Push', 'Win'.
 ## Ommited the InPlay matches, filter out the sample data, only Pre-Games matches taken into further calculations.
-preData <- subset(dat, InPlay=='No' & InPlay2=='No')
+preData <- filter(dat, InPlay=='No' & InPlay2=='No')
 hdp <- sort(unique(as.numeric(as.character(dat$HCap))))
 hdp
 ```
@@ -970,8 +981,34 @@ Sys.info()
 ```
 
 
+### 7.2 Versions' Log
+  
+  - File pre-release version: 0.9.0
+    - file created
+    - Applied **ggplot2**, **ggthemes**, **directlabels** packages for ploting. For example, the graphs applied in Section [2. Dataset].
+  - File pre-release version: 0.9.1
+    - Added [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) which is research for teams' name filtering purpose.
+    - Changed from **knitr::kable** to use datatble from **DT::datatable** to make the tables be dynamic.
+    - Changed from **ggplot2** relevant packages to **googleVis** package to make graph dynamic.
+    - Completed chapter [3. Summarise the Staking Model].
+  - File pre-release version: 0.9.2 - *"2016-02-20 09:41:49 JST"*
+    - Added Section [7.2 Versions' Log] and Section [7.3 Speech and Blooper] since retest the coding
+    - Added Section [4. Staking Model] .
+  - File version: 1.0.3 - *"2016-02-05 05:24:35 EST"*
+    - Modified datatable to make the documents can be save as xls/csv
+    - Added log file for version upgraded
 
-## References
+
+### 7.3 Speech and Blooper
+
+  There are quite some errors when I **knit HTML**:
+  
+  * let say always stuck (which is not response and consider as completed) at 29%. I tried couple times while sometimes prompt me different errors (upgrade Droplet to larger RAM memory space doesn't helps) and eventually apply `rm() and gc()` to remove the object after use and also clear the memory space.
+
+  * Need to reload the package `suppressAll(library('networkD3'))` which in chunk `decission-tree-A` prior to apply function `simpleNetwork` while I load it in chunk `libs` at the beginning of the section 1. Otherwise cannot found that particlar function.
+
+
+### 7.4 References
   
   * [Creating a Profitable Betting Strategy for Football by Using Statistical Modelling](http://www.ylikerroin.com/file/Complete.pdf)
   * [What Actually Wins Soccer Matches: Prediction of the 2011-2012 Premier League for Fun and Profit](http://homes.cs.washington.edu/~jasnyder/papers/thesis.pdf)
