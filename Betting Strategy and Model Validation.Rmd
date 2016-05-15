@@ -21,20 +21,20 @@ suppressMessages(source('function/libs.R'))
 
 
 
-## Abstract
+# Abstract
 
   This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the [Dixon and Pope (2003)](http://www.sciencedirect.com/science/article/pii/S016920700400010X), due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the [Wrangling F1 Data With R](http://www.r-bloggers.com/wrangling-f1-data-with-r-f1datajunkie-book/) if you are getting interest to write a data analysis on Sports-book.
 
 
 
-## 1. Introduction to the Betting Stategics
+# 1. Introduction to the Betting Stategics
 
   * Section [1.1 Introducing Betting Strategies] - Introduce Betting Strategies
   * Section [1.2 Value Betting] - Odds Price and Overrounds Changared by Bookmakers
   * Section [1.3 Professional Gambler] - Punters' life and How Hedge Fund Works
 
 
-### 1.1 Introducing Betting Strategies
+## 1.1 Introducing Betting Strategies
 
   As a player, we know gambling is that an activities which bet against bankers. Normally gamblers applied few betting strategies to make money from bankers or may be other players. You can try to refer to [数据科学中的R和Python - Data Science is the art of turning data into actions - 如何用21点来击败赌场？](http://xccds1977.blogspot.my/2012/03/21.html)or [Betting Strategy](https://en.wikipedia.org/wiki/Betting_strategy) for more information.
 
@@ -83,7 +83,7 @@ suppressMessages(source('function/libs.R'))
   [16]*Maurizio Montone (2015)* taking 82 operators' as sample data for research on arbitrages and bookmakers' characteristics. [17]*Steven D. Levitt (2004)* analyse the betslips breakdown which is similar with section 3 in this paper.
 
 
-### 1.2 Value Betting
+## 1.2 Value Betting
 
   Section [1.1 Introducing Betting Strategies] describe some basic concepts about betting strategies. Now we focus on [Value betting](http://www.valuepunter.com/valuebetting.htm) and it is the popular and efficient staking strategy since money management is the key for betting strategy.
 
@@ -104,7 +104,7 @@ suppressMessages(source('function/libs.R'))
   The best and the most successful punters are money managers looking for ideal situations, which are defined as matches with only high percentage of return. In individual situations luck will play into the outcome of an event, which no amount of odds compiling can overcome, but in the long run a disciplined punter will win more of those lucky games than lose.
 
 
-### 1.3 Professional Gambler
+## 1.3 Professional Gambler
   
   Nowadays, operates make a lot of restriction to increase their profits. For example: single bet maximum stakes per account, triggers upon staking per bet, single match maximum stakes per account, vigorous/spreads margin (Which will describe in [2.2 Overrounds / Vigorish]). As a professional gambler we are require a high level mathematical skill in order to take profit from operators. Below are some articles about sports betting data analysis.
   - [Play Data, Play Ball!Exploring Baseball Data with R](http://suensummit.github.io/playBall/#1)
@@ -124,13 +124,13 @@ suppressMessages(source('function/libs.R'))
 
 
 
-## 2. Data
+# 2. Data
 
   * Section [2.1 Collect and Reprocess the Data] - Data from Firm A
   * Section [2.2 Overrounds / Vigorish] - Odds Price and Overrounds Changared by Bookmakers
 
 
-### 2.1 Collect and Reprocess the Data
+## 2.1 Collect and Reprocess the Data
 
   I collect the data-set of World Wide soccer matches from year 2011 until 2015 from a British betting consultancy named firm A. All bets placed by display on HK currency, and the odds price also measure based on Hong Kong price.
   
@@ -187,7 +187,7 @@ rm(mbase) ## We need to scrap the livescore data based on the raw data mbase wit
   You are feel free to read [Asian Handicap](http://www.bettingarbitrage.eu/asian-handicap.html) and [Arbitrage of Synthetic Asian Handicap Bets](http://www.sportstradingnetwork.com/arbitrage-synthetic-asian-handicap-bets/) for some basic lession about Asian Handicap Bets.
   
 
-### 2.2 Overrounds / Vigorish
+## 2.2 Overrounds / Vigorish
 
   **Fair odds**: the odds that would be offered if the sum of the probabilities for all possible outcomes were exactly 1 (100%). For example, supposing we had a market with three possible outcomes {A, B, C} with probabilities of success $P(A) = 0.5, P(B) = 0.4$ and $P(C) = 0.1$, the fair odds would be `2.00`, `2.50`, and `10.00` respectively, which are just the inverse of the estimated probabilities.
 
@@ -248,7 +248,7 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 
 
 
-## 3. Summarise the Staking Model
+# 3. Summarise the Staking Model
 
   * Section [3.1 Summarise Diversified Periodic Stakes] - Summarise the Stakes and Return
   * Section [3.2 Summarise the Staking Handicap] - Summarise the Staking Handicap Breakdown
@@ -257,7 +257,7 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
   * Section [3.5 Summarise the In-Play Staking Based on Current Score] - Summarise the In-Play Staking Breakdown by Current Score
 
 
-### 3.1 Summarise Diversified Periodic Stakes
+## 3.1 Summarise Diversified Periodic Stakes
   
   Before we start analyse the staking model, we are firstly see some diversified periodic breakdown Stakes and Profit & Lose of the Agency A.
   
@@ -265,7 +265,7 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 ## Annual summry graph.
 m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL)) %>% data.frame %>% tbl_df
 
-gvis.options <- list(title = "Annum Stakes & PL ('0,000)", series = "[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis = "{title:'Year'}", vAxis = "{title:'Stakes'},{title:'PL'}",width = 'automatic', height = 'automatic')
+gvis.options <- list(title = "Annum Stakes & PL ('0,000)", series = "[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis = "{title:'Year'}", vAxis = "{title:'Stakes'},{title:'PL'}", width = 'automatic', height = 'automatic')
 col.gvis <- gvisColumnChart(xvar = 'Sess', yvar = c('Stakes','Return','PL'), data = m, options = gvis.options)
 plot(col.gvis)
 
@@ -387,7 +387,7 @@ rm(ddim, line.gvis, m)
   From the graph above, we can easily know the figure of Stakes, Returns and Profit & Lose while below table separate into daily breakdown. The table shows the daily stakes and also quantile values.
   
   
-### 3.2 Summarise the Staking Handicap
+## 3.2 Summarise the Staking Handicap
 
 ```{r data-hdp-summary-table1a, echo = FALSE, results = 'asis'}
 ## Handicap breakdown summary
@@ -476,7 +476,7 @@ rm(line.gvis)
   Now we look at the graph above, we can know the Stakes breakdown on both `r names(lProfile)[1]` and `r names(lProfile)[2]`.
 
 
-### 3.3 Summarise the Staking Prices
+## 3.3 Summarise the Staking Prices
 
 ```{r data-hdp-summary-table2a, echo = FALSE, results = 'asis'}
 ## Favorite or Underdog and price range breakdown
@@ -563,7 +563,7 @@ rm(line.gvis)
   However, due to consideration of the stakes amount, here I just simply use the HK in order to make the Stakes and Return/PL exactly same with the dataset.
 
 
-### 3.4 Summarise the In-Play Staking Timing
+## 3.4 Summarise the In-Play Staking Timing
 
 ```{r data-ip-summary-table1a, echo = FALSE, results = 'asis'}
 ## In-Play : time range
@@ -646,7 +646,7 @@ rm(line.gvis)
   From the above graph shows the In-Play stakes, the first `(0,10]` time range placed most stakes while `(55,60]` start dropping. The `<NA>` includes all stakes when the soccer players are not playing on the football field. (Pre-games, Half-Time, Full-Time, Extra-Time, Injuries Time, Breaks Time etc.)
 
 
-### 3.5 Summarise the In-Play Staking Based on Current Score
+## 3.5 Summarise the In-Play Staking Based on Current Score
 
 ```{r data-ip-summary-table2a, echo = FALSE, results = 'asis'}
 ## In-Play : time range, current score, current ah/ou and also picked home team or favorite team etc.
@@ -737,17 +737,17 @@ rm(line.gvis)
 
 
 
-## 4. Staking Model
+# 4. Staking Model
 
   * Section [4.1 Basic Equation] - Analyse the Odds Price and Probabilities
-  * Section [4.2 Linear Model] - 
+  * Section [4.2 Linear Model] - Reversed Engineer to get the EMOdds derived from Stakes
   * Section [4.3 Kelly Model] - aaaaaa
   * Section [4.4 Poisson Modelling] - Soccer Scores Modelling
   * Section [4.5 Staking Modelling and Money Management] - aaaaaa
   * Section [4.6 Expectation Maximization and Staking Simulation] - aaaaaa
   
 
-### 4.1 Basic Equation
+## 4.1 Basic Equation
 
   Before we start modelling, we look at the summary of investment return rates.
 
@@ -827,7 +827,25 @@ m <- ddply(dat, .(Result), summarise, Stakes = sum(Stakes), Return = sum(Return)
 tv <- c('Total', colSums(m[-1])); tv[4] <- as.numeric(tv[3])/as.numeric(tv[2])
 m <- suppressWarnings(rbind(m, tv))
 m$Result <- factor(c(as.character(m$Result)[-length(m$Result)], 'Total')); rm(tv)
-m %>% kable(caption = 'Table 4.1.3 : Summary of Betting Results')
+m %<>% map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
+#'@ m %>% kable(caption = 'Table 4.1.3 : Summary of Betting Results')
+
+suppressMessages(library('formattable'))
+m %>% formattable(list(
+    caption = 'Table 4.1.3 : Summary of Betting Results', 
+    Stakes = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, "blue", "grey")), 
+                       x ~ sprintf("%.2f (rank: %02d)", x, rank(-x))), 
+    Return = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, "blue", "grey")), 
+                       x ~ sprintf("%.2f (rank: %02d)", x, rank(-x))), 
+    Rates = normalize_bar("pink", 0.2), 
+    n = color_tile("white", "green"), 
+    S.prop = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, "blue", "grey")), 
+                       x ~ sprintf("%.2f (rank: %02d)", x, rank(-x))), 
+    R.prop = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, "blue", "grey")), 
+                       x ~ sprintf("%.2f (rank: %02d)", x, rank(-x))), 
+    prop = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, "blue", "grey")), 
+                     x ~ sprintf("%.2f (rank: %02d)", x, rank(-x)))
+)) %>% as.htmlwidget
 ```
 
 *table 4.1.3* : `r paste0(dim(m), collapse = ' x ')` : *Summary of betting results.*
@@ -838,17 +856,18 @@ m %>% kable(caption = 'Table 4.1.3 : Summary of Betting Results')
 ##
 ## Calculate the proportional model on the results, which are 'Cancelled', 'Half-Loss', 'Half-Win', 'Loss', 'Push', 'Win'.
 ## Ommited the InPlay matches, filter out the sample data, only Pre-Games matches taken into further calculations.
-preData <- filter(dat, InPlay == 'No' & InPlay2 == 'No')
-hdp <- sort(unique(as.numeric(as.character(dat$HCap))))
-hdp
+#'@ preData <- filter(dat, InPlay == 'No' & InPlay2 == 'No')
+#'@ hdp <- sort(unique(as.numeric(as.character(dat$HCap))))
+#'@ hdp
 ```
 
+## 4.2 Linear Model
 
-### 4.2 Linear Model
+  From our understanding of staking, the covariates we need to consider should be only odds price since the handicap's covariate has settled according to different handicap of EMOdds.
 
-  Again, I don't pretend to know the correct model, here I try to apply linear model, and descrete linear model as well as bayesian etc. Kindly refer to [Staking Linear ®egression Ⓜodels](http://rpubs.com/englianhu/staking-linear-regression-models).
+  Again, I don't pretend to know the correct Ⓜodel, here I simply apply linear model to retrieve the value of *EMOdds* derived from stakes. The purpose of measure the edge overcame bookmakers' vigorish is *to know the levarage of the staking activities onto 1 unit edge of odds price by firm A to agency A*.
 
-```{r}
+```{r linear-models}
 ## Test
 ## Choosing the variables of linear models
 #'@ summary(lm(Return~HCap, data=dat))
@@ -871,6 +890,11 @@ hdp
 #'@ summary(lm(Stakes~CurScore+ipHCap, data=dat))
 #'@ summary(lm(Stakes~CurScore+ipRange, data=dat))
 #'@ summary(lm(Stakes~CurScore+ipRange+ipHCap, data=dat))
+
+## Linear Mixed Effects Models
+#'@ library('lme4')
+#'@ 
+#'@ 
 ```
 
   
@@ -887,7 +911,7 @@ hdp
 ```
 
 
-### 4.3 Kelly Model
+## 4.3 Kelly Model
 
   From the papers [Niko Marttinen2001](http://www.ylikerroin.com/file/Complete.pdf) and [Jeffrey Alan Logan Snyder 2013](http://homes.cs.washington.edu/~jasnyder/papers/thesis.pdf) both applying **Full-Kelly**,**Half-Kelly** and also **Quarter-Kelly** models which similar with my previous Kelly-Criterion model [englianhu2014](http://rpubs.com/englianhu/kelly_eng1112) but enhanced.
 
@@ -942,7 +966,7 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho)$$   *equation 4.3.4*
   Now we look at abpve function from a different perspective by considering the observed values $x1, x2, …, xn$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
 
 
-### 4.4 Poisson Modelling
+## 4.4 Poisson Modelling
 
   Here we introduce the [Dixon & Coles 1996](http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf) Poisson model and its codes. You are freely learning from below links if interest.
 
@@ -972,7 +996,7 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
   sample...
 
 
-### 4.5 Staking Modelling and Money Management
+## 4.5 Staking Modelling and Money Management
 
 ```{r, echo = FALSE, results = 'asis'}
 ## Bootstrap and apply maximum likelihood model
@@ -983,7 +1007,7 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
   sample... Geometric Mean
 
 
-### 4.6 Expectation Maximization and Staking Simulation
+## 4.6 Expectation Maximization and Staking Simulation
 
 ```{r, echo = FALSE, results = 'asis'}
 ## Apply Poison model to simulate the result of the matches
@@ -997,10 +1021,12 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 
 
 
-## 5. Result
+# 5. Result
 
+  * Section [5.1 Comparison of the Results] - 
+  * Section [5.2 Market Basket] - 
 
-### 5.1 Comparison of the Results
+## 5.1 Comparison of the Results
 
 Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 
@@ -1014,7 +1040,7 @@ Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
   [Dixon&Pope2003](http://www.sciencedirect.com/science/article/pii/S016920700400010X) apply linear model to compare the efficiency of the odds prices offer by first three largest Firm A, B and C in UK.
 
 
-### 5.2 Market Basket
+## 5.2 Market Basket
 
   Here I apply the `arules` and `arulesViz` packages to analyse the market basket of the bets.
 
@@ -1025,10 +1051,10 @@ options(op)
 
 
 
-## 6. Conclusion
+# 6. Conclusion
 
 
-### 6.1 Conclusion
+## 6.1 Conclusion
 
   Due to the data-sets I collected just one among all agents among couple sports-bookmakers [4lowin](https://www.youtube.com/watch?v=eFYS0jdSiWc). Here I cannot determine if the sample data among the population...
 
@@ -1044,7 +1070,7 @@ source : [Preparing for a Career as a Sports Statistician: Two Interviews with P
 ...
 ...
 
-### 6.2 Future Works
+## 6.2 Future Works
   
   I will be apply Shiny to write a dynamic website to utilise the function as web based apps. You are welcome to refer [SHOW ME SHINY](http://www.showmeshiny.com/category/topics/sports/).
   
@@ -1052,22 +1078,22 @@ source : [Preparing for a Career as a Sports Statistician: Two Interviews with P
 
 
 
-## 7. Appendices
+# 7. Appendices
 
   
-### 7.1 Documenting File Creation 
+## 7.1 Documenting File Creation 
 
   It's useful to record some information about how your file was created.
   
-  * File creation date: 2015-07-22
-  * `r R.version.string`
-  * R version (short form): `r getRversion()`
-  * `rmarkdown` package version: `r packageVersion('rmarkdown')`
-  * File version: 1.0.0
-  * File latest updated date: `r Sys.Date()`
-  * Author Profile: [®γσ, Eng Lian Hu](http://rpubs.com/englianhu/ryoeng)
-  * GitHub: [Source Code](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation)
-  * Additional session information
+  - File creation date: 2015-07-22
+  - `r R.version.string`
+  - R version (short form): `r getRversion()`
+  - [**rmarkdown**](https://github.com/rstudio/rmarkdown) package version: `r packageVersion('rmarkdown')`
+  - File version: 1.0.0
+  - File latest updated date: `r Sys.Date()`
+  - Author Profile: [®γσ, Eng Lian Hu](http://rpubs.com/englianhu/ryoeng)
+  - GitHub: [Source Code](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation)
+  - Additional session information
   
 ```{r info, echo = FALSE, results = 'asis'}
 lubridate::now()
@@ -1076,7 +1102,7 @@ Sys.info()
 ```
 
 
-### 7.2 Versions' Log
+## 7.2 Versions' Log
   
   - File pre-release version: 0.9.0
     - file created
@@ -1095,7 +1121,7 @@ Sys.info()
     
 
 
-### 7.3 Speech and Blooper
+## 7.3 Speech and Blooper
 
   Firstly I do appreciate those who shade me a light on my research. Meanwhile I do happy and learn from the research.
 
@@ -1108,7 +1134,7 @@ Sys.info()
   * Need to reload the package `suppressAll(library('networkD3'))` which in chunk `decission-tree-A` prior to apply function `simpleNetwork` while I load it in chunk `libs` at the beginning of the section 1. Otherwise cannot found that particlar function.
 
 
-### 7.4 References
+## 7.4 References
 
 ####  Reference for industry knowdelege and academic research portion for the paper.
 
