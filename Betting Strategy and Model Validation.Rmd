@@ -904,7 +904,7 @@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llp
 list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., summary)
 ```
 
-  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, as well as the 
+  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf).]
 
 ```
 Section : reverse modelling to get the EMProb prior to calculate the coefficient of the staking model. Otherwise might rearrange the order of applied Poison model here by refer to international competitions.
@@ -916,7 +916,7 @@ Section : reverse modelling to get the EMProb prior to calculate the coefficient
 ```
 draft : 
   - http://www.moneychimp.com/articles/risk/regression.htm
-  - read *Galema, Plantinga and Scholtens (2008)*
+  - read *Galema, Plantinga and Scholtens (2008)* https://englianhu.files.wordpress.com/2016/06/the-stocks-at-stake-return-and-risk-in-socially-responsible-investment.pdf
   - reverse engineering on staking-profit linear regression model to get/retrieve EMProb value since now only get the coefficients figire of EMProb. Although incompleted soccer teams... 2ndly, reversed poison model from EMProb might is not workable on one-sided competition, need to refer to some international competition as references for incompleted dataset.
 ```
 
@@ -1166,7 +1166,7 @@ Sys.info()
   15. [**Why are Gambling Markets Organised so Differently from Financial Markets?** *by Steven Levitt (2004)*](https://www.stat.berkeley.edu/~aldous/157/Papers/Levitt_Gambling_2004.pdf)
   16. [**Forecasting Accuracy and Line Changes in the NFL and College Football Betting Markets** *by Steven Xu (2013)*](http://blogs.colgate.edu/economics/files/2013/05/Xu_Econ490_Thesis.pdf)
   17. [**The Forecast Ability of the Dispersion of Bookmaker Odds** *by Kwinten Derave (2013-2014)*](http://lib.ugent.be/fulltxt/RUG01/002/165/010/RUG01-002165010_2014_0001_AC.pdf)
-  18. [**The Stocks at Stake: Return and Risk in Socially Responsible Investment** *by Galema, Plantinga and Scholtens (2008)*](http://www.rug.nl/research/portal/files/2538250/02_c2.pdf)
+  18. [**The Stocks at Stake: Return and Risk in Socially Responsible Investment** *by Galema, Plantinga and Scholtens (2008)*](https://englianhu.files.wordpress.com/2016/06/the-stocks-at-stake-return-and-risk-in-socially-responsible-investment.pdf)
 
 ####  Reference for technical research on programming and coding portion for the paper.
 
