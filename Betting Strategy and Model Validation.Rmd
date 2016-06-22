@@ -906,6 +906,10 @@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llp
 
   Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, as well as the 
 
+```
+Section : reverse modelling to get the EMProb prior to calculate the coefficient of the staking model. Otherwise might rearrange the order of applied Poison model here by refer to international competitions.
+```
+
   *Galema, Plantinga and Scholtens (2008)*^[You are feel free to refer to [Reference for industry knowdelege and academic research portion for the paper] for further details]
 
 # reminder (temporary noted for further):
@@ -913,7 +917,7 @@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llp
 draft : 
   - http://www.moneychimp.com/articles/risk/regression.htm
   - read *Galema, Plantinga and Scholtens (2008)*
-  - reverse engineering on staking-profit linear regression model to get/retrieve EMProb value since now only get the coefficients figire of EMProb. Although incompleted soccer teams... 2ndly, reversed poison model from EMProb might is not workable on oneway competition, need to refer to some international competition as references for incompleted dataset.
+  - reverse engineering on staking-profit linear regression model to get/retrieve EMProb value since now only get the coefficients figire of EMProb. Although incompleted soccer teams... 2ndly, reversed poison model from EMProb might is not workable on one-sided competition, need to refer to some international competition as references for incompleted dataset.
 ```
 
   *John Fingleton & Patrick Waldron (1999)*^[You are feel free to refer to [Reference for industry knowdelege and academic research portion for the paper] for further details] apply Shin's model and finally conclude suggests that bookmakers in Ireland are infinitely risk-averse and balance their books. The authors cannot distinguish between inside information and operating costs, merely concluding that combined they account for up to 3.7% of turnover. They compare different versions of our model, using data from races in Ireland in 1993. The authors' empirical results can be summarised as follows:
@@ -1121,10 +1125,10 @@ Sys.info()
   - File pre-release version: 0.9.2 - *"2016-02-20 09:41:49 JST"*
     + Added Section [7.2 Versions' Log] and Section [7.3 Speech and Blooper] since retest the coding
     + Added Section [4. Staking Model] .
-  - File version: 0.9.3 - *"2016-02-05 05:24:35 EST"*
+  - File pre-release version: 0.9.3 - *"2016-02-05 05:24:35 EST"*
     + Modified DT::datatable to make the documents can be save as xls/csv
     + Added log file for version upgraded
-  - File version: 0.9.4 - *2016-06-22 13:36:33 JST*
+  - File pre-release version: 0.9.3.1 - *2016-06-22 13:36:33 JST*
     + Reviewed previous version, DT::datatable updated new version replaced *Button* extension from *TableTools*, removed sparkline and htmlwidget
     + Applied linear regression to test the efficiency of staking model by consultancy firm A
 
