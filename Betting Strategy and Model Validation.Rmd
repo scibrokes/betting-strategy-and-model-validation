@@ -1,6 +1,6 @@
 ---
-title: "Betting Strategy and Model Validation (テスト)"
-author: "[®γσ, Eng Lian Hu](http://englianhu.wordpress.com) <img src='figure/ShirotoNorimichi.jpg' width='24'> 白戸則道®"
+title: "Betting Strategy and Ⓜodel Validation"
+author: "[®γσ, Eng Lian Hu](http://englianhu.wordpress.com) <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸則道®"
 date: "`r Sys.Date()`"
 output:
   html_document:
@@ -19,13 +19,9 @@ suppressMessages(library('utils'))
 suppressMessages(source('function/libs.R'))
 ```
 
-
-
 # Abstract
 
   This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the [Dixon and Pope (2003)](http://www.sciencedirect.com/science/article/pii/S016920700400010X), due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the [Wrangling F1 Data With R](http://www.r-bloggers.com/wrangling-f1-data-with-r-f1datajunkie-book/) if you are getting interest to write a data analysis on Sports-book.
-
-
 
 # 1. Introduction to the Betting Stategics
 
@@ -33,34 +29,33 @@ suppressMessages(source('function/libs.R'))
   * Section [1.2 Value Betting] - Odds Price and Overrounds Changared by Bookmakers
   * Section [1.3 Professional Gambler] - Punters' life and How Hedge Fund Works
 
-
 ## 1.1 Introducing Betting Strategies
 
   As a player, we know gambling is that an activities which bet against bankers. Normally gamblers applied few betting strategies to make money from bankers or may be other players. You can try to refer to [数据科学中的R和Python - Data Science is the art of turning data into actions - 如何用21点来击败赌场？](http://xccds1977.blogspot.my/2012/03/21.html)or [Betting Strategy](https://en.wikipedia.org/wiki/Betting_strategy) for more information.
 
   Well, I'll introducing some sports betting strategies used by a company **Sports Insights** (You can just read as your own reference, since I've never subscribe thier service, here I term it as **SI**) might help you improve your winning percentage and start making money investing in sports. The following concepts represent some of the most lucrative historical betting trends and are the same tools used by sharp bettors to turn consistent profits.
 
-  - **Sports Betting Strategy 1** – [Betting Against the Public](https://www.sportsinsights.com/how-to-bet-on-sports/betting-against-the-public/)
+  - **Sports Betting Strategy 1** - [Betting Against the Public](https://www.sportsinsights.com/how-to-bet-on-sports/betting-against-the-public/)
 
   Betting Against the Public is one of the most popular and simplest methods used by **SI** to maximize value in the sports betting marketplace.
 
-  - **Sports Betting Strategy 2** – [Reverse-Line Movement](https://www.sportsinsights.com/how-to-bet-on-sports/reverse-line-movement/)
+  - **Sports Betting Strategy 2** - [Reverse-Line Movement](https://www.sportsinsights.com/how-to-bet-on-sports/reverse-line-movement/)
 
   **SI** will show how analyzing [betting trends data](https://www.sportsinsights.com/betting-trends/) and line movement can help you identify which games the sharp money (wagers placed by sharps, wiseguys or betting syndicates) is taking.
 
-  - **Sports Betting Strategy 3** – [Major Line Moves](https://www.sportsinsights.com/major-line-moves/)
+  - **Sports Betting Strategy 3** - [Major Line Moves](https://www.sportsinsights.com/major-line-moves/)
 
   **SI**'s major line move analysis explains how to interpret line moves across the sports betting marketplace in order to find value.
 
-  - **Sports Betting Strategy 4** – [Shading Sports Betting Lines](https://www.sportsinsights.com/how-to-bet-on-sports/shading-sports-betting-lines/)
+  - **Sports Betting Strategy 4** - [Shading Sports Betting Lines](https://www.sportsinsights.com/how-to-bet-on-sports/shading-sports-betting-lines/)
 
   This article explains how sportsbooks shade their lines to exploit human tendencies and how you can take advantage by using **SI**'s Betting Against the Public strategy.
 
-  - **Sports Betting Strategy 5** – [Shopping for the Best Line](https://www.sportsinsights.com/shopping-for-the-best-line/)
+  - **Sports Betting Strategy 5** - [Shopping for the Best Line](https://www.sportsinsights.com/shopping-for-the-best-line/)
 
   Shopping for the best possible number is an easy way to improve your winning percentage over the course of an entire season.
 
-  - **Sports Betting Strategy 6** – [The Importance of Units Won](https://www.sportsinsights.com/sportsbettingarticles/the-importance-of-true-units-won-in-evaluating-betting-strategies/)
+  - **Sports Betting Strategy 6** - [The Importance of Units Won](https://www.sportsinsights.com/sportsbettingarticles/the-importance-of-true-units-won-in-evaluating-betting-strategies/)
 
   Understanding the importance of units won vs winning percentage will help you evaluate the true worth of any sports betting system.
 
@@ -68,7 +63,7 @@ suppressMessages(source('function/libs.R'))
   
   - [StrataBet](https://app.stratabet.com/home)
   
-<iframe width="420" height="315" src="https://www.youtube.com/embed/V_5O0GUEPo4" frameborder="0" allowfullscreen></iframe>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/V_5O0GUEPo4" frameborder="0" allowfullscreen></iframe>
 
   - [4lowin2](http://www.4lowin.com/)
   
@@ -81,7 +76,6 @@ suppressMessages(source('function/libs.R'))
   -[Sports Betting Tips For Profit](http://sportsbettingtipsforprofit.com/)
   
   [16]*Maurizio Montone (2015)* taking 82 operators' as sample data for research on arbitrages and bookmakers' characteristics. [17]*Steven D. Levitt (2004)* analyse the betslips breakdown which is similar with section 3 in this paper.
-
 
 ## 1.2 Value Betting
 
@@ -103,7 +97,6 @@ suppressMessages(source('function/libs.R'))
 
   The best and the most successful punters are money managers looking for ideal situations, which are defined as matches with only high percentage of return. In individual situations luck will play into the outcome of an event, which no amount of odds compiling can overcome, but in the long run a disciplined punter will win more of those lucky games than lose.
 
-
 ## 1.3 Professional Gambler
   
   Nowadays, operates make a lot of restriction to increase their profits. For example: single bet maximum stakes per account, triggers upon staking per bet, single match maximum stakes per account, vigorous/spreads margin (Which will describe in [2.2 Overrounds / Vigorish]). As a professional gambler we are require a high level mathematical skill in order to take profit from operators. Below are some articles about sports betting data analysis.
@@ -122,13 +115,10 @@ suppressMessages(source('function/libs.R'))
 
   Now that you have some basic betting strategy knowledge and concept, you can try to learn further sportsbook staking modelling to take the challenge.
 
-
-
 # 2. Data
 
   * Section [2.1 Collect and Reprocess the Data] - Data from Firm A
   * Section [2.2 Overrounds / Vigorish] - Odds Price and Overrounds Changared by Bookmakers
-
 
 ## 2.1 Collect and Reprocess the Data
 
@@ -146,7 +136,7 @@ years <- seq(2011, 2015)
 ## Here we term as Fair Odds
 lProfile <- c(AH = 0.10, OU = 0.12)
 
-mbase <- readfirmDatasets(years = years) %>% arrfirmDatasets(lProfile = lProfile)
+mbase <- readfirmData(years = years) %>% arrfirmData(lProfile = lProfile)
 
 ## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
 ## the stakes amount display as $1 = $10,000
@@ -160,9 +150,8 @@ dat %>% datatable(
   caption = "Table 2.1.1 : Firm A Staking Data", 
   escape = FALSE, filter = "top", rownames = FALSE, 
   extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+                    "Buttons" = NULL, "Responsive" = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE, scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
@@ -170,7 +159,7 @@ dat %>% datatable(
                                      buttons = c('csv', 'excel', 'pdf'), 
                                      text = 'Download'), I('colvis'))))
 
-rm(years, readfirmDatasets, arrfirmDatasets)
+rm(years, readfirmData, arrfirmData)
 rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.
 ```
 
@@ -185,7 +174,6 @@ rm(mbase) ## We need to scrap the livescore data based on the raw data mbase wit
   In order to analyse the AHOU, here I've filtered out all soccer matches other than AHOU which is the table showing above (For example : Corners, Total League Goals etc.) for whole research paper. Please refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) to see the firm A staking raw data-set.
   
   You are feel free to read [Asian Handicap](http://www.bettingarbitrage.eu/asian-handicap.html) and [Arbitrage of Synthetic Asian Handicap Bets](http://www.sportstradingnetwork.com/arbitrage-synthetic-asian-handicap-bets/) for some basic lession about Asian Handicap Bets.
-  
 
 ## 2.2 Overrounds / Vigorish
 
@@ -205,7 +193,7 @@ probabilities exceeds `100%` and it is the bookmaker’s profit margin.
 
 ## Besides, need to scrap the final-scores / half-time scores / result of soccer matches
 #'@ dateID <- sort(unique(mbase$datasets$Date)); spboDate <- gsub('-','',dateID)
-#'@ lnk <- paste0('http://www8.spbo.com/history.plex?day=',spboDate,'&l=en')
+#'@ lnk <- paste0('http://www8.spbo.com/history.plex?day=', spboDate, '&l=en')
 ## kick-off time(GMT+8) - 12hrs since livescore website start count a day from 12pm(GMT+8)
 dateID <- as.Date(sort(unique(dat$Date) - hm('12:00'))); spboDate <- gsub('-', '', dateID)
 
@@ -221,7 +209,7 @@ spboData <- readSPBO(dateID = dateID, parallel = FALSE)$data
 #'@ method <- c('osa', 'lv', 'dl', 'hamming', 'lcs', 'qgram', 'cosine', 'jaccard', 'jw', 'soundex')
 #'@ source(paste0(getwd(),'/function/arrTeamID.R'))
 #'@ tmID <- arrTeamID(mbase, spboData, parallel = FALSE)
-tmIDdata <- read.csv('datasets/teamID.csv', header = TRUE, sep = ',') %>% mutate_each(funs(as.character)) %>% data.frame %>% tbl_df %>% filter(spbo != 'Kuban Krasnodar')
+tmIDdata <- read.csv('./data/teamID.csv', header = TRUE, sep = ',') %>% mutate_each(funs(as.character)) %>% data.frame %>% tbl_df %>% filter(spbo != 'Kuban Krasnodar')
 spboData %<>% filter((Home %in% tmIDdata$spbo)|(Away %in% tmIDdata$spbo))
 
 rm(dateID, spboDate, readSPBO)
@@ -246,8 +234,6 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 
   Above *table 2.2.1* just provides some sample about the odds price and over-round while you can refer to *table 2.1.1* for details. Meanwhile, you can know more details about the *return of investment*, *convertion* and also *origin region* based on *same probabilities* among different Odds Types/Styles via [Betting Odds Converter](http://www.sportsbookreview.com/betting-tools/odds-converter/) or just simply google'ing.
 
-
-
 # 3. Summarise the Staking Model
 
   * Section [3.1 Summarise Diversified Periodic Stakes] - Summarise the Stakes and Return
@@ -255,7 +241,6 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
   * Section [3.3 Summarise the Staking Prices] - Summarise the Staking Price Range Breakdown
   * Section [3.4 Summarise the In-Play Staking Timing] - Summarise the In-Play Staking Breakdown by Time Range
   * Section [3.5 Summarise the In-Play Staking Based on Current Score] - Summarise the In-Play Staking Breakdown by Current Score
-
 
 ## 3.1 Summarise Diversified Periodic Stakes
   
@@ -278,42 +263,43 @@ rm(m)
   
 ```{r data-month-summary-table, echo = FALSE, results = 'asis'}
 ## Monthly summary table.
-dt1 <- dat %>% group_by(Sess, Month) %>% summarise(S.total = sum(Stakes), S.median = median(Stakes), S.mean = round(mean(Stakes), 4), S.sd = round(sd(Stakes), 4), Count = length(PL), minHKPrcB = min(HKPrice), maxHKPrcB = max(HKPrice), minProbB = min(netProbB), maxProbB = max(netProbB), Return = sum(PL, Stakes), PL = sum(PL), PL.percent = sprintf(sum(PL)/sum(Stakes), fmt = '%1.4f%%'), Samples = paste(Stakes, collapse = ',')) %>% mutate(Series = Samples)
+dt1 <- dat %>% group_by(Sess, Month) %>% summarise(S.total = sum(Stakes), S.median = median(Stakes), S.mean = round(mean(Stakes), 4), S.sd = round(sd(Stakes), 4), Count = length(PL), minHKPrcB = min(HKPrice), maxHKPrcB = max(HKPrice), minProbB = min(netProbB), maxProbB = max(netProbB), Return = sum(PL, Stakes), PL = sum(PL), PL.percent = sprintf(sum(PL) / sum(Stakes), fmt = '%1.4f%%'), Samples = paste(Stakes, collapse = ',')) %>% mutate(Series = Samples)
 #'@ names(dt1)[1] <- 'Sess'
 ddim <- dim(dt1)
 
-r <- dt1 %>% group_by(Sess, Month) %>% .$Stakes %>% range
+## daily stakes but not grouped monthly staking to plot a daily staking chart.
+## r <- dt1 %>% group_by(Sess, Month) %>% .$S.total %>% range
+#'@ r <- dat$Stakes %>% range
 
-line_string <- "type: 'line', lineColor: 'black', fillColor: '#ccc', highlightLineColor: 'orange', highlightSpotColor: 'orange'"
+#'@ line_string <- "type: 'line', lineColor: 'black', fillColor: '#ccc', highlightLineColor: 'orange', highlightSpotColor: 'orange'"
 
-cb_line <- JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))').sparkline('html', { ", line_string, ", chartRangeMin: ", r[1], ", chartRangeMax: ", r[2], " }); }"), collapse = "")
+#'@ cb_line <- JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))').sparkline('html', { ", line_string, ", chartRangeMin: ", r[1], ", chartRangeMax: ", r[2], " }); }"), collapse = "")
 
-box_string <- "type: 'box', lineColor: 'black', whiskerColor: 'black', outlierFillColor: 'black', outlierLineColor: 'black', medianColor: 'black', boxFillColor: 'orange', boxLineColor: 'black'"
+#'@ box_string <- "type: 'box', lineColor: 'black', whiskerColor: 'black', outlierFillColor: 'black', outlierLineColor: 'black', medianColor: 'black', boxFillColor: 'orange', boxLineColor: 'black'"
 
-cd <- list(list(targets = 15, render = JS("function(data, type, full){ return '<span class=sparkSamples>' + data + '</span>' }")), list(targets = 16, render = JS("function(data, type, full){ return '<span class=sparkSeries>' + data + '</span>' }")))
+#'@ cd <- list(list(targets = 15, render = JS("function(data, type, full){ return '<span class=sparkSamples>' + data + '</span>' }")), list(targets = 16, render = JS("function(data, type, full){ return '<span class=sparkSeries>' + data + '</span>' }")))
 
-cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = "")
+#'@ cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = "")
 
 dt1 %<>% datatable(
   caption = "Table 3.1.1 : Summary of Monthly Stakes and Return. ('0,000)", 
-  escape = FALSE, filter = "top", rownames = FALSE, 
-  extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+  escape = FALSE, filter = 'top', rownames = FALSE, 
+  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                    'Buttons' = NULL, 'Responsive' = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE, scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
                                 list(extend = 'collection', 
                                      buttons = c('csv', 'excel', 'pdf'), 
-                                     text = 'Download'), I('colvis')), 
-                 columnDefs = cd, fnDrawCallback = cb))
+                                     text = 'Download'), I('colvis'))))#, 
+                 #'@ columnDefs = cd, fnDrawCallback = cb))
 
 ## convert the data into inline graph
-dt1$dependencies <- append(dt1$dependencies, htmlwidgets:::getDependency('sparkline'))
+#'@ dt1$dependencies <- append(dt1$dependencies, htmlwidgets:::getDependency('sparkline'))
 dt1
 
-rm(dt1, r)
+rm(dt1)#, r)
 ```
 
 *table 3.1.1* : `r paste0(ddim, collapse = ' x ')` : *Investment monthly breakdown table.*
@@ -339,35 +325,34 @@ dt2 <- dat %>% group_by(Sess, Month, Day) %>% summarise(S.total = sum(Stakes), S
 #'@ names(dt2)[1] <- 'Sess'
 ddim <- dim(dt2)
 
-## Coy for plot graph
+## Copy for plot graph
 m <- dt2 %>% mutate(Day = paste(Day, Month, Sess)) %>% select(Day, Stakes = S.total, Return, PL)
 
-r <- dt2 %>% group_by(Sess, Month, Day) %>% .$Stakes %>% range
+#'@ r <- dt2 %>% group_by(Sess, Month, Day) %>% .$S.total %>% range
 
-cb_line <- JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))').sparkline('html', { ", line_string, ", chartRangeMin: ", r[1], ", chartRangeMax: ", r[2], " }); }"), collapse = "")
+#'@ cb_line <- JS(paste0("function (oSettings, json) { $('.spark:not(:has(canvas))').sparkline('html', { ", line_string, ", chartRangeMin: ", r[1], ", chartRangeMax: ", r[2], " }); }"), collapse = "")
 
-cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = "")
+#'@ cb = JS(paste0("function (oSettings, json) {\n  $('.sparkSeries:not(:has(canvas))').sparkline('html', { ", line_string, " });\n  $('.sparkSamples:not(:has(canvas))').sparkline('html', { ", box_string, " });\n}"), collapse = "")
 
 dt2 %<>% datatable(
   caption = "Table 3.1.2 : Summary of Daily Stakes and Return. ('0,000)", 
-  escape = FALSE, filter = "top", rownames = FALSE, 
-  extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+  escape = FALSE, filter = 'top', rownames = FALSE, 
+  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                    'Buttons' = NULL, 'Responsive' = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
                                 list(extend = 'collection', 
                                      buttons = c('csv', 'excel', 'pdf'), 
-                                     text = 'Download'), I('colvis')), 
-                 columnDefs = cd, fnDrawCallback = cb))
+                                     text = 'Download'), I('colvis'))))#, 
+                 #'@ columnDefs = cd, fnDrawCallback = cb))
 
 ## convert the data into inline graph
-dt2$dependencies <- append(dt2$dependencies, htmlwidgets:::getDependency('sparkline'))
+#'@ dt2$dependencies <- append(dt2$dependencies, htmlwidgets:::getDependency('sparkline'))
 dt2
 
-rm(dt2, r, line_string, cb_line, box_string, cd, cb)
+rm(dt2)#, r, line_string, cb_line, box_string, cd, cb)
 ```
 
 *table 3.1.2* : `r paste0(ddim, collapse = ' x ')` : *Investment daily breakdown table.*
@@ -385,8 +370,7 @@ rm(ddim, line.gvis, m)
 *graph 3.1.3* : *Investment daily trend graph.*
   
   From the graph above, we can easily know the figure of Stakes, Returns and Profit & Lose while below table separate into daily breakdown. The table shows the daily stakes and also quantile values.
-  
-  
+
 ## 3.2 Summarise the Staking Handicap
 
 ```{r data-hdp-summary-table1a, echo = FALSE, results = 'asis'}
@@ -394,20 +378,19 @@ rm(ddim, line.gvis, m)
 funs <- expression(sum, mean, median, sd, length)
 
 ahBets <- llply(funs, function(x)
-    ddply(dat, ~ HCap + AHOU + Picked, .drop = TRUE, colwise(.fun=x, .cols = ~ Stakes + Return + PL))) %>% join_all(by = c('HCap', 'AHOU', 'Picked')) %>% .[-c((ncol(.)-1):ncol(.))] %>% data.frame
+    ddply(dat, ~ HCap + AHOU + Picked, .drop = TRUE, colwise(.fun = x, .cols = ~ Stakes + Return + PL))) %>% join_all(by = c('HCap', 'AHOU', 'Picked')) %>% .[-c((ncol(.)-1):ncol(.))] %>% data.frame
 
 names(ahBets) <- suppressWarnings(c('HCap', 'AHOU', 'Picked', 'Stakes', 'Return', 'PL', 'S.mean', 'R.mean', 'PL.mean',  'S.median', 'R.median', 'PL.median', 'S.sd', 'R.sd', 'PL.sd', 'Count'))
 
-ahBets %<>% map_if(is.numeric, round, 2) %>% data.frame %>% mutate(R.percent = sprintf(Return/Stakes, fmt = '%1.4f%%'), PL.percent = sprintf(PL/Stakes, fmt = '%1.4f%%')) %>% tbl_df
+ahBets %<>% map_if(is.numeric, round, 2) %>% data.frame %>% mutate(R.percent = sprintf(Return / Stakes, fmt = '%1.4f%%'), PL.percent = sprintf(PL / Stakes, fmt = '%1.4f%%')) %>% tbl_df
 
 lst <- ahBets %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(
   caption = "Table 3.2.1A : Asian Handicap - Handicap Breakdown ('0,000)", 
-  escape = FALSE, filter = "top", rownames = FALSE, 
-  extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+  escape = FALSE, filter = 'top', rownames = FALSE, 
+  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                    'Buttons' = NULL, 'Responsive' = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
@@ -421,11 +404,10 @@ lst[[1]] %>% datatable(
 ```{r data-hdp-summary-table1b, echo = FALSE, results = 'asis'}
 lst[[2]] %>% datatable(
   caption = "Table 3.2.1B : Goal Line - Handicap Breakdown ('0,000)", 
-  escape = FALSE, filter = "top", rownames = FALSE, 
-  extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+  escape = FALSE, filter = 'top', rownames = FALSE, 
+  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                    'Buttons' = NULL, 'Responsive' = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
@@ -437,11 +419,27 @@ lst[[2]] %>% datatable(
 *table 3.2.1b* : `r paste0(dim(lst[[2]]), collapse = ' x ')` : *Goal Line - handicap breakdown table.*
 
 ```{r data-hdp-summary-table1c, echo = FALSE, results = 'asis'}
-m <- ddply(dat, ~ HCap + AHOU, .drop = TRUE, colwise(.fun = sum, .cols = ~ Stakes + Return + PL)) %>% mutate(R.percent = sprintf(Return/Stakes, fmt = '%1.4f%%'), PL.percent = sprintf(PL/Stakes, fmt = '%1.4f%%')) %>% dlply(.(AHOU)) %>% llply(arrange, Stakes) %>% ldply(tail, 4, .id = NULL)
-m %>% kable(caption = 'Table 3.2.1c : Sample data about Handicap, Stakes and PL')
+m <- ddply(dat, ~ HCap + AHOU, .drop = TRUE, colwise(.fun = sum, .cols = ~ Stakes + Return + PL)) %>% mutate(R.percent = Return / Stakes * 100, PL.percent = PL / Stakes * 100) %>% dlply(.(AHOU)) %>% llply(arrange, Stakes) %>% ldply(tail, 4, .id = NULL) %>% tbl_df
+
+m %>% formattable(list(
+   HCap = color_tile('white', 'darkgoldenrod'), 
+   PL = formatter('span', 
+                  style = x ~ style(color = ifelse(x > 0, 'green', 'red')),
+                  x ~ icontext(ifelse(x > 0, 'ok', 'remove'), ifelse(x > 0, m$PL, m$PL))),
+   R.percent = formatter('span',
+                         style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')),
+                         x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))),
+   PL.percent = formatter("span",
+                          style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')),
+                          x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))))) %>% as.htmlwidget
+
+#'@ m <- ddply(dat, ~ HCap + AHOU, .drop = TRUE, colwise(.fun = sum, .cols = ~ Stakes + Return + PL)) %>% mutate(R.percent = Return / Stakes * 100, PL.percent = PL / Stakes * 100) %>% tbl_df
+
+## Due to save the file size, here I ommit the DT::datatable for stylist table but using statical formattable.
+## https://beta.rstudioconnect.com/englianhu/Programming-Assignment-2-Submission/#read-data
 ```
 
-*table 3.2.1c* : `r paste0(dim(m), collapse = ' x ')` : *Handicap, stakes and PL sample table.*
+*table 3.2.1c* : `r paste0(dim(m), collapse = ' x ')` : *Handicap, stakes and PL sample data.*
 
   From above tables, firm A mostly placed on Asian Handicap range concedes/taken `r m %>% filter(Stakes == max(Stakes), AHOU == 'AH') %>% .$HCap` ball on agency A. Menwhile the odds `r m %>% filter(AHOU == 'AH', R.percent == max(R.percent)) %>% .$HCap` is most profitable from return rate.
 
@@ -475,26 +473,24 @@ rm(line.gvis)
 
   Now we look at the graph above, we can know the Stakes breakdown on both `r names(lProfile)[1]` and `r names(lProfile)[2]`.
 
-
 ## 3.3 Summarise the Staking Prices
 
 ```{r data-hdp-summary-table2a, echo = FALSE, results = 'asis'}
 ## Favorite or Underdog and price range breakdown
 fuBets <- llply(funs, function(x)
-    ddply(dat, ~ AHOU + pHKRange + Picked, .drop = TRUE, colwise(.fun=x, .cols = ~ Stakes + Return + PL))) %>% join_all(by = c('AHOU', 'pHKRange', 'Picked')) %>% .[-c((ncol(.) - 1):ncol(.))] %>% data.frame
+    ddply(dat, ~ AHOU + pHKRange + Picked, .drop = TRUE, colwise(.fun = x, .cols = ~ Stakes + Return + PL))) %>% join_all(by = c('AHOU', 'pHKRange', 'Picked')) %>% .[-c((ncol(.) - 1):ncol(.))] %>% data.frame
 
 names(fuBets) <- suppressWarnings(c('AHOU', 'pHKRange', 'Picked', 'Stakes', 'Return', 'PL', 'S.mean', 'R.mean', 'PL.mean', 'S.median', 'R.median', 'PL.median', 'S.sd', 'R.sd', 'PL.sd', 'Count'))
 
-fuBets %<>% map_if(is.numeric, round, 2) %>% data.frame %>% mutate(R.percent = sprintf(Return/Stakes, fmt = '%1.4f%%'), PL.percent = sprintf(PL/Stakes, fmt = '%1.4f%%')) %>% tbl_df
+fuBets %<>% map_if(is.numeric, round, 2) %>% data.frame %>% mutate(R.percent = sprintf(Return / Stakes, fmt = '%1.4f%%'), PL.percent = sprintf(PL / Stakes, fmt = '%1.4f%%')) %>% tbl_df
 
 lst <- fuBets %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(
   caption = "Table 3.3.1A : Asian Handicap - Price Range Breakdown ('0,000)", 
-  escape = FALSE, filter = "top", rownames = FALSE, 
-  extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+  escape = FALSE, filter = 'top', rownames = FALSE, 
+  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                    'Buttons' = NULL, 'Responsive' = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
@@ -507,12 +503,11 @@ lst[[1]] %>% datatable(
 
 ```{r data-hdp-summary-table2b, echo = FALSE, results = 'asis'}
 lst[[2]] %>% datatable(
-  caption = "Table 3.3.1B : Goal Line - Price Range Breakdown ", 
-  escape = FALSE, filter = "top", rownames = FALSE, 
-  extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+  caption = "Table 3.3.1B : Goal Line - Price Range Breakdown ('0,000)", 
+  escape = FALSE, filter = 'top', rownames = FALSE, 
+  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                    'Buttons' = NULL, 'Responsive' = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
@@ -524,8 +519,26 @@ lst[[2]] %>% datatable(
 *table 3.3.1b* : `r paste0(dim(lst[[2]]), collapse = ' x ')` : *Goal Line - price range breakdown table.*
 
 ```{r data-hdp-summary-table2c, echo = FALSE, results = 'asis'}
-m <- ddply(dat, ~ pHKRange + pMYRange, .drop = TRUE, colwise(.fun = sum, .cols = ~ Stakes + Return + PL)) %>% tbl_df %>% mutate(R.percent = sprintf(Return/Stakes, fmt = '%1.4f%%'), PL.percent = sprintf(PL/Stakes, fmt = '%1.4f%%')) %>% arrange(Stakes) %>% tail
-m %>% kable(caption = 'Table 3.3.1c : Sample data about Price Range, Stakes and PL')
+#'@ m <- ddply(dat, ~ pHKRange + pMYRange, .drop = TRUE, colwise(.fun = sum, .cols = ~ Stakes + Return + PL)) %>% tbl_df %>% mutate(R.percent = sprintf(Return / Stakes, fmt = '%1.4f%%'), PL.percent = sprintf(PL / Stakes, fmt = '%1.4f%%')) %>% arrange(Stakes) %>% tail
+
+m <- ddply(dat, ~ pHKRange + pMYRange, .drop = TRUE, colwise(.fun = sum, .cols = ~ Stakes + Return + PL)) %>% mutate(R.percent = Return / Stakes * 100, PL.percent = PL / Stakes * 100) %>% dlply(.(AHOU)) %>% llply(arrange, Stakes) %>% ldply(tail, 4, .id = NULL) %>% tbl_df
+
+m %>% formattable(list(
+    HCap = color_tile('white', 'darkgoldenrod'), 
+    PL = formatter('span', 
+                   style = x ~ style(color = ifelse(x > 0, 'green', 'red')),
+                   x ~ icontext(ifelse(x > 0, 'ok', 'remove'), ifelse(x > 0, m$PL, m$PL))),
+    R.percent = formatter('span',
+                          style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')),
+                          x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))),
+    PL.percent = formatter("span",
+                           style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')),
+                           x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))))) %>% as.htmlwidget
+
+#'@ m <- ddply(dat, ~ pHKRange + pMYRange, .drop = TRUE, colwise(.fun = sum, .cols = ~ Stakes + Return + PL)) %>% mutate(R.percent = Return / Stakes * 100, PL.percent = PL / Stakes * 100) %>% tbl_df
+
+## Due to save the file size, here I ommit the DT::datatable for stylist table but using statical formattable.
+## https://beta.rstudioconnect.com/englianhu/Programming-Assignment-2-Submission/#read-data
 ```
 
 *table 3.3.1c* : `r paste0(dim(m), collapse = ' x ')` : *Price range, stakes and PL sample table.*
@@ -562,7 +575,6 @@ rm(line.gvis)
   
   However, due to consideration of the stakes amount, here I just simply use the HK in order to make the Stakes and Return/PL exactly same with the dataset.
 
-
 ## 3.4 Summarise the In-Play Staking Timing
 
 ```{r data-ip-summary-table1a, echo = FALSE, results = 'asis'}
@@ -578,11 +590,10 @@ ipBets1 %<>% map_if(is.numeric, round, 2) %>% data.frame %>% mutate(R.percent = 
 lst <- ipBets1 %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(
   caption = "Table 3.4.1A : Asian Handicap - In-Play Time Range Breakdown ('0,000)", 
-  escape = FALSE, filter = "top", rownames = FALSE, 
-  extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+  escape = FALSE, filter = 'top', rownames = FALSE, 
+  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                    'Buttons' = NULL, 'Responsive' = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
@@ -598,11 +609,10 @@ rm(funs)
 ```{r data-ip-summary-table1b, echo = FALSE, results = 'asis'}
 lst[[2]] %>% datatable(
   caption = "Table 3.4.1B : Goal Line - In-Play Time Range Breakdown ('0,000)", 
-  escape = FALSE, filter = "top", rownames = FALSE, 
-  extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+  escape = FALSE, filter = 'top', rownames = FALSE, 
+  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                    'Buttons' = NULL, 'Responsive' = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
@@ -645,7 +655,6 @@ rm(line.gvis)
   
   From the above graph shows the In-Play stakes, the first `(0,10]` time range placed most stakes while `(55,60]` start dropping. The `<NA>` includes all stakes when the soccer players are not playing on the football field. (Pre-games, Half-Time, Full-Time, Extra-Time, Injuries Time, Breaks Time etc.)
 
-
 ## 3.5 Summarise the In-Play Staking Based on Current Score
 
 ```{r data-ip-summary-table2a, echo = FALSE, results = 'asis'}
@@ -656,23 +665,21 @@ ipBets2 <- llply(funs, function(x)
 
 names(ipBets2) <- suppressWarnings(c('AHOU', 'CurScore', 'ipHCap', 'Stakes', 'Return', 'PL', 'S.mean', 'R.mean', 'PL.mean', 'S.median', 'R.median', 'PL.median', 'S.sd', 'R.sd', 'PL.sd', 'Count'))
 
-ipBets2 %<>% map_if(is.numeric, round, 2) %>% data.frame %>% mutate(R.percent = sprintf(Return/Stakes, fmt = '%1.4f%%'), PL.percent = sprintf(PL/Stakes, fmt = '%1.4f%%')) %>% tbl_df
+ipBets2 %<>% map_if(is.numeric, round, 2) %>% data.frame %>% mutate(R.percent = sprintf(Return / Stakes, fmt = '%1.4f%%'), PL.percent = sprintf(PL / Stakes, fmt = '%1.4f%%')) %>% tbl_df
 
 lst <- ipBets2 %>% dlply(.(AHOU))
 lst[[1]] %>% datatable(
   caption = "Table 3.4.2A : Asian Handicap - In-Play Current Score and Handicap Breakdown ('0,000)", 
   escape = FALSE, filter = "top", rownames = FALSE, 
   extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+                    "Buttons" = NULL, "Responsive" = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
                                 list(extend = 'collection', 
                                      buttons = c('csv', 'excel', 'pdf'), 
                                      text = 'Download'), I('colvis'))))
-
 rm(funs)
 ```
 
@@ -683,9 +690,8 @@ lst[[2]] %>% datatable(
   caption = "Table 3.4.2B : Goal Line - In-Play Current Score and Handicap Breakdown ('0,000)", 
   escape = FALSE, filter = "top", rownames = FALSE, 
   extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
-                    "Buttons" = NULL, "Responsive" = NULL, 
-                    "FixedColumns" = list(leftColumns = 1)), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE, 
+                    "Buttons" = NULL, "Responsive" = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
                  lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
                  ColReorder = TRUE, rowReorder = TRUE, 
                  buttons = list('copy', 'print', 
@@ -735,17 +741,14 @@ rm(line.gvis)
 
   While the further linear model will also take above criteria for investment. You can also refer to my previous research which is [Odds Modelling and Testing Inefficiency of Sports-Bookmakers](https://www.dropbox.com/sh/ifwczokjptt6re0/AADv1VarJoQ6IgIitZBzG5c6a?dl=0).
 
-
-
-# 4. Staking Model
+# 4. Staking Ⓜodel
 
   * Section [4.1 Basic Equation] - Analyse the Odds Price and Probabilities
-  * Section [4.2 Linear Model] - Reversed Engineer to get the EMOdds derived from Stakes
-  * Section [4.3 Kelly Model] - aaaaaa
-  * Section [4.4 Poisson Modelling] - Soccer Scores Modelling
-  * Section [4.5 Staking Modelling and Money Management] - aaaaaa
-  * Section [4.6 Expectation Maximization and Staking Simulation] - aaaaaa
-  
+  * Section [4.2 Linear Ⓜodel] - Reversed Engineer to get the EMOdds derived from Stakes
+  * Section [4.3 Kelly Ⓜodel] - aaaaaa
+  * Section [4.4 Poisson Ⓜodel] - Soccer Scores Modelling
+  * Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - aaaaaa
+  * Section [4.6 Expectation Ⓜaximization and Staking Simulation] - aaaaaa
 
 ## 4.1 Basic Equation
 
@@ -755,7 +758,7 @@ rm(line.gvis)
 ## Get the investment return rates per annun
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
 ## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
-m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), Return = sum(Return), n = length(Sess), rRates = Return/Stakes)
+m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), Return = sum(Return), n = length(Sess), rRates = Return / Stakes)
 
 m %>% kable(caption = "Table 4.1.1 : Annual Return of Investment. ('0,000)")
 ```
@@ -770,7 +773,7 @@ $$\rho_i = P_i^{Lay} / (P_i^{Back} + P_i^{Lay})$$   *equation 4.1.2*
 
 $P_i^{Back}$ and $P_i^{Lay}$ is the backed and layed fair price offer by bookmakers.
 
-  We can simply apply equation above to get the value $\Re$. From the table above we know that the EMPrice calculated by firm A **invested** at a threshold edge (price greater) `r m$rRates` than the prices offer by bookmakers. There are some description about $\Re$ on [Dixon & Coles 1996](http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf). The optimal value of $\rho_{i}$ (`rEMProbB`) will be calculated based on bootstrapping/resampling method in section [4.2 Kelly Model].
+  We can simply apply equation above to get the value $\Re$. From the table above we know that the EMPrice calculated by firm A **invested** at a threshold edge (price greater) `r m$rRates` than the prices offer by bookmakers. There are some description about $\Re$ on [Dixon & Coles 1996](http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf). The optimal value of $\rho_{i}$ (`rEMProbB`) will be calculated based on bootstrapping/resampling method in section [4.2 Kelly Ⓜodel].
 
 ```{r data-prob-table2, echo = FALSE, results = 'asis'}
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
@@ -800,12 +803,13 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 
 #'@ ggplot(dat, aes(x = netProbB, y = rEMProbB)) + geom_point(aes(y = netProbB, color = 'netProbB')) + geom_point(aes(y = rEMProbB, color = 'rEMProbB')) + xlab('Bookmaker Backed Net Prob') + ylab('Calculated EM Backed Prob') + theme_economist(base_family='Verdana') + scale_colour_economist() + ggtitle('Bookmaker Net Probabilities -vs- Firm A EM Probabilities')
 
-gvis.options <- list(title = "Bookmaker Net Probabilities -vs- Firm A EM Probabilities", series = "[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis = "{title:'Bookmaker Backed Net Prob'}", vAxis = "{title:'rEMProbB'},{title:'netProbB'}", width = 'automatic', height = 'automatic')
+gvis.options <- list(title = "Bookmaker Net Probabilities -vs- Firm A EM Probabilities", series = "[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis = "{title:'Bookmaker Backed Net Prob'}", vAxis = "{title:'rEMProbB'},{title:'netProbB'}", pointSize = 2, width = 'automatic', height = 'automatic', gvis.editor = 'Edit me!')
 
-line.gvis <- gvisLineChart(xvar = 'netProbB', yvar = 'rEMProbB', data = dat, options = gvis.options)
-plot(line.gvis)
+#'@ plot4.1.1 <- gvisLineChart(xvar = 'netProbB', yvar = 'rEMProbB', data = dat, options = gvis.options)
+plot4.1.1 <- gvisScatterChart(dat[c('netProbB', 'rEMProbB')], options = gvis.options)
+plot(plot4.1.1)
 
-rm(line.gvis)
+rm(plot4.1.1)
 ```
 
 *graph 4.1.1* : *A sample graph about the relationship between the investmental probabilities -vs- bookmakers' probabilities.*
@@ -817,14 +821,14 @@ rm(line.gvis)
 ```{r data-return-summary-table2, echo = FALSE, results = 'asis'}
 ## http://www.statmethods.net/stats/frequencies.html
 ## prop.table, margin.table
-## margin.table(table(dat$Result),1)
+## margin.table(table(dat$Result), 1)
 ##
 ## library('gmodels')
 ## CrossTable(dat$HCap, dat$Result)
 ##
 
-m <- ddply(dat, .(Result), summarise, Stakes = sum(Stakes), Return = sum(Return), Rates = Return/Stakes, n = length(Sess)) %>% tbl_df %>% mutate(S.prop = round(Stakes/sum(Stakes), 4), R.prop = round(Return/sum(Return), 4), prop=round(n/sum(n), 4))
-tv <- c('Total', colSums(m[-1])); tv[4] <- as.numeric(tv[3])/as.numeric(tv[2])
+m <- ddply(dat, .(Result), summarise, Stakes = sum(Stakes), Return = sum(Return), Rates = Return / Stakes, n = length(Sess)) %>% tbl_df %>% mutate(S.prop = round(Stakes / sum(Stakes), 4), R.prop = round(Return / sum(Return), 4), prop = round(n / sum(n), 4))
+tv <- c('Total', colSums(m[-1])); tv[4] <- as.numeric(tv[3]) / as.numeric(tv[2])
 m <- suppressWarnings(rbind(m, tv))
 m$Result <- factor(c(as.character(m$Result)[-length(m$Result)], 'Total')); rm(tv)
 m %<>% map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
@@ -833,18 +837,19 @@ m %<>% map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
 suppressMessages(library('formattable'))
 m %>% formattable(list(
     caption = 'Table 4.1.3 : Summary of Betting Results', 
-    Stakes = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, "blue", "grey")), 
-                       x ~ sprintf("%.2f (rank: %02d)", x, rank(-x))), 
-    Return = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, "blue", "grey")), 
-                       x ~ sprintf("%.2f (rank: %02d)", x, rank(-x))), 
-    Rates = normalize_bar("pink", 0.2), 
-    n = color_tile("white", "green"), 
-    S.prop = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, "blue", "grey")), 
-                       x ~ sprintf("%.2f (rank: %02d)", x, rank(-x))), 
-    R.prop = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, "blue", "grey")), 
-                       x ~ sprintf("%.2f (rank: %02d)", x, rank(-x))), 
-    prop = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, "blue", "grey")), 
-                     x ~ sprintf("%.2f (rank: %02d)", x, rank(-x)))
+    Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
+    Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
+    Rates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
+    n = color_tile('white', 'green'), 
+    S.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
+    R.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
+    prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                     x ~ sprintf('%.2f (rank: %02f)', x, rank(-x)))
 )) %>% as.htmlwidget
 ```
 
@@ -856,62 +861,77 @@ m %>% formattable(list(
 ##
 ## Calculate the proportional model on the results, which are 'Cancelled', 'Half-Loss', 'Half-Win', 'Loss', 'Push', 'Win'.
 ## Ommited the InPlay matches, filter out the sample data, only Pre-Games matches taken into further calculations.
-#'@ preData <- filter(dat, InPlay == 'No' & InPlay2 == 'No')
-#'@ hdp <- sort(unique(as.numeric(as.character(dat$HCap))))
-#'@ hdp
+preData <- filter(dat, InPlay == 'No' & InPlay2 == 'No')
+hdp <- sort(unique(as.numeric(as.character(dat$HCap))))
+hdp
 ```
 
-## 4.2 Linear Model
+## 4.2 Linear Ⓜodel
 
   From our understanding of staking, the covariates we need to consider should be only odds price since the handicap's covariate has settled according to different handicap of EMOdds.
 
-  Again, I don't pretend to know the correct Ⓜodel, here I simply apply linear model to retrieve the value of *EMOdds* derived from stakes. The purpose of measure the edge overcame bookmakers' vigorish is *to know the levarage of the staking activities onto 1 unit edge of odds price by firm A to agency A*.
-
-```{r linear-models}
-## Test
-## Choosing the variables of linear models
-#'@ summary(lm(Return~HCap, data=dat))
-#'@ summary(lm(Return~HKPrice, data=dat))
-#'@ summary(lm(Return~HCap+HKPrice, data=dat))
-#'@ summary(lm(Return~HCap+pHKRange, data=dat))
-#'@ summary(lm(Return~ipRange, data=dat))
-#'@ summary(lm(Return~ipHCap, data=dat))
-#'@ summary(lm(Return~CurScore+ipHCap, data=dat))
-#'@ summary(lm(Return~CurScore+ipRange, data=dat))
-#'@ summary(lm(Return~CurScore+ipRange+ipHCap, data=dat))
-
-## Choosing the variables of linear models
-#'@ summary(lm(Stakes~HCap, data=dat))
-#'@ summary(lm(Stakes~HKPrice, data=dat))
-#'@ summary(lm(Stakes~HCap+HKPrice, data=dat))
-#'@ summary(lm(Stakes~HCap+pHKRange, data=dat))
-#'@ summary(lm(Stakes~ipRange, data=dat))
-#'@ summary(lm(Stakes~ipHCap, data=dat))
-#'@ summary(lm(Stakes~CurScore+ipHCap, data=dat))
-#'@ summary(lm(Stakes~CurScore+ipRange, data=dat))
-#'@ summary(lm(Stakes~CurScore+ipRange+ipHCap, data=dat))
-
-## Linear Mixed Effects Models
-#'@ library('lme4')
-#'@ 
-#'@ 
+```{r plot4.2.1, echo = FALSE, results = 'asis'}
+n1 <- rPlot(Return ~ Stakes, data = dat, color = 'Stakes', type = 'point')
+n1$addControls('x', value = 'Stakes', values = names(dat))
+n1$addControls('y', value = 'Stakes', values = names(dat))
+n1$addControls('color', value = 'Stakes', values = names(dat))
+n1
 ```
 
+  Again, I don't pretend to know the correct Ⓜodel, here I simply apply linear model to retrieve the value of *EMOdds* derived from stakes. The purpose of measure the edge overcame bookmakers' vigorish is *to know the levarage of the staking activities onto 1 unit edge of odds price by firm A to agency A*.
+
+```{r linear-models, echo = FALSE, result = 'asis'}
+## Choosing the variables of linear models
+lm0 <- lm(Return ~ Stakes, data = dat)
+lm1 <- lm(Return ~ Stakes + HCap, data = dat)
+lm2 <- lm(Return ~ Stakes + netProbB, data = dat)
+lm3 <- lm(Return ~ Stakes + HCap + netProbB, data = dat)
+lm4 <- lm(Return ~ Stakes + ipRange, data = dat)
+lm5 <- lm(Return ~ Stakes + ipHCap, data = dat)
+lm6 <- lm(Return ~ Stakes + HCap + ipRange, data = dat)
+lm7 <- lm(Return ~ Stakes + CurScore + ipHCap, data = dat)
+lm8 <- lm(Return ~ Stakes + CurScore + ipRange, data = dat)
+lm9 <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap, data = dat)
+
+## Linear Mixed Effects Models
+lm10 <- lm(Return ~ HCap + netProbB + HCap:netProbB, data = dat)
+lm11 <- lm(Return ~ Stakes + ipHCap + ipRange + ipHCap:ipRange, data = dat)
+lm12 <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRange, data = dat)
+
+#'@ anova to compare the models
+#'@ anova(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, test = 'F')
+list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., anova)
+list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., summary)
+```
+
+  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, as well as the 
+
+  *Galema, Plantinga and Scholtens (2008)*^[You are feel free to refer to [Reference for industry knowdelege and academic research portion for the paper] for further details]
+
+# reminder (temporary noted for further):
+```
+draft : 
+  - http://www.moneychimp.com/articles/risk/regression.htm
+  - read *Galema, Plantinga and Scholtens (2008)*
+  - reverse engineering on staking-profit linear regression model to get/retrieve EMProb value since now only get the coefficients figire of EMProb. Although incompleted soccer teams... 2ndly, reversed poison model from EMProb might is not workable on oneway competition, need to refer to some international competition as references for incompleted dataset.
+```
+
+  *John Fingleton & Patrick Waldron (1999)*^[You are feel free to refer to [Reference for industry knowdelege and academic research portion for the paper] for further details] apply Shin's model and finally conclude suggests that bookmakers in Ireland are infinitely risk-averse and balance their books. The authors cannot distinguish between inside information and operating costs, merely concluding that combined they account for up to 3.7% of turnover. They compare different versions of our model, using data from races in Ireland in 1993. The authors' empirical results can be summarised as follows:
   
-  [15]John Fingleton & Patrick Waldron (1999) apply Shin's model and finally conclude suggests that bookmakers in Ireland are infinitely risk-averse and balance their books. The authors cannot distinguish between inside information and operating costs, merely concluding that combined they account for up to 3.7% of turnover. They compare different versions of our model, using data from races in Ireland in 1993. The authors' empirical results can be summarised as follows:
-  
-  * They reject the hypothesis that bookmakers behave in a riskneutral manner;
-  * They cannot reject the hypothesis that they are infinitely riskaverse;
-  * They estimate gross margins to be up to 4 per cent of total oncourse turnover; and
-  * They estimate that 3.1 to 3.7% (by value) of all bets are placed by punters with inside information.
+  - They reject the hypothesis that bookmakers behave in a riskneutral manner;
+  - They cannot reject the hypothesis that they are infinitely riskaverse;
+  - They estimate gross margins to be up to 4 per cent of total oncourse turnover; and
+  - They estimate that 3.1 to 3.7% (by value) of all bets are placed by punters with inside information.
 
   Here I try to test our data if there has any insider information.
 
 ```{r}
+
 ```
 
 
-## 4.3 Kelly Model
+
+## 4.3 Kelly Ⓜodel
 
   From the papers [Niko Marttinen2001](http://www.ylikerroin.com/file/Complete.pdf) and [Jeffrey Alan Logan Snyder 2013](http://homes.cs.washington.edu/~jasnyder/papers/thesis.pdf) both applying **Full-Kelly**,**Half-Kelly** and also **Quarter-Kelly** models which similar with my previous Kelly-Criterion model [englianhu2014](http://rpubs.com/englianhu/kelly_eng1112) but enhanced.
 
@@ -921,11 +941,9 @@ $$S=(\rho*\sigma-1)/(\sigma-1)$$   *equation-4.3.1*
 
   Where S = the stake expressed as a fraction of one's total bankroll, $\rho$ = probability of an event to take place, $\sigma$ = odds for an event offered by the bookmaker. Three important properties, mentioned by Hausch and Ziemba (1994) ([Efficiency of Racetrack Betting Markets (2008Edition)](http://stocksfirst.com/books/trading-econ-investing/Efficiency%20of%20Racetrack%20Betting%20Mkts%20-%20Ziemba%202008.pdf)), arise when using this criterion to determine a proper stake for each bet:
 
-- It maximizes the asymptotic growth rate of capital
-
-- Asymptotically, it minimizes the expected time to reach a specified goal
-
-- It outperforms in the long run any other essentially different strategy almost surely
+  - It maximizes the asymptotic growth rate of capital
+  - Asymptotically, it minimizes the expected time to reach a specified goal
+  - It outperforms in the long run any other essentially different strategy almost surely
 
   The criterion is known to economists and financial theorists by names such as the geometric mean maximizing portfolio strategy, the growth-optimal strategy, the capital growth criterion, etc. We will now show that Kelly betting will maximize the expected log utility for sports-book betting.
 
@@ -933,12 +951,12 @@ $$S=(\rho*\sigma-1)/(\sigma-1)$$   *equation-4.3.1*
 ## Kelly Criterion model
 ##
 ## 1. Summarise the data which group by Date
-accBets <- ddply(dat, .(Date), summarise, Stakes=sum(Stakes), S.median=median(Stakes),
-                S.mean=mean(Stakes), S.sd=sd(Stakes), Count=length(PL), PL=sum(PL), PL.percent=(PL/Stakes))
+accBets <- ddply(dat, .(Date), summarise, Stakes = sum(Stakes), S.median = median(Stakes),
+                S.mean = mean(Stakes), S.sd = sd(Stakes), Count = length(PL), PL = sum(PL), PL.percent = PL / Stakes)
 
 ## 2. Set initial bankroll as 1,000,000
 dat$iniBR <- c(1000000, cumsum(dat$Return[-1]))
-dat$K <- ((dat$EUPrice + 1) * dat$rEMProbB - 1)/(dat$EUPrice)
+dat$K <- ((dat$EUPrice + 1) * dat$rEMProbB - 1) / (dat$EUPrice)
 
 exp(mean(log(dat$Stakes)))
 
@@ -966,7 +984,7 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho)$$   *equation 4.3.4*
   Now we look at abpve function from a different perspective by considering the observed values $x1, x2, …, xn$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
 
 
-## 4.4 Poisson Modelling
+## 4.4 Poisson Ⓜodel
 
   Here we introduce the [Dixon & Coles 1996](http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf) Poisson model and its codes. You are freely learning from below links if interest.
 
@@ -983,7 +1001,7 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho)$$   *equation 4.3.4*
 ## http://stackoverflow.com/questions/19532651/benchmarking-logistic-regression-using-glm-fit-bigglm-speedglm-glmnet-libli
 ##
 ## Test if placed multiple bets on same match
-#'@ preData[duplicated(preData[c('Date','Home','Away')]),c('Date','Home','Away','HG','AG','InPlay','InPlay2','Mins','Mins2','Picked2')]
+preData[duplicated(preData[c('Date','Home','Away')]),c('Date','Home','Away','HG','AG','InPlay','InPlay2','Mins','Mins2','Picked2')]
 
 ```
 
@@ -995,8 +1013,7 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
   
   sample...
 
-
-## 4.5 Staking Modelling and Money Management
+## 4.5 Staking Ⓜodel and Ⓜoney Management
 
 ```{r, echo = FALSE, results = 'asis'}
 ## Bootstrap and apply maximum likelihood model
@@ -1006,8 +1023,7 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 
   sample... Geometric Mean
 
-
-## 4.6 Expectation Maximization and Staking Simulation
+## 4.6 Expectation Ⓜaximization and Staking Simulation
 
 ```{r, echo = FALSE, results = 'asis'}
 ## Apply Poison model to simulate the result of the matches
@@ -1018,8 +1034,6 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 ```
 
   sample...
-
-
 
 # 5. Result
 
@@ -1039,7 +1053,6 @@ Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 
   [Dixon&Pope2003](http://www.sciencedirect.com/science/article/pii/S016920700400010X) apply linear model to compare the efficiency of the odds prices offer by first three largest Firm A, B and C in UK.
 
-
 ## 5.2 Market Basket
 
   Here I apply the `arules` and `arulesViz` packages to analyse the market basket of the bets.
@@ -1049,10 +1062,7 @@ Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 options(op)
 ```
 
-
-
 # 6. Conclusion
-
 
 ## 6.1 Conclusion
 
@@ -1060,9 +1070,9 @@ options(op)
 
 **JA**: What skills and academic training (example: college courses) are valuable to sports statisticians?
 **KW**: I would say there are three sets of skills you need to be a successful sports statistician:
-  - Quantitative skills—the statistical and mathematical techniques you’ll use to make sense of the data. Most kinds of coursework you’d find in an applied statistics program will be helpful. Regression methods, hypothesis testing, confidence intervals, inference, probability, ANOVA, multivariate analysis, linear and logistic models, clustering, time series, and data mining/machine learning would all be applicable. I’d include in this category designing charts, graphs, and other data visualizations to help present and communicate results.
-  - Technical skills—learning one or more statistical software systems such as R/S-PLUS, SAS, SPSS, Stata, Matlab, etc. will give you the tools to apply quantitative skills in practice. Beyond that, the more self-reliant you are at extracting and manipulating your data directly, the more quickly you can explore your data and test ideas. So being adept with the technology you’re likely to encounter will help tremendously. Most of the information you’d be dealing with in sports statistics would be in a database, so learning SQL or another query language is important. In addition, mastering advanced spreadsheet skills such as pivot tables, macros, scripting, and chart customization would be useful.
-  - Domain knowledge—truly understanding the sport you want to analyze professionally is critical to being successful. Knowing the rules of the game; studying how front offices operate; finding out how players are recruited, developed, and evaluated; and even just learning the jargon used within the industry will help you integrate into the organization. You’ll come to understand what problems are important to the GM and other decisionmakers, as well as what information is available, how it’s collected, what it means, and what its limitations are. Also, I recommend keeping up with the discussions in your sport’s analytic community so you know about the latest developments and what’s considered the state of the art in the public sphere. One of the great things about being a sports statistician is getting to follow your favorite websites and blogs as a legitimate part of your job!
+  - Quantitative skills - the statistical and mathematical techniques you'll use to make sense of the data. Most kinds of coursework you'd find in an applied statistics program will be helpful. Regression methods, hypothesis testing, confidence intervals, inference, probability, ANOVA, multivariate analysis, linear and logistic models, clustering, time series, and data mining/machine learning would all be applicable. I'd include in this category designing charts, graphs, and other data visualizations to help present and communicate results.
+  - Technical skills - learning one or more statistical software systems such as R/S-PLUS, SAS, SPSS, Stata, Matlab, etc. will give you the tools to apply quantitative skills in practice. Beyond that, the more self-reliant you are at extracting and manipulating your data directly, the more quickly you can explore your data and test ideas. So being adept with the technology you're likely to encounter will help tremendously. Most of the information you'd be dealing with in sports statistics would be in a database, so learning SQL or another query language is important. In addition, mastering advanced spreadsheet skills such as pivot tables, macros, scripting, and chart customization would be useful.
+  - Domain knowledge - truly understanding the sport you want to analyze professionally is critical to being successful. Knowing the rules of the game; studying how front offices operate; finding out how players are recruited, developed, and evaluated; and even just learning the jargon used within the industry will help you integrate into the organization. You'll come to understand what problems are important to the GM and other decisionmakers, as well as what information is available, how it's collected, what it means, and what its limitations are. Also, I recommend keeping up with the discussions in your sport's analytic community so you know about the latest developments and what's considered the state of the art in the public sphere. One of the great things about being a sports statistician is getting to follow your favorite websites and blogs as a legitimate part of your job!
 
 source : [Preparing for a Career as a Sports Statistician: Two Interviews with People in the Field](http://stattrak.amstat.org/2012/08/01/sports-statistician/)
 
@@ -1076,11 +1086,8 @@ source : [Preparing for a Career as a Sports Statistician: Two Interviews with P
   
   I will also write as a package to easier load and log.
 
-
-
 # 7. Appendices
 
-  
 ## 7.1 Documenting File Creation 
 
   It's useful to record some information about how your file was created.
@@ -1091,7 +1098,7 @@ source : [Preparing for a Career as a Sports Statistician: Two Interviews with P
   - [**rmarkdown**](https://github.com/rstudio/rmarkdown) package version: `r packageVersion('rmarkdown')`
   - File version: 1.0.0
   - File latest updated date: `r Sys.Date()`
-  - Author Profile: [®γσ, Eng Lian Hu](http://rpubs.com/englianhu/ryoeng)
+  - Author Profile: [?????, Eng Lian Hu](http://rpubs.com/englianhu/ryoeng)
   - GitHub: [Source Code](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation)
   - Additional session information
   
@@ -1101,25 +1108,25 @@ devtools::session_info()$platform
 Sys.info()
 ```
 
-
 ## 7.2 Versions' Log
   
   - File pre-release version: 0.9.0
-    - file created
-    - Applied **ggplot2**, **ggthemes**, **directlabels** packages for ploting. For example, the graphs applied in Section [2. Data].
+    + file created
+    + Applied **ggplot2**, **ggthemes**, **directlabels** packages for ploting. For example, the graphs applied in Section [2. Data].
   - File pre-release version: 0.9.1
-    - Added [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) which is research for teams' name filtering purpose.
-    - Changed from **knitr::kable** to use datatble from **DT::datatable** to make the tables be dynamic.
-    - Changed from **ggplot2** relevant packages to **googleVis** package to make graph dynamic.
-    - Completed chapter [3. Summarise the Staking Model].
+    + Added [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) which is research for teams' name filtering purpose.
+    + Changed from **knitr::kable** to use datatble from **DT::datatable** to make the tables be dynamic.
+    + Changed from **ggplot2** relevant packages to **googleVis** package to make graph dynamic.
+    + Completed chapter [3. Summarise the Staking Model].
   - File pre-release version: 0.9.2 - *"2016-02-20 09:41:49 JST"*
-    - Added Section [7.2 Versions' Log] and Section [7.3 Speech and Blooper] since retest the coding
-    - Added Section [4. Staking Model] .
+    + Added Section [7.2 Versions' Log] and Section [7.3 Speech and Blooper] since retest the coding
+    + Added Section [4. Staking Model] .
   - File version: 0.9.3 - *"2016-02-05 05:24:35 EST"*
-    - Modified datatable to make the documents can be save as xls/csv
-    - Added log file for version upgraded
-    
-
+    + Modified DT::datatable to make the documents can be save as xls/csv
+    + Added log file for version upgraded
+  - File version: 0.9.4 - *2016-06-22 13:36:33 JST*
+    + Reviewed previous version, DT::datatable updated new version replaced *Button* extension from *TableTools*, removed sparkline and htmlwidget
+    + Applied linear regression to test the efficiency of staking model by consultancy firm A
 
 ## 7.3 Speech and Blooper
 
@@ -1138,33 +1145,30 @@ Sys.info()
 
 ####  Reference for industry knowdelege and academic research portion for the paper.
 
-  1) [ () - *Creating a Profitable Betting Strategy for Football by Using Statistical Modelling*](http://www.ylikerroin.com/file/Complete.pdf)
-  2) [ () - *What Actually Wins Soccer Matches: Prediction of the 2011-2012 Premier League for Fun and Profit*](http://homes.cs.washington.edu/~jasnyder/papers/thesis.pdf)
-  3) [ () - *The value of statistical forecasts in the UK association football betting market*](http://www.sciencedirect.com/science/article/pii/S016920700400010X)
-  4) [ () - *Dixon and Cole's Poisson regression R Packages*](http://lastplanetranking.blogspot.com/2013/11/code.html)
-  5) [ () - *Apply Kelly-Criterion on English Soccer 2011/2012*](http://rpubs.com/englianhu/kelly_eng1112) and [ () - *Apply Kelly-Criterion on English Soccer 2012/2013*](http://rpubs.com/englianhu/kelly_eng1213)
-  6) [ () - *An introduction to football modelling at Smartodds*](https://people.maths.ox.ac.uk/siamstudentchapter/webpages/2011_Conference/Robert_Talk.pdf)
-  7) [ () - *The Betting Machine*](http://www.diva-portal.org/smash/get/diva2:655630/fulltext01.pdf)
-  8) [ () - *The Kelly Criterion in Blackjack Sports Betting, and the Stock Market*](http://www.eecs.harvard.edu/cs286r/courses/fall12/papers/Thorpe_KellyCriterion2007.pdf)
-  9) [Fabián Enrique Moya (2012) - *Statistical Methodology for Profitable Sports Gambling*](https://www.stat.sfu.ca/content/dam/sfu/stat/alumnitheses/2012/FabianMoyaFinalVersion.pdf)
-  10) [ () - *How to apply the Kelly criterion when expected return may be negative?*](http://quant.stackexchange.com/questions/2500/how-to-apply-the-kelly-criterion-when-expected-return-may-be-negative)
-  11) [ () - *Money Management Using The Kelly Criterion*](http://www.investopedia.com/articles/trading/04/091504.asp)
-  12) [ () - *Optimal Exchange Betting Strategy For WIN-DRAW-LOSS Markets*](http://www.rankingsoftware.com/research/OptimalBettingStrategyWinDrawLoss.pdf)
-  13) [ () - *Kelly criterion with more than two outcomes*](http://math.stackexchange.com/questions/662104/kelly-criterion-with-more-than-two-outcomes)
-  14) [ () - *凯利模式资金管理*](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)
-  15) [John Fingleton & Patrick Waldron (1999) - *Optimal Determination of Bookmakers' Betting Odds: Theory and Tests*](http://www.maths.tcd.ie/~pwaldron/pdf/tp969.pdf)
-  16) [Maurizio Montone (2015) - *Optimal Pricing in the Online Betting Market*](http://www.efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2015-Amsterdam/papers/EFMA2015_0502_fullpaper.pdf)
-  17) [Steven D. Levitt (2004) - *Why are Gambling Markets Organised so Differently from Financial Markets?*](https://www.stat.berkeley.edu/~aldous/157/Papers/Levitt_Gambling_2004.pdf)
-  18) [Steven Xu (2013) - *Forecasting Accuracy and Line Changes in the NFL and College Football Betting Markets*](http://blogs.colgate.edu/economics/files/2013/05/Xu_Econ490_Thesis.pdf)
-  19) [Kwinten Derave (2013-2014) - *The Forecast Ability of the Dispersion of Bookmaker Odds*](http://lib.ugent.be/fulltxt/RUG01/002/165/010/RUG01-002165010_2014_0001_AC.pdf)
+  1. [**Creating a Profitable Betting Strategy for Football by Using Statistical Modelling** *by Niko Marttinen (2006)*](http://www.ylikerroin.com/file/Complete.pdf)
+  2. [**What Actually Wins Soccer Matches: Prediction of the 2011-2012 Premier League for Fun and Profit** *by Robert Schapire (2013)*](http://homes.cs.washington.edu/~jasnyder/papers/thesis.pdf)
+  3. [**Odds Modelling and Testing Inefficiency of Sports Bookmakers : Rmodel** by ®γσ, Eng Lian Hu (2016)](https://www.researchgate.net/publication/303135550_Journal_of_Statistical_Software_Odds_Modelling_and_Testing_Inefficiency_of_Sports_Bookmakers_Rmodel)
+  4. [**Apply Kelly-Criterion on English Soccer 2011/12 to 2012/13** *by ®γσ, Eng Lian Hu (2014)*](https://github.com/scibrokes/kelly-criterion)
+  5. [**The Betting Machine** *by Martin Belgau Ellefsrød (2013)*](http://www.diva-portal.org/smash/get/diva2:655630/fulltext01.pdf)
+  6. [**The Kelly Criterion in Blackjack Sports Betting, and the Stock Market** *by Edward Thorp (2016)*](http://www.eecs.harvard.edu/cs286r/courses/fall12/papers/Thorpe_KellyCriterion2007.pdf)
+  7. [**Statistical Methodology for Profitable Sports Gambling** *by Fabián Enrique Moya (2012)*](https://www.stat.sfu.ca/content/dam/sfu/stat/alumnitheses/2012/FabianMoyaFinalVersion.pdf)
+  8. [**How to apply the Kelly criterion when expected return may be negative?** *by user1443 (2011)*](http://quant.stackexchange.com/questions/2500/how-to-apply-the-kelly-criterion-when-expected-return-may-be-negative)
+  9. [**Money Management Using The Kelly Criterion** *by Justin Kuepper*](http://www.investopedia.com/articles/trading/04/091504.asp)
+  10. [**Optimal Exchange Betting Strategy For WIN-DRAW-LOSS Markets** *by Darren O'Shaughnessy (2012)*](http://www.rankingsoftware.com/research/OptimalBettingStrategyWinDrawLoss.pdf)
+  11. [**Kelly criterion with more than two outcomes** *by David Speyer (2014)*](http://math.stackexchange.com/questions/662104/kelly-criterion-with-more-than-two-outcomes)
+  12. [**凯利模式资金管理** *by Chung-Han Hsieh (2015)*](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)
+  13. [**Optimal Determination of Bookmakers' Betting Odds: Theory and Tests** *by John Fingleton & Patrick Waldron (1999)*](http://www.maths.tcd.ie/~pwaldron/pdf/tp969.pdf)
+  14. [**Optimal Pricing in the Online Betting Market** *by Maurizio Montone (2015)*](http://www.efmaefm.org/0EFMAMEETINGS/EFMA%20ANNUAL%20MEETINGS/2015-Amsterdam/papers/EFMA2015_0502_fullpaper.pdf)
+  15. [**Why are Gambling Markets Organised so Differently from Financial Markets?** *by Steven Levitt (2004)*](https://www.stat.berkeley.edu/~aldous/157/Papers/Levitt_Gambling_2004.pdf)
+  16. [**Forecasting Accuracy and Line Changes in the NFL and College Football Betting Markets** *by Steven Xu (2013)*](http://blogs.colgate.edu/economics/files/2013/05/Xu_Econ490_Thesis.pdf)
+  17. [**The Forecast Ability of the Dispersion of Bookmaker Odds** *by Kwinten Derave (2013-2014)*](http://lib.ugent.be/fulltxt/RUG01/002/165/010/RUG01-002165010_2014_0001_AC.pdf)
+  18. [**The Stocks at Stake: Return and Risk in Socially Responsible Investment** *by Galema, Plantinga and Scholtens (2008)*](http://www.rug.nl/research/portal/files/2538250/02_c2.pdf)
 
 ####  Reference for technical research on programming and coding portion for the paper.
 
-  17) [ () - *Wrangling F1 Data With R*](http://www.r-bloggers.com/wrangling-f1-data-with-r-f1datajunkie-book/)
-  18) [ () - *Interactive visualizations with R - a minireview*](http://ouzor.github.io/blog/2014/11/21/interactive-visualizations.html)
-  19) [ () - *R + htmlwidgets + DT + sparkline*](https://englianhu.wordpress.com/2015/10/04/r-htmlwidgets-dt-sparkline/)
+  1. [**Wrangling F1 Data With R** *by Tony Hirst (2014)*](http://www.r-bloggers.com/wrangling-f1-data-with-r-f1datajunkie-book/)
+  2. [**Interactive visualizations with R - a minireview** *by Juuso Parkkinen (2014)*](http://ouzor.github.io/blog/2014/11/21/interactive-visualizations.html)
+  3. [**R + htmlwidgets + DT + sparkline** *by Matthew Leonawicz (2015)*](https://blog.snap.uaf.edu/2015/10/01/r-htmlwidgets-dt-sparkline/)
+  4. [**Programming Assignment 2 Submission : Data Visualization by University of Illinois at Urbana-Champaign** *by ®γσ, Eng Lian Hu (2016)*](https://beta.rstudioconnect.com/englianhu/Programming-Assignment-2-Submission/#read-data)
 
-
-**Powered by - Copyright© Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)個人の経営企業**
-
-
+**Powered by - Copyright? Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes?](http://www.scibrokes.com)個人の経営企業**
