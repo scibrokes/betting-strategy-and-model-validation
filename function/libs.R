@@ -21,9 +21,9 @@ suppressMessages(library('BBmisc'))
 #'@ library(c('dplyrr', 'nycflights13'))
 
 ## Loading multiple packages at once
-pkgs <- c('devtools', 'zoo', 'chron', 'stringr', 'reshape', 'reshape2', 'data.table', 'sparkline', 
+pkgs <- c('devtools', 'zoo', 'chron', 'stringr', 'reshape', 'reshape2', 'data.table', 'sparkline', 'lme4', 
           'stringdist', 'DT', 'plyr', 'dplyr', 'purrr', 'magrittr', 'foreach', 'manipulate', 'ggplot2', 
-          'ggthemes', 'proto', 'extrafont', 'directlabels', 'PerformanceAnalytics', 'plotly', 
+          'ggthemes', 'proto', 'extrafont', 'directlabels', 'PerformanceAnalytics', 'plotly', 'rstan', 
           'doParallel', 'rvest', 'highlightHTML', 'knitr', 'rmarkdown', 'scales', 'lubridate', 'tidyr', 
           'whisker', 'gtable', 'grid', 'gridExtra', 'arules', 'arulesViz', 'googleVis', 'formattable')
 #'@ c('memoise', 'RStudioAMI', 'pander', 'parallel', 'sqldf', 'BiocParallel', 'RSelenium', 
