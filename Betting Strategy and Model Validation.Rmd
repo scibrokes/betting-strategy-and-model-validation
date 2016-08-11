@@ -1033,6 +1033,11 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 
   sample... Geometric Mean
 
+<iframe width="420" height="315" src="https://www.youtube.com/embed/IH7On9hJsAk" frameborder="0" allowfullscreen></iframe>
+
+[**Parimutuel Betting**](https://en.wikipedia.org/wiki/Parimutuel_betting)
+
+
 ## 4.6 Expectation Ⓜaximization and Staking Simulation
 
 ```{r, echo = FALSE, results = 'asis'}
