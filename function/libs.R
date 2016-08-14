@@ -25,7 +25,8 @@ pkgs <- c('devtools', 'zoo', 'chron', 'stringr', 'reshape', 'reshape2', 'data.ta
           'stringdist', 'DT', 'plyr', 'dplyr', 'purrr', 'magrittr', 'foreach', 'manipulate', 'ggplot2', 
           'ggthemes', 'proto', 'extrafont', 'directlabels', 'PerformanceAnalytics', 'plotly', 'rstan', 
           'doParallel', 'rvest', 'highlightHTML', 'knitr', 'rmarkdown', 'scales', 'lubridate', 'tidyr', 
-          'whisker', 'gtable', 'grid', 'gridExtra', 'arules', 'arulesViz', 'googleVis', 'formattable')
+          'whisker', 'gtable', 'grid', 'gridExtra', 'arules', 'arulesViz', 'googleVis', 'formattable', 
+          'rCharts')
 #'@ c('memoise', 'RStudioAMI', 'pander', 'parallel', 'sqldf', 'BiocParallel', 'RSelenium', 
 #'@   'doMC', 'editR') #load if needed
 #'@ suppressAll(lib(pkgs)
