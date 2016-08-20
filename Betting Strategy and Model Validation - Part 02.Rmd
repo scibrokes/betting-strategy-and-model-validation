@@ -200,6 +200,8 @@ hdp %>% matrix(., ncol = 8, dimnames = list(NULL, c('X350.225',	'X200.075',	'X05
 ) %>% as.htmlwidget
 ```
 
+*table 4.1.4 : The handicap in sample data.*
+
 ## 4.2 Linear Ⓜodel
 
   From our understanding of staking, the covariates we need to consider should be only odds price since the handicap's covariate has settled according to different handicap of EMOdds.
@@ -249,7 +251,17 @@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llp
 
   Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](Fitting Linear Mixed-Effects Models using lme4). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf).]
 
+```{r shiny-calc01}
 
+```
+
+*shinyapp 4.2.1 : Comparison of the vigorish between AH and Fixed-Odds.*
+
+```{r chiny-calc02}
+
+```
+
+*shinyapp 4.2.2 : Convertion between AH and Fixed-Odds.*
 
 ```
 Section : reverse modelling to get the EMProb prior to calculate the coefficient of the staking model. Otherwise might rearrange the order of applied Poison model here by refer to international competitions.
@@ -350,9 +362,10 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho)$$   *equation 4.3.4*
 ## http://stackoverflow.com/questions/19532651/benchmarking-logistic-regression-using-glm-fit-bigglm-speedglm-glmnet-libli
 ##
 ## Test if placed multiple bets on same match
-dt <- preData[duplicated(preData[c('Date','Home','Away')]),c('Date','Home','Away','HG','AG','InPlay','InPlay2','Mins','Mins2','Picked2')] %>% dTable
-dt
+preData[duplicated(preData[c('Date','Home','Away')]),c('Date','Home','Away','HG','AG','InPlay','InPlay2','Mins','Mins2','Picked2')] %>% datatable
 ```
+
+*table 4.4.1 : Filtered multiple bets placed on same matches.*
 
   Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I filter-up the sample data to be `r paste(dim(preData), collapse=' x ')`. I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation [An introduction to football modelling at Smartodds](https://people.maths.ox.ac.uk/siamstudentchapter/webpages/2011_Conference/Robert_Talk.pdf) from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
 
@@ -362,6 +375,13 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
   
   sample...
 
+  In order to minimzie the risk, I tried to validate the odds price range invested by firm A.^[As I used to work in **AS3388** which always take bets from **Starlizard** where they only placed bets within the odds price range from 0.70 ~ -0.70. They are not placed bets on all odds price in same edge]. The sportbook consulatancy firms will not place same amount of stakes on same edge, lets take example as below :-
+  
+  - $Odds_{em}$ = 0.40 while $Odds_{BK}$ = 0.50, The edge to firm will be 0.5 ÷ 0.4 = `r 0.5/0.4`
+  - $Odds_{em}$ = 0.64 while $Odds_{BK}$ = 0.80, The edge to firm will be 0.8 ÷ 0.64 = `r 0.8/0.64`
+  
+  We know above edge is same but due to the probability of occurance an event/goal at 0.4 is smaller than 0.64. Here I try to bootstrap/resampling the scores of matches of the dataset and apply maximum likelihood on the poisson model to test the Kelly model and get the mean/likelihood value. Boostrapping the scores and staking model will be falling in the following sections [4.5 Staking Ⓜodel and Ⓜoney Management] and  [4.6 Expectation Ⓜaximization and Staking Simulation].
+
 ## 4.5 Staking Ⓜodel and Ⓜoney Management
 
 ```{r, echo = FALSE, results = 'asis'}
@@ -370,11 +390,15 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 
 ```
 
+  *Martin Spann and Bernd Skiera (2009)*^[Kindly refer to 19th paper in [7.4 References]] applied a basic probability sets on the draw games and also the portion of win and loss. The author simply measured the portion of the draw result with win/loss to get the edge to place a bet. However it made a loss on Italian operator Oddset due to the 25% high vigorish but profitable in 12%. Secondly, the bets placed on fixed odds but not Asian Handicap and also a fixed amount $100.
+
   sample... Geometric Mean
 
 <iframe width="420" height="315" src="https://www.youtube.com/embed/IH7On9hJsAk" frameborder="0" allowfullscreen></iframe>
 
 [**Parimutuel Betting**](https://en.wikipedia.org/wiki/Parimutuel_betting)
+
+  
 
 
 ## 4.6 Expectation Ⓜaximization and Staking Simulation
@@ -518,7 +542,10 @@ Sys.info()
   16. [**Forecasting Accuracy and Line Changes in the NFL and College Football Betting Markets** *by Steven Xu (2013)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Forecasting%20Accuracy%20and%20Line%20Changes%20in%20the%20NFL%20and%20College%20Football%20Betting%20Markets.pdf)
   17. [**The Forecast Ability of the Dispersion of Bookmaker Odds** *by Kwinten Derave (2013-2014)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/The%20Forecast%20Ability%20of%20the%20Dispersion%20of%20Bookmaker%20Odds.pdf)
   18. [**The Stocks at Stake: Return and Risk in Socially Responsible Investment** *by Galema, Plantinga and Scholtens (2008)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/The%20Stocks%20at%20Stake%20-%20Return%20and%20Risk%20in%20Socially%20Responsible%20Investment.pdf)
-  19. [**A Comparison of the Forecast Accuracy of Prediction Markets, Betting Odds and Tipsters** *by Martin Spann and Bernd Skiera (2009)*]()
+  19. [**A Comparison of the Forecast Accuracy of Prediction Markets, Betting Odds and Tipsters** *by Martin Spann and Bernd Skiera (2009)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20Comparison%20of%20the%20Forecast%20Accuracy%20of%20Prediction%20Markets%20Betting%20Odds%20and%20Tipsters.pdf)
+  20. [**Efficiency of the Market for Racetrack Betting** *by Donald Hausch, William Ziemba and Mark Rubinstein (1981)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Efficiency%20of%20the%20Market%20for%20Racetrack%20Betting.pdf)
+  21. [**Betting Market Efficient at Premiere Racetracks** *by Marshall Gramm (2011)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Betting%20Market%20Efficient%20at%20Premiere%20Racetracks.pdf)
+  22. [**Late Money and Betting Market Efficiency: Evidence from Australia** *by Marshall Gramm, Nicholas McKinney and Randall Parker (2012)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Late%20Money%20and%20Betting%20Market%20Efficiency%20-%20Evidence%20from%20Australia.pdf)
 
 ####  Reference for technical research on programming and coding portion for the paper.
 
