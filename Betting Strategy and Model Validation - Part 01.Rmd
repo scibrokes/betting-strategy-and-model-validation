@@ -25,7 +25,7 @@ suppressMessages(source('function/libs.R'))
 
 # Abstract
 
-  This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the [Dixon and Pope (2003)](http://www.sciencedirect.com/science/article/pii/S016920700400010X), due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the [Wrangling F1 Data With R](http://www.r-bloggers.com/wrangling-f1-data-with-r-f1datajunkie-book/) if you are getting interest to write a data analysis on Sports-book.
+  This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the [Dixon and Pope (2004)](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/reference/DixonPope2004.pdf), due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the [Wrangling F1 Data With R](http://www.r-bloggers.com/wrangling-f1-data-with-r-f1datajunkie-book/) if you are getting interest to write a data analysis on Sports-book.
 
 # 1. Introduction to the Betting Stategics
 
@@ -427,15 +427,9 @@ m <- ddply(dat, ~ HCap + AHOU, .drop = TRUE, colwise(.fun = sum, .cols = ~ Stake
 
 m %>% formattable(list(
    HCap = color_tile('white', 'darkgoldenrod'), 
-   PL = formatter('span', 
-                  style = x ~ style(color = ifelse(x > 0, 'green', 'red')),
-                  x ~ icontext(ifelse(x > 0, 'ok', 'remove'), ifelse(x > 0, m$PL, m$PL))),
-   R.percent = formatter('span',
-                         style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')),
-                         x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))),
-   PL.percent = formatter("span",
-                          style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')),
-                          x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))))) %>% as.htmlwidget
+   PL = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, 'ok', 'remove'), ifelse(x > 0, m$PL, m$PL))),
+   R.percent = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')), x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))),
+   PL.percent = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')), x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))))) %>% as.htmlwidget
 
 #'@ m <- ddply(dat, ~ HCap + AHOU, .drop = TRUE, colwise(.fun = sum, .cols = ~ Stakes + Return + PL)) %>% mutate(R.percent = Return / Stakes * 100, PL.percent = PL / Stakes * 100) %>% tbl_df
 
@@ -745,36 +739,36 @@ rm(line.gvis)
 
   While the further linear model will also take above criteria for investment. You can also refer to my previous research which is [Odds Modelling and Testing Inefficiency of Sports-Bookmakers](https://www.dropbox.com/sh/ifwczokjptt6re0/AADv1VarJoQ6IgIitZBzG5c6a?dl=0).
 
-# 4. Staking Ⓜodel
+# [4. Staking Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#staking-odel)
 
-  * Section [4.1 Basic Equation] - Analyse the Odds Price and Probabilities
-  * Section [4.2 Linear Ⓜodel] - Reversed Engineer to get the EMOdds derived from Stakes
-  * Section [4.3 Kelly Ⓜodel] - aaaaaa
-  * Section [4.4 Poisson Ⓜodel] - Soccer Scores Modelling
-  * Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - aaaaaa
-  * Section [4.6 Expectation Ⓜaximization and Staking Simulation] - aaaaaa
+  * Section [4.1 Basic Equation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#basic-equation) - Analyse the Odds Price and Probabilities
+  * Section [4.2 Linear Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#linear-odel) - Reversed Engineer to get the EMOdds derived from Stakes
+  * Section [4.3 Kelly Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#kelly-odel) - aaaaaa
+  * Section [4.4 Poisson Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#poisson-odel) - Soccer Scores Modelling
+  * Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#staking-odel-and-oney-management) - aaaaaa
+  * Section [4.6 Expectation Ⓜaximization and Staking Simulation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#expectation-aximization-and-staking-simulation) - aaaaaa
 
-# 5. Result
+# [5. Result](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#result)
 
-  * Section [5.1 Comparison of the Results] - 
-  * Section [5.2 Market Basket] - 
+  * Section [5.1 Comparison of the Results](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#comparison-of-the-results) - 
+  * Section [5.2 Market Basket](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#market-basket) - 
 
 ```{r, echo = FALSE, results = 'asis'}
 ## Set options back to original options
 options(op)
 ```
 
-# 6. Conclusion
+# [6. Conclusion](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#conclusion)
 
-  - Section [6.1 Conclusion] - aaaaa
-  - Section [6.2 Future Works] - aaaaa
+  - Section [6.1 Conclusion](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#conclusion-1) - aaaaa
+  - Section [6.2 Future Works](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#future-works) - aaaaa
 
-# 7. Appendices
+# [7. Appendices](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#appendices)
 
-  - Section [7.1 Documenting File Creation] - Information of Document Creation
-  - Section [7.2 Versions' Log] - File Version's Log
-  - Section [7.3 Speech and Blooper] - Speech for this paper
-  - Section [7.4 References] - References for this paper
+  - Section [7.1 Documenting File Creation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#documenting-file-creation) - Information of Document Creation
+  - Section [7.2 Versions' Log](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#versions-log) - File Version's Log
+  - Section [7.3 Speech and Blooper](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#speech-and-blooper) - Speech for this paper
+  - Section [7.4 References](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#references) - References for this paper
 
 ## 7.1 Documenting File Creation 
 
@@ -797,4 +791,4 @@ devtools::session_info()$platform
 Sys.info()
 ```
 
-**Powered by - Copyright? Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)個人の経営企業**
+**Powered by - Copyright® Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)個人の経営企業**
