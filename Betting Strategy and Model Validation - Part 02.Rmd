@@ -14,6 +14,7 @@ output:
     latex_engine: xelatex
 bibliography: skeleton.bib
 link-citations: yes
+runtime: shiny
 ---
 
 ```{r libs, message = FALSE, warning = FALSE, cache = TRUE, include = FALSE}
@@ -25,7 +26,7 @@ suppressMessages(source('function/libs.R'))
 
 # Abstract
 
-  This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the [Dixon and Pope (2003)](http://www.sciencedirect.com/science/article/pii/S016920700400010X), due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the [Wrangling F1 Data With R](http://www.r-bloggers.com/wrangling-f1-data-with-r-f1datajunkie-book/) if you are getting interest to write a data analysis on Sports-book.
+  This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the *Dixon and Pope (2004)*^[Kindly refer to 24th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**], due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the *Tony Hirst (2014)*^[Kindly refer to 1st paper in [Reference for technical research on programming and coding portion for the paper.] in **7.4 References**] if you are getting interest to write a data analysis on Sports-book.
 
 # 1. Introduction to the Betting Stategics
 
@@ -96,7 +97,7 @@ $$\rho_i = P_i^{Lay} / (P_i^{Back} + P_i^{Lay})$$   *equation 4.1.2*
 
 $P_i^{Back}$ and $P_i^{Lay}$ is the backed and layed fair price offer by bookmakers.
 
-  We can simply apply equation above to get the value $\Re$. From the table above we know that the EMPrice calculated by firm A **invested** at a threshold edge (price greater) `r m$rRates` than the prices offer by bookmakers. There are some description about $\Re$ on [Dixon & Coles 1996](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/reference/DixonColes1996.pdf). The optimal value of $\rho_{i}$ (`rEMProbB`) will be calculated based on bootstrapping/resampling method in section [4.3 Kelly Ⓜodel].
+  We can simply apply equation above to get the value $\Re$. From the table above we know that the EMPrice calculated by firm A **invested** at a threshold edge (price greater) `r m$rRates` than the prices offer by bookmakers. There are some description about $\Re$ on *Dixon and Coles (1996)*^[Kindly refer to 25th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**]. The optimal value of $\rho_{i}$ (`rEMProbB`) will be calculated based on bootstrapping/resampling method in section [4.3 Kelly Ⓜodel].
 
 ```{r data-prob-table2, echo = FALSE, results = 'asis'}
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
@@ -187,7 +188,9 @@ m %>% formattable(list(
 preData <- filter(dat, InPlay == 'No' & InPlay2 == 'No')
 hdp <- sort(unique(as.numeric(as.character(dat$HCap))))
 
-hdp %>% matrix(., ncol = 8, dimnames = list(NULL, c('X350.225',	'X200.075',	'X050.075',	'X100.225',	'X250.375',	'X400.525',	'X550.675',	'X700.825'))) %>% data.frame %>% formattable(list(
+hdp %<>% matrix(., ncol = 8, dimnames = list(NULL, c('X350.225',	'X200.075',	'X050.075',	'X100.225',	'X250.375',	'X400.525',	'X550.675',	'X700.825'))) %>% data.frame
+
+hdp %>% formattable(list(
   X350.225 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
   X200.075 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
   X050.075 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
@@ -200,7 +203,7 @@ hdp %>% matrix(., ncol = 8, dimnames = list(NULL, c('X350.225',	'X200.075',	'X05
 ) %>% as.htmlwidget
 ```
 
-*table 4.1.4 : The handicap in sample data.*
+*table 4.1.4 : `r paste0(dim(hdp), collapse = ' x ')` : The handicap in sample data.*
 
 ## 4.2 Linear Ⓜodel
 
@@ -218,7 +221,7 @@ n1
 
   Again, I don't pretend to know the correct Ⓜodel, here I simply apply linear model to retrieve the value of *EMOdds* derived from stakes. The purpose of measure the edge overcame bookmakers' vigorish is *to know the levarage of the staking activities onto 1 unit edge of odds price by firm A to agency A*.
 
-```{r linear-models, echo = FALSE, result = 'asis'}
+```{r linear-models, echo = FALSE, results = 'asis'}
 ## Choosing the variables of linear models
 ## The net probabilities might open diversified handicap, therefore the HCap parameter need to be insert as one of parameter since the return of draw-no-bet, win-half, win-full, loss-half, loss-full (example : 0, 0/0.5, 0.5, 0.5/1, 1) affect the return of investment.
 lm0 <- lm(Return ~ Stakes, data = dat)
@@ -241,23 +244,133 @@ lm12 <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRan
 ## Mixed effect categorised the parameters by group... similar with current score during living betting modelling, the scoring rate (intensity of scores) during 0-0 is different with scoring rates during 1-0 etc.
 lm0 <- lm(Return ~ Stakes + (1|HCap), data = dat)
 lm0 <- lm(Return ~ HCap + (1|Stakes), data = dat) # the stakes amount placed by firm A must be based on the degree of the edges to punter. Here I try to test the effect. (Although firm A might bet via several agents, here I can only took available sample from population to test the efficiency.)
+```
 
+```{r lm-summary, echo = FALSE, results = 'asis'}
 #'@ anova to compare the models
 #'@ anova(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, test = 'F')
-list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., function(x) print(xtable(x), floating = TRUE, type = 'html'))
 
-list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., function(x) print(xtable(anova(x)), floating = TRUE, type = 'html'))
+## xtable always shows LaTeX output but not table.
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., function(x) print(xtable(x), floating = TRUE, type = 'html'))
+
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., stargazer, type = 'html')
+stargazer(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, type = 'html')
+
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., texreg)
 ```
 
-  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](Fitting Linear Mixed-Effects Models using lme4). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf).]
+*table 4.1.5 : Summary of linear models.*
 
-```{r shiny-calc01}
+```{r lm-anova, echo = FALSE, results = 'asis'}
+## xtable always shows LaTeX output but not table.
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., function(x) print(xtable(anova(x)), floating = TRUE, type = 'html'))
 
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., function(x) stargazer(anova(x), type = 'html'))
+
+#'@ stargazer(anova(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12), type = 'html')
+
+stargazer(anova(lm0, lm1, lm2, lm3, lm4), type = 'html')
+#'@ list(lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(stargazer, anova, type = 'html')
+stargazer(anova(lm5), type = 'html')
+stargazer(anova(lm6), type = 'html')
+stargazer(anova(lm7), type = 'html')
+stargazer(anova(lm8), type = 'html')
+stargazer(anova(lm9), type = 'html')
+stargazer(anova(lm10), type = 'html')
+stargazer(anova(lm11), type = 'html')
+stargazer(anova(lm12), type = 'html')
+
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., function(x) texreg(anova(x)))
 ```
 
-*shinyapp 4.2.1 : Comparison of the vigorish between AH and Fixed-Odds.*
+*table 4.1.6 : Anova of linear models.*
 
-```{r chiny-calc02}
+  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](Fitting Linear Mixed-Effects Models using lme4). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf).] and also anova to compare among the models.
+
+```{r shiny-calc01, echo = FALSE, results = 'asis'}
+library('shiny')
+library('shinyjs')
+library('dplyr')
+
+shinyApp(
+  ui = fluidPage(
+    titlePanel('1 x 2 Combo to AH (by William Chen 2006)'),
+    
+    ## this is your web page header information
+    #'@ tags$head(
+    ## here you include your inline styles
+    #'@ tags$style(HTML("
+    #'@   body {
+    #'@     background-color: darkgoldenrod;
+    #'@     color: #B8860B;
+    #'@   }
+    #'@ "))
+    #'@ ),
+    
+    fluidRow(
+      column(3, numericInput('num1', label = 'Home Win', value = 2.5)),
+      column(4, numericInput('num2', label = 'Draw', value = 3.20)),
+      column(5, numericInput('num3', label = 'Away Win', value = 2.5))),
+    fluidRow(
+      column(3, ''),
+      column(4, numericInput('spread', label = 'Spread / Vigorish / Overround', value = 1.12))),
+    hr(),
+    fluidRow(
+      column(3, ''),
+      column(4, verbatimTextOutput('txt'))),
+    fluidRow(
+      column(3, tableOutput('tab1')),
+      column(4, ''),
+      column(5, tableOutput('tab2'))),
+    fluidRow(
+      column(3, ''),
+      column(4, tableOutput('tab3'))),
+    fluidRow(
+      column(3, tableOutput('tab4')),
+      column(4, ''),
+      column(5, tableOutput('tab5')))),
+  
+  server = function(input, output) {
+
+    output$txt <- renderText({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      c(paste0('Home Win = ', round(fOdds[1], 3)), ';', paste0('Draw = ', round(fOdds[2], 3)), ';', paste0('Away Win = ', round(fOdds[3], 3)))
+    })
+    
+    output$tab1 <- renderTable({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      data_frame(Team = c('Home', 'Away'), Hdp = c('0.5', ''), Price = c(fOdds[1] - 1, ((fOdds[2] * fOdds[3]) / (fOdds[2] + fOdds[3])) - 1))
+    })
+    
+    output$tab2 <- renderTable({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      data_frame(Team = c('Home', 'Away'), Hdp = c('', '0.5'), Price = c(((fOdds[1] * fOdds[2]) / (fOdds[1] + fOdds[2])) - 1, fOdds[3] - 1))
+    })
+    
+    output$tab3 <- renderTable({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      data_frame(Team = c('Home', 'Away'), Hdp = c('0', '0'), Price = c(((fOdds[1] * fOdds[2]) - fOdds[1] - fOdds[2]) / fOdds[2], ((fOdds[2] * fOdds[3]) - fOdds[2] - fOdds[3]) / fOdds[2]))
+    })
+    
+    output$tab4 <- renderTable({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      data_frame(Team = c('Home', 'Away'), Hdp = c('0/0.5', ''), Price = c(((2 * fOdds[1] * fOdds[2]) - fOdds[1] - (2 * fOdds[2])) / (2 * fOdds[2]), ((2 * fOdds[2] * fOdds[3]) - (2 * fOdds[2]) - (2 * fOdds[3])) / ((2 * fOdds[2]) + fOdds[3])))
+    })
+    
+    output$tab5 <- renderTable({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      data_frame(Team = c('Home', 'Away'), Hdp = c('', '0/0.5'), Price = c(((2 * fOdds[1] * fOdds[2]) - (2 * fOdds[1]) - (2 * fOdds[2])) / ((2 * fOdds[2]) + fOdds[1]), ((2 * fOdds[2] * fOdds[3]) - fOdds[3] - (fOdds[2])) / (2 * fOdds[2])))
+    })
+    },
+  options = list(height = 500)
+  )
+```
+
+*shinyapp 4.2.1 : Comparison of the vigorish between AH and Fixed-Odds. Source from 1x2 to Combo AH version 1.1 by William Chen (2006)*
+
+  Here I simply attached with a Fixed Odds to Asian Handicap's calculator which refer to my *ex-colleague William Chen's*^[My ex-colleague and best friend in sportsbook industry which known since join sportsbook industry year 2005 ------ Telebiz and later Caspo Inc.] spreadsheet version 1.1 in year 2006. You can simply input the home win, draw, away win (in decimal format) as well as the overround.^[Kindly refer to my previous research to know the vigorish / overround.]
+
+```{r chiny-calc02, echo = FALSE, results = 'asis'}
 
 ```
 
@@ -367,7 +480,7 @@ preData[duplicated(preData[c('Date','Home','Away')]),c('Date','Home','Away','HG'
 
 *table 4.4.1 : Filtered multiple bets placed on same matches.*
 
-  Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I filter-up the sample data to be `r paste(dim(preData), collapse=' x ')`. I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation [An introduction to football modelling at Smartodds](https://people.maths.ox.ac.uk/siamstudentchapter/webpages/2011_Conference/Robert_Talk.pdf) from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
+  Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I filter-up the sample data to be `r paste(dim(preData), collapse=' x ')`. I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation *Robert Johnson (2011)*^[Kindly refer to 23th paper in [7.4 References]] from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
 
   Here I cannot reverse computing from barely $\rho_i^{EM}$ without know the $\lambda_{ij}$ and $\gamma$ values. Therefore I try to using both Home and Away Scores to simulate and test to get the maximum likelihood $\rho_i^{EM}$.
 
@@ -515,18 +628,21 @@ Sys.info()
 
   There are quite some errors when I **knit HTML**:
   
-  * let say always stuck (which is not response and consider as completed) at 29%. I tried couple times while sometimes prompt me different errors (upgrade Droplet to larger RAM memory space doesn't helps) and eventually apply `rm() and gc()` to remove the object after use and also clear the memory space.
+  - let say always stuck (which is not response and consider as completed) at 29%. I tried couple times while sometimes prompt me different errors (upgrade Droplet to larger RAM memory space doesn't helps) and eventually apply `rm() and gc()` to remove the object after use and also clear the memory space.
 
-  * Need to reload the package `suppressAll(library('networkD3'))` which in chunk `decission-tree-A` prior to apply function `simpleNetwork` while I load it in chunk `libs` at the beginning of the section 1. Otherwise cannot found that particlar function.
+  - Need to reload the package `suppressAll(library('networkD3'))` which in chunk `decission-tree-A` prior to apply function `simpleNetwork` while I load it in chunk `libs` at the beginning of the section 1. Otherwise cannot found that particlar function.
 
+  - The `rCharts::rPlot()` works fine if run in chunk, but error when knit the rmarkdown file. Raised an issue : [Error : rCharts::rPlot() in rmarkdown file](http://stackoverflow.com/questions/38941927/error-rchartsrplot-in-rmarkdown-file).
 
+  - `xtable` always shows LaTeX output but not table. Raised a question in COS : [求助！knitr Rmd pdf 中文编译 *2016年8月19日 下午9:56 7 楼*](http://cos.name/cn/topic/411119/#post-417637).Here I try other packages like [`textreg`](http://www2.uaem.mx/r-mirror/web/packages/texreg/vignettes/texreg.pdf) and [`stargazer`](http://www.princeton.edu/~otorres/NiceOutputR.pdf).
+  
 ## 7.4 References
 
 ####  Reference for industry knowdelege and academic research portion for the paper.
 
   1. [**Creating a Profitable Betting Strategy for Football by Using Statistical Modelling** *by Niko Marttinen (2006)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Creating%20a%20Profitable%20Betting%20Strategy%20for%20Football%20by%20Using%20Statistical%20Modelling.pdf)
   2. [**What Actually Wins Soccer Matches: Prediction of the 2011-2012 Premier League for Fun and Profit** *by Jeffrey Alan Logan Snyder (2013)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/What%20Actually%20Wins%20Soccer%20Matches%20-%20Prediction%20of%20the%202011-2012%20Premier%20League%20for%20Fun%20and%20Profit.pdf)
-  3. [**Odds Modelling and Testing Inefficiency of Sports Bookmakers : Rmodel** by ®γσ, Eng Lian Hu (2016)](https://www.researchgate.net/publication/303135550_Journal_of_Statistical_Software_Odds_Modelling_and_Testing_Inefficiency_of_Sports_Bookmakers_Rmodel)
+  3. [**Odds Modelling and Testing Inefficiency of Sports Bookmakers : Rmodel** by ®γσ, Eng Lian Hu (2016)](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/Odds%20Modelling%20and%20Testing%20Inefficiency%20of%20Sports-Bookmakers.pdf)
   4. [**Apply Kelly-Criterion on English Soccer 2011/12 to 2012/13** *by ®γσ, Eng Lian Hu (2014)*](https://github.com/scibrokes/kelly-criterion)
   5. [**The Betting Machine** *by Martin Belgau Ellefsrød (2013)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/The%20Betting%20Machine.pdf)
   6. [**The Kelly Criterion in Blackjack Sports Betting, and the Stock Market** *by Edward Thorp (2016)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/The%20Kelly%20Criterion%20in%20Blackjack%20Sports%20Betting%2C%20and%20the%20Stock%20Market.pdf)
@@ -546,6 +662,9 @@ Sys.info()
   20. [**Efficiency of the Market for Racetrack Betting** *by Donald Hausch, William Ziemba and Mark Rubinstein (1981)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Efficiency%20of%20the%20Market%20for%20Racetrack%20Betting.pdf)
   21. [**Betting Market Efficient at Premiere Racetracks** *by Marshall Gramm (2011)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Betting%20Market%20Efficient%20at%20Premiere%20Racetracks.pdf)
   22. [**Late Money and Betting Market Efficiency: Evidence from Australia** *by Marshall Gramm, Nicholas McKinney and Randall Parker (2012)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Late%20Money%20and%20Betting%20Market%20Efficiency%20-%20Evidence%20from%20Australia.pdf)
+  23. [**An introduction to football modelling at Smartodds** *by Robert Johnson (2011)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/An%20Introduction%20to%20Football%20Modelling%20at%20SmartOdds%20(v1).pdf)
+  24. [**The Value of Statistical Forecasts in the UK Association Football Betting Market** *by Dixon and Pope (2003)*](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/reference/DixonPope2004.pdf)
+  25. [**Modelling Association Football Scores and Inefficiencies in the Football Betting Market** *by Dixon & Coles 1996*](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/reference/DixonColes1996.pdf)
 
 ####  Reference for technical research on programming and coding portion for the paper.
 

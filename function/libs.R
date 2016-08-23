@@ -26,9 +26,9 @@ pkgs <- c('devtools', 'zoo', 'chron', 'stringr', 'reshape', 'reshape2', 'data.ta
           'ggthemes', 'proto', 'extrafont', 'directlabels', 'PerformanceAnalytics', 'plotly', 'rstan', 
           'doParallel', 'rvest', 'highlightHTML', 'knitr', 'rmarkdown', 'scales', 'lubridate', 'tidyr', 
           'whisker', 'gtable', 'grid', 'gridExtra', 'arules', 'arulesViz', 'googleVis', 'formattable', 
-          'rCharts', 'xtable')
+          'rCharts', 'stargazer', 'shiny', 'shinyjs')
 #'@ c('memoise', 'RStudioAMI', 'pander', 'parallel', 'sqldf', 'BiocParallel', 'RSelenium', 
-#'@   'doMC', 'editR') #load if needed
+#'@   'doMC', 'editR', 'xtable', 'textreg') #load if needed
 #'@ suppressAll(lib(pkgs)
 suppressMessages(plyr::l_ply(pkgs, require, character.only = TRUE))
 rm(pkgs)
