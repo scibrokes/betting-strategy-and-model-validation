@@ -259,7 +259,7 @@ stargazer(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, ty
 #'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., texreg)
 ```
 
-*table 4.1.5 : Summary of linear models.*
+*table 4.2.1 : Summary of linear models.*
 
 ```{r lm-anova, echo = FALSE, results = 'asis'}
 ## xtable always shows LaTeX output but not table.
@@ -283,13 +283,76 @@ stargazer(anova(lm12), type = 'html')
 #'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(., function(x) texreg(anova(x)))
 ```
 
-*table 4.1.6 : Anova of linear models.*
+*table 4.2.2 : Anova of linear models.*
 
-  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](Fitting Linear Mixed-Effects Models using lme4). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf).] and also anova to compare among the models.
+```{r shiny-summary, echo = FALSE, results = 'asis'}
+library('shiny')
+library('dplyr')
+library('stargazer')
+
+shinyApp(
+  
+  ui = fluidPage(
+    
+    titlePanel('Summary of linear models to test the efficiency of staking model of firm A.'),
+    
+    ## this is your web page header information
+    #'@ tags$head(
+    ## here you include your inline styles
+    #'@ tags$style(HTML("
+    #'@   body {
+    #'@     background-color: darkgoldenrod;
+    #'@     color: #B8860B;
+    #'@   }
+    #'@ "))
+    #'@ ),
+    
+    # Sidebar with a slider input for number of bins
+    sidebarLayout(
+      sidebarPanel(
+        selectInput('selection', 'Choose an output:',
+                    choices = list('summary', 'anova')),
+        actionButton('update', 'Display')
+        ),
+      
+      mainPanel(
+        tabsetPanel(
+          tabPanel('Summary', renderUI('txte')),
+          tabPanel('Anova 01~04', renderUI('wordplot')),
+          tabPanel('Anova 05', renderUI('table')),
+          tabPanel('Anova 06', renderUI('table')),
+          tabPanel('Anova 07', renderUI('table')),
+          tabPanel('Anova 08', renderUI('table')),
+          tabPanel('Anova 09', renderUI('table')),
+          tabPanel('Anova 10', renderUI('table')),
+          tabPanel('Anova 11', renderUI('table')),
+          tabPanel('Anova 12', renderUI('table')),
+          tabPanel('Reference', h4('Reference:'),
+                   p('1. ', HTML("<a href='https://www.youtube.com/watch?v=66z_MRwtFJM'>Linear Regression in R (R Tutorial 5.1 to 5.11)</a>")),
+                   p('1. ', HTML("<a href='http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/'>Getting Started with Mixed Effect Models in R</a>")),
+                   p('1. ', HTML("<a href='...'>A very basic tutorial for performing linear mixed effects analyses</a>")),
+                   p('1. ', HTML("<a href='...'>Linear Models with R</a>")),
+                   p('1. ', HTML("<a href='...'>Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models</a>"))
+                   )
+        )
+  
+  server = function(input, output) {
+
+    output$txt <- render
+    
+    },
+  options = list(height = 500)
+  )
+  
+
+```
+
+*shinyapp 4.2.1 : *
+
+  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf).] and also anova to compare among the models.
 
 ```{r shiny-calc01, echo = FALSE, results = 'asis'}
 library('shiny')
-library('shinyjs')
 library('dplyr')
 
 shinyApp(
@@ -366,7 +429,7 @@ shinyApp(
   )
 ```
 
-*shinyapp 4.2.1 : Comparison of the vigorish between AH and Fixed-Odds. Source from 1x2 to Combo AH version 1.1 by William Chen (2006)*
+*shinyapp 4.2.2 : Comparison of the vigorish between AH and Fixed-Odds. Source from 1x2 to Combo AH version 1.1 by William Chen (2006)*
 
   Here I simply attached with a Fixed Odds to Asian Handicap's calculator which refer to my *ex-colleague William Chen's*^[My ex-colleague and best friend in sportsbook industry which known since join sportsbook industry year 2005 ------ Telebiz and later Caspo Inc.] spreadsheet version 1.1 in year 2006. You can simply input the home win, draw, away win (in decimal format) as well as the overround.^[Kindly refer to my previous research to know the vigorish / overround.]
 
@@ -374,7 +437,7 @@ shinyApp(
 
 ```
 
-*shinyapp 4.2.2 : Convertion between AH and Fixed-Odds.*
+*shinyapp 4.2.3 : Convertion between AH and Fixed-Odds.*
 
 ```
 Section : reverse modelling to get the EMProb prior to calculate the coefficient of the staking model. Otherwise might rearrange the order of applied Poison model here by refer to international competitions.
