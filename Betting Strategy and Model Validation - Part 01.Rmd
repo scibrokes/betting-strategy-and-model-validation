@@ -29,9 +29,9 @@ suppressMessages(source('function/libs.R'))
 
 # 1. Introduction to the Betting Stategics
 
-  * Section [1.1 Introducing Betting Strategies] - Introduce Betting Strategies
-  * Section [1.2 Value Betting] - Odds Price and Overrounds Changared by Bookmakers
-  * Section [1.3 Professional Gambler] - Punters' life and How Hedge Fund Works
+  - Section [1.1 Introducing Betting Strategies] - Introduce Betting Strategies
+  - Section [1.2 Value Betting] - Odds Price and Overrounds Changared by Bookmakers
+  - Section [1.3 Professional Gambler] - Punters' life and How Hedge Fund Works
 
 ## 1.1 Introducing Betting Strategies
 
@@ -121,8 +121,8 @@ suppressMessages(source('function/libs.R'))
 
 # 2. Data
 
-  * Section [2.1 Collect and Reprocess the Data] - Data from Firm A
-  * Section [2.2 Overrounds / Vigorish] - Odds Price and Overrounds Changared by Bookmakers
+  - Section [2.1 Collect and Reprocess the Data] - Data from Firm A
+  - Section [2.2 Overrounds / Vigorish] - Odds Price and Overrounds Changared by Bookmakers
 
 ## 2.1 Collect and Reprocess the Data
 
@@ -240,11 +240,11 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 
 # 3. Summarise the Staking Model
 
-  * Section [3.1 Summarise Diversified Periodic Stakes] - Summarise the Stakes and Return
-  * Section [3.2 Summarise the Staking Handicap] - Summarise the Staking Handicap Breakdown
-  * Section [3.3 Summarise the Staking Prices] - Summarise the Staking Price Range Breakdown
-  * Section [3.4 Summarise the In-Play Staking Timing] - Summarise the In-Play Staking Breakdown by Time Range
-  * Section [3.5 Summarise the In-Play Staking Based on Current Score] - Summarise the In-Play Staking Breakdown by Current Score
+  - Section [3.1 Summarise Diversified Periodic Stakes] - Summarise the Stakes and Return
+  - Section [3.2 Summarise the Staking Handicap] - Summarise the Staking Handicap Breakdown
+  - Section [3.3 Summarise the Staking Prices] - Summarise the Staking Price Range Breakdown
+  - Section [3.4 Summarise the In-Play Staking Timing] - Summarise the In-Play Staking Breakdown by Time Range
+  - Section [3.5 Summarise the In-Play Staking Based on Current Score] - Summarise the In-Play Staking Breakdown by Current Score
 
 ## 3.1 Summarise Diversified Periodic Stakes
   
@@ -741,17 +741,17 @@ rm(line.gvis)
 
 # [4. Staking Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#staking-odel)
 
-  * Section [4.1 Basic Equation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#basic-equation) - Analyse the Odds Price and Probabilities
-  * Section [4.2 Linear Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#linear-odel) - Reversed Engineer to get the EMOdds derived from Stakes
-  * Section [4.3 Kelly Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#kelly-odel) - aaaaaa
-  * Section [4.4 Poisson Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#poisson-odel) - Soccer Scores Modelling
-  * Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#staking-odel-and-oney-management) - aaaaaa
-  * Section [4.6 Expectation Ⓜaximization and Staking Simulation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#expectation-aximization-and-staking-simulation) - aaaaaa
+  - Section [4.1 Basic Equation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#basic-equation) - Analyse the Odds Price and Probabilities
+  - Section [4.2 Linear Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#linear-odel) - Reversed Engineer to get the EMOdds derived from Stakes
+  - Section [4.3 Kelly Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#kelly-odel) - Test the Kelly Model.
+  - Section [4.4 Poisson Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#poisson-odel) - Soccer Scores, Odds Price and Stakes modelling.
+  - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#staking-odel-and-oney-management) - Simulate the staking model.
+  - Section [4.6 Expectation Ⓜaximization and Staking Simulation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#expectation-aximization-and-staking-simulation) - Enhance by weighted function on Staking model and Simulation.
 
 # [5. Result](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#result)
 
-  * Section [5.1 Comparison of the Results](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#comparison-of-the-results) - 
-  * Section [5.2 Market Basket](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#market-basket) - 
+  - Section [5.1 Comparison of the Results](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#comparison-of-the-results) - Comparison of the Returns of Staking Models.
+  - Section [5.2 Market Basket](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#market-basket) - Analyse the Hedging or Double up Invest by Firm A.
 
 ```{r, echo = FALSE, results = 'asis'}
 ## Set options back to original options
@@ -760,15 +760,15 @@ options(op)
 
 # [6. Conclusion](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#conclusion)
 
-  - Section [6.1 Conclusion](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#conclusion-1) - aaaaa
-  - Section [6.2 Future Works](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#future-works) - aaaaa
+  - Section [6.1 Conclusion](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#conclusion-1) - Conclusion of this Research Paper.
+  - Section [6.2 Future Works](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#future-works) - Future Research or Enhancement.
 
 # [7. Appendices](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#appendices)
 
-  - Section [7.1 Documenting File Creation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#documenting-file-creation) - Information of Document Creation
-  - Section [7.2 Versions' Log](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#versions-log) - File Version's Log
-  - Section [7.3 Speech and Blooper](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#speech-and-blooper) - Speech for this paper
-  - Section [7.4 References](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#references) - References for this paper
+  - Section [7.1 Documenting File Creation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#documenting-file-creation) - Information of the Paper.
+  - Section [7.2 Versions' Log](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#versions-log) - Version Log of the Paper.
+  - Section [7.3 Speech and Blooper](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#speech-and-blooper) - Speech and Blooper during Conducting the Research.
+  - Section [7.4 References](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#references) - Reference Papers for the Paper.
 
 ## 7.1 Documenting File Creation 
 
