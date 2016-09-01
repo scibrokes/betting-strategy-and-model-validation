@@ -1,0 +1,457 @@
+---
+title: "test"
+author: "®γσ, Eng Lian Hu"
+date: "August 28, 2016"
+output: html_document
+runtime: shiny
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r libs, message = FALSE, warning = FALSE, cache = TRUE, include = FALSE}
+## Setup Options, Loading Required Libraries and Preparing Environment
+## Loading the packages and setting adjustment
+suppressMessages(library('utils'))
+suppressMessages(source('function/libs.R'))
+```
+
+# Abstract
+
+  This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the *Dixon and Pope (2004)*^[Kindly refer to 24th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**], due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the *Tony Hirst (2014)*^[Kindly refer to 1st paper in [Reference for technical research on programming and coding portion for the paper.] in **7.4 References**] if you are getting interest to write a data analysis on Sports-book.
+
+# 1. Introduction to the Betting Stategics
+
+  - Section [1.1 Introducing Betting Strategies] - Introduce Betting Strategies
+  - Section [1.2 Value Betting] - Odds Price and Overrounds Changared by Bookmakers
+  - Section [1.3 Professional Gambler] - Punters' life and How Hedge Fund Works
+
+# 2. Data
+
+  - Section [2.1 Collect and Reprocess the Data] - Data from Firm A
+  - Section [2.2 Overrounds / Vigorish] - Odds Price and Overrounds Changared by Bookmakers
+
+```{r read-data-summary-table, echo = FALSE, results = 'asis'}
+## Read the data
+## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
+years <- seq(2011, 2015)
+
+## Here I take the majority leagues setting profile which are "league-10-12"
+## fMYPriceB = Back with vigorish price; fMYPriceL = Lay with vigorish price
+## Here we term as Fair Odds
+lProfile <- c(AH = 0.10, OU = 0.12)
+
+mbase <- readfirmData(years = years) %>% arrfirmData(lProfile = lProfile)
+
+## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
+## the stakes amount display as $1 = $10,000
+#'@ mbase$datasets[!(mbase$datasets$Home %in% mbase$corners)|!(mbase$datasets$Away %in% mbase$corners),]
+dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$others)) %>% mutate(Stakes = Stakes/10000, Return = Return/10000, PL = PL/10000)
+```
+
+# 3. Summarise the Staking Model
+
+  - Section [3.1 Summarise Diversified Periodic Stakes] - Summarise the Stakes and Return
+  - Section [3.2 Summarise the Staking Handicap] - Summarise the Staking Handicap Breakdown
+  - Section [3.3 Summarise the Staking Prices] - Summarise the Staking Price Range Breakdown
+  - Section [3.4 Summarise the In-Play Staking Timing] - Summarise the In-Play Staking Breakdown by Time Range
+  - Section [3.5 Summarise the In-Play Staking Based on Current Score] - Summarise the In-Play Staking Breakdown by Current Score
+
+# 4. Staking Ⓜodel
+
+  - Section [4.1 Basic Equation] - Analyse the Odds Price and Probabilities
+  - Section [4.2 Linear Ⓜodel] - Reversed Engineer to get the EMOdds derived from Stakes
+  - Section [4.3 Kelly Ⓜodel] - Test the Kelly Model.
+  - Section [4.4 Poisson Ⓜodel] - Soccer Scores, Odds Price and Stakes modelling.
+  - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - Simulate the staking model.
+  - Section [4.6 Expectation Ⓜaximization and Staking Simulation] - Enhance by weighted function on Staking model and Simulation.
+
+## 4.1 Basic Equation
+
+  Before we start modelling, we look at the summary of investment return rates.
+
+```{r data-return-summary-table1, echo = FALSE, results = 'asis'}
+## Get the investment return rates per annun
+## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
+## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
+m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), Return = sum(Return), n = length(Sess), rRates = Return / Stakes)
+
+m %>% formattable %>% as.htmlwidget
+```
+
+*table 4.1.1* : `r paste0(dim(m), collapse=' x ')` : *Return of annually investment summary table.*
+
+$$\Re = \sum_{i=1}^{n}\rho_{i}^{EM}/\sum_{i=1}^{n}\rho_{i}^{BK} \cdots equation 4.1.1$$
+
+  $\Re$ is the return rates of investment. The $\rho_i^{EM}$ is the estimated probabilities which is the calculated by firm A from match 1,2... until $n$ matches while $\rho_{i}^{BK}$ is the net/pure probability (real odds) offer by bookmakers after we fit the *equation 4.1.2* into *equation 4.1.1*.
+
+$$\rho_i = P_i^{Lay} / (P_i^{Back} + P_i^{Lay}) \cdots equation 4.1.2$$
+
+$P_i^{Back}$ and $P_i^{Lay}$ is the backed and layed fair price offer by bookmakers.
+
+  We can simply apply equation above to get the value $\Re$. From the table above we know that the EMPrice calculated by firm A **invested** at a threshold edge (price greater) `r m$rRates` than the prices offer by bookmakers. There are some description about $\Re$ on *Dixon and Coles (1996)*^[Kindly refer to 25th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**]. The optimal value of $\rho_{i}$ (`rEMProbB`) will be calculated based on bootstrapping/resampling method in section [4.3 Kelly Ⓜodel].
+
+```{r data-prob-table2, echo = FALSE, results = 'asis'}
+## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
+## value R.rates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
+## Please refer to function arrfirmDatasets()
+dat %<>% mutate(rEMProbB = round(unlist(sapply(split(m, m$Sess), function(x) rep(x$rRates, x$n))) * netProbB, 6), rEMProbL = round(1 - rEMProbB, 6))
+
+dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL, rEMProbB, rEMProbL, favNetProb, undNetProb) %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
+```
+
+*table 4.1.2* : `r paste0(dim(dat), collapse = ' x ')` : *Odds price and probabilities sample table.*
+
+  Above table list a part of sample odds prices and probabilities of soccer match $i$ while $n$ indicates the number of soccer matches. We can know the values `rEMProbB`, `netProbB` and so forth.
+
+```{r data-prob-plot2, echo = FALSE, results = 'asis'}
+## Linear model
+## Learn about API authentication here: https://plot.ly/r/getting-started
+## Find your api_key here: https://plot.ly/settings/api
+
+#'@ model <- lm(rEMProbB ~ netProbB, data=dat)
+#'@ grid <- with(dat, expand.grid(netProbB = seq(min(netProbB), max(netProbB), length = 20),
+#'@                                 rEMProbB = seq(min(rEMProbB), max(rEMProbB), length = 20)))
+#'@ grid$rEMProb <- stats::predict(model, newdata=grid)
+#'@ viz2 <- qplot(netProbB, rEMProbB, data=dat) + geom_point(data=grid)
+#'@ out <- ggplotly(viz2)
+#'@ plotly_url <- out$response$url
+
+#'@ ggplot(dat, aes(x = netProbB, y = rEMProbB)) + geom_point(aes(y = netProbB, color = 'netProbB')) + geom_point(aes(y = rEMProbB, color = 'rEMProbB')) + xlab('Bookmaker Backed Net Prob') + ylab('Calculated EM Backed Prob') + theme_economist(base_family='Verdana') + scale_colour_economist() + ggtitle('Bookmaker Net Probabilities -vs- Firm A EM Probabilities')
+
+gvis.options <- list(title = "Bookmaker Net Probabilities -vs- Firm A EM Probabilities", series = "[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis = "{title:'Bookmaker Backed Net Prob'}", vAxis = "{title:'rEMProbB'},{title:'netProbB'}", pointSize = 2, width = 'automatic', height = 'automatic', gvis.editor = 'Edit me!')
+
+#'@ plot4.1.1 <- gvisLineChart(xvar = 'netProbB', yvar = 'rEMProbB', data = dat, options = gvis.options)
+plot4.1.1 <- gvisScatterChart(dat[c('netProbB', 'rEMProbB')], options = gvis.options)
+plot(plot4.1.1)
+
+rm(plot4.1.1)
+```
+
+*graph 4.1.1* : *A sample graph about the relationship between the investmental probabilities -vs- bookmakers' probabilities.*
+
+  Graph above shows the probabilities calculated by firm A to back against real probabilities offered by bookmakers over `r nrow(dat)` soccer matches.
+
+  Now we look at the result of the soccer matches.
+
+```{r data-return-summary-table2, echo = FALSE, results = 'asis'}
+## http://www.statmethods.net/stats/frequencies.html
+## prop.table, margin.table
+## margin.table(table(dat$Result), 1)
+##
+## library('gmodels')
+## CrossTable(dat$HCap, dat$Result)
+##
+
+m <- ddply(dat, .(Result), summarise, Stakes = sum(Stakes), Return = sum(Return), Rates = Return / Stakes, n = length(Sess)) %>% tbl_df %>% mutate(S.prop = round(Stakes / sum(Stakes), 4), R.prop = round(Return / sum(Return), 4), prop = round(n / sum(n), 4))
+tv <- c('Total', colSums(m[-1])); tv[4] <- as.numeric(tv[3]) / as.numeric(tv[2])
+m <- suppressWarnings(rbind(m, tv))
+m$Result <- factor(c(as.character(m$Result)[-length(m$Result)], 'Total')); rm(tv)
+m %<>% map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
+#'@ m %>% kable(caption = 'Table 4.1.3 : Summary of Betting Results')
+
+suppressMessages(library('formattable'))
+m %>% formattable(list(
+    caption = 'Table 4.1.3 : Summary of Betting Results', 
+    Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
+    Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
+    Rates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
+    n = color_tile('white', 'green'), 
+    S.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
+    R.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
+    prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
+                     x ~ sprintf('%.2f (rank: %02f)', x, rank(-x)))
+)) %>% as.htmlwidget
+```
+
+*table 4.1.3* : `r paste0(dim(m), collapse = ' x ')` : *Summary of betting results.*
+
+  The table above summarize the stakes and return on soccer matches result. Well, below table list the handicaps placed by firm A on agency A. I list the handicap prior to test the coefficient according to the handicap in next section [4.2 Linear Ⓜodel].
+
+```{r data-preMatch, echo = FALSE, results = 'asis'}
+##
+## Calculate the proportional model on the results, which are 'Cancelled', 'Half-Loss', 'Half-Win', 'Loss', 'Push', 'Win'.
+## Ommited the InPlay matches, filter out the sample data, only Pre-Games matches taken into further calculations.
+preData <- filter(dat, InPlay == 'No' & InPlay2 == 'No')
+hdp <- sort(unique(as.numeric(as.character(dat$HCap))))
+
+hdp %<>% matrix(., ncol = 8, dimnames = list(NULL, c('X350.225',	'X200.075',	'X050.075',	'X100.225',	'X250.375',	'X400.525',	'X550.675',	'X700.825'))) %>% data.frame
+
+hdp %>% formattable(list(
+  X350.225 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X200.075 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X050.075 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X100.225 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X250.375 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X400.525 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X550.675 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X700.825 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x)))
+  )
+) %>% as.htmlwidget
+```
+
+*table 4.1.4 : `r paste0(dim(hdp), collapse = ' x ')` : The handicap in sample data.*
+
+## 4.2 Linear Ⓜodel
+
+  From our understanding of staking, the covariates we need to consider should be only odds price since the handicap's covariate has settled according to different handicap of EMOdds.
+
+```{r plot4.2.1, echo = FALSE, eval = FALSE, results = 'asis'}
+n1 <- rPlot(Return ~ Stakes, data = dat, color = 'Stakes', type = 'point')
+n1$addControls('x', value = 'Stakes', values = names(dat))
+n1$addControls('y', value = 'Stakes', values = names(dat))
+n1$addControls('color', value = 'Stakes', values = names(dat))
+#'@ n1$print(include_assets = TRUE)
+#'@ 
+n1
+```
+
+  Again, I don't pretend to know the correct Ⓜodel, here I simply apply linear model to retrieve the value of *EMOdds* derived from stakes. The purpose of measure the edge overcame bookmakers' vigorish is *to know the levarage of the staking activities onto 1 unit edge of odds price by firm A to agency A*.
+
+```{r linear-models, echo = FALSE, results = 'asis'}
+## Choosing the variables of linear models
+## The net probabilities might open diversified handicap, therefore the HCap parameter need to be insert as one of parameter since the return of draw-no-bet, win-half, win-full, loss-half, loss-full (example : 0, 0/0.5, 0.5, 0.5/1, 1) affect the return of investment.
+lm0 <- lm(Return ~ Stakes, data = dat)
+lm1 <- lm(Return ~ Stakes + HCap, data = dat)
+lm2 <- lm(Return ~ Stakes + netProbB, data = dat)
+lm3 <- lm(Return ~ Stakes + HCap + netProbB, data = dat)
+lm4 <- lm(Return ~ Stakes + ipRange, data = dat)
+lm5 <- lm(Return ~ Stakes + ipHCap, data = dat)
+lm6 <- lm(Return ~ Stakes + HCap + ipRange, data = dat)
+lm7 <- lm(Return ~ Stakes + CurScore + ipHCap, data = dat)
+lm8 <- lm(Return ~ Stakes + CurScore + ipRange, data = dat)
+lm9 <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap, data = dat)
+
+## Linear Interative Effect Models
+lm10 <- lm(Return ~ HCap + netProbB + HCap:netProbB, data = dat)
+lm11 <- lm(Return ~ Stakes + ipHCap + ipRange + ipHCap:ipRange, data = dat)
+lm12 <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRange, data = dat)
+
+## Linear Mixed Effects Models
+## Mixed effect categorised the parameters by group... similar with current score during living betting modelling, the scoring rate (intensity of scores) during 0-0 is different with scoring rates during 1-0 etc.
+lm13 <- lm(Return ~ Stakes + (1|HCap), data = dat)
+lm14 <- lm(Return ~ HCap + (1|Stakes), data = dat) # the stakes amount placed by firm A must be based on the degree of the edges to punter. Here I try to test the effect. (Although firm A might bet via several agents, here I can only took available sample from population to test the efficiency.)
+
+lms <- list(lm0 = lm0, lm1 = lm1, lm2 = lm2, lm3 = lm3, lm4 = lm4, lm5 = lm5, lm6 = lm6, lm7 = lm7, lm8 = lm8, lm9 = lm9, lm10 = lm10, lm11 = lm11, lm12 = lm12, lm13 = lm13, lm14 = lm14)
+```
+
+<s>
+```{r lm-summary, echo = FALSE, eval = FALSE, results = 'asis'}
+#'@ anova to compare the models
+#'@ anova(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm13, lm14, test = 'F')
+
+## xtable always shows LaTeX output but not table.
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm13, lm14) %>% llply(., function(x) print(xtable(x), floating = TRUE, type = 'html'))
+
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm13, lm14) %>% llply(., stargazer, type = 'html')
+stargazer(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm13, lm14, type = 'html')
+
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm13, lm14) %>% llply(., texreg)
+```
+
+*table 4.2.1 : Summary of linear models.*
+
+```{r lm-anova, echo = FALSE, eval = FALSE, results = 'asis'}
+## xtable always shows LaTeX output but not table.
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm13, lm14) %>% llply(., function(x) print(xtable(anova(x)), floating = TRUE, type = 'html'))
+
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm13, lm14) %>% llply(., function(x) stargazer(anova(x), type = 'html'))
+
+#'@ stargazer(anova(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12 lm13, lm14), type = 'html')
+
+stargazer(anova(lm0, lm1, lm2, lm3, lm4), type = 'html')
+#'@ list(lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12) %>% llply(stargazer, anova, type = 'html')
+stargazer(anova(lm5), type = 'html')
+stargazer(anova(lm6), type = 'html')
+stargazer(anova(lm7), type = 'html')
+stargazer(anova(lm8), type = 'html')
+stargazer(anova(lm9), type = 'html')
+stargazer(anova(lm10), type = 'html')
+stargazer(anova(lm11), type = 'html')
+stargazer(anova(lm12), type = 'html')
+stargazer(anova(lm13), type = 'html')
+stargazer(anova(lm14), type = 'html')
+
+#'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm13, lm14) %>% llply(., function(x) texreg(anova(x)))
+```
+
+*table 4.2.2 : Anova of linear models.*
+</s>
+
+```{r shiny-summary, echo = FALSE, results = 'asis'}
+#'@ runApp( ## Cannot use runApp() with list(ui, server) since it will open an independent webpage but unable embed into rmarkdown file. It will endless stuck in knitting progress...
+#'@     list(
+shinyApp(
+      ui = fluidPage(
+        titlePanel('Summary of linear models to test the efficiency of staking model of firm A.'), 
+        
+        ## this is your web page header information
+        tags$head(
+        ## here you include your inline styles
+        tags$style(HTML("
+         body {
+           background-color: darkgoldenrod;
+           color: #B8860B;
+         }
+        "))
+        ),
+        
+        # Sidebar with a slider input for number of bins
+        sidebarLayout(
+          sidebarPanel(
+            h2('Select variables below for your linear model'),
+            selectInput('response', label = h4('What is the column name of your response variable Y?'), choices = names(dat)),
+            checkboxGroupInput('explan1', label = h4('What is the column(s) name of your explanatory variable X?'), choices = names(dat)),
+            actionButton('analysis', 'Analyze!')),
+          
+          mainPanel(
+            tabsetPanel(
+              tabPanel('Your model', verbatimTextOutput('modelSummary')),
+              tabPanel('Model 01', verbatimTextOutput('model0')),
+              tabPanel('Model 02', verbatimTextOutput('model1')),
+              tabPanel('Model 03', verbatimTextOutput('model2')),
+              tabPanel('Model 04', verbatimTextOutput('model3')),
+              tabPanel('Model 05', verbatimTextOutput('model4')),
+              tabPanel('Model 06', verbatimTextOutput('model5')),
+              tabPanel('Model 07', verbatimTextOutput('model6')),
+              tabPanel('Model 08', verbatimTextOutput('model7')),
+              tabPanel('Model 09', verbatimTextOutput('model8')),
+              tabPanel('Model 10', verbatimTextOutput('model9')),
+              tabPanel('Model 11', verbatimTextOutput('model10')),
+              tabPanel('Model 12', verbatimTextOutput('model11')),
+              tabPanel('Model 13', verbatimTextOutput('model12')),
+              tabPanel('Model 14', verbatimTextOutput('model13')),
+              tabPanel('Model 15', verbatimTextOutput('model14')),
+              tabPanel('Reference', h4('Reference:'),
+                   p('1. ', HTML("<a href='https://www.youtube.com/watch?v=66z_MRwtFJM'>Linear Regression in R (R Tutorial 5.1 to 5.11)</a>")),
+                   p('2. ', HTML("<a href='http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/'>Getting Started with Mixed Effect Models in R</a>")),
+                   p('3. ', HTML("<a href='...'>A very basic tutorial for performing linear mixed effects analyses</a>")),
+                   p('4. ', HTML("<a href='...'>Linear Models with R</a>")),
+                   p('5. ', HTML("<a href='...'>Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models</a>")))))
+          )
+        ),
+      
+      server = function(input, output) {
+        observeEvent(input$analysis, {
+          y = ifelse(is.null(input$response)||is.na(input$response)||length(input$response) == 0, 'Return', input$response)
+          x = ifelse(is.null(input$explan1)||is.na(input$explan1)||length(input$explan1) == 0, 'Stakes', input$explan1)
+
+          model = lm(as.formula(paste0(y, '~', paste(x, collapse = ' + '))), data = dat)
+          output$modelSummary = renderPrint({
+            list(Summary = summary(model), Anova = anova(model))
+            })
+          })
+        
+        output$model0 <- renderPrint(list(Summary = summary(lm0), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
+        output$model1 <- renderPrint(list(Summary = summary(lm1), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
+        output$model2 <- renderPrint(list(Summary = summary(lm2), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
+        output$model3 <- renderPrint(list(Summary = summary(lm3), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
+        output$model4 <- renderPrint(list(Summary = summary(lm4), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
+        output$model5 <- renderPrint(list(Summary = summary(lm5), Anova = anova(lm5)))
+        output$model6 <- renderPrint(list(Summary = summary(lm6), Anova = anova(lm6)))
+        output$model7 <- renderPrint(list(Summary = summary(lm7), Anova = anova(lm7)))
+        output$model8 <- renderPrint(list(Summary = summary(lm8), Anova = anova(lm8)))
+        output$model9 <- renderPrint(list(Summary = summary(lm9), Anova = anova(lm9)))
+        output$model10 <- renderPrint(list(Summary = summary(lm10), Anova = anova(lm10)))
+        output$model11 <- renderPrint(list(Summary = summary(lm11), Anova = anova(lm11)))
+        output$model12 <- renderPrint(list(Summary = summary(lm12), Anova = anova(lm12)))
+        output$model13 <- renderPrint(list(Summary = summary(lm13), Anova = anova(lm13)))
+        output$model14 <- renderPrint(list(Summary = summary(lm14), Anova = anova(lm14)))
+        }
+  #'@    )
+  #'@  )
+  )
+```
+
+*shinyapp 4.2.1 : Summary and anova of linear models.*
+
+  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf).] and also anova to compare among the models.
+  
+  You might select Y response variable and X explanatory variable(s) to measure your model^[Refer to [Shiny height-weight example](runGist("https://gist.github.com/wch/4034323")) for further information about shinyapp for linear models.] or existing models.
+
+```{r shiny-calc01, echo = FALSE, results = 'asis'}
+library('shiny')
+library('dplyr')
+
+shinyApp(
+  ui = fluidPage(
+    titlePanel('1 x 2 Combo to AH (by William Chen 2006)'),
+    
+    ## this is your web page header information
+    #'@ tags$head(
+    ## here you include your inline styles
+    #'@ tags$style(HTML("
+    #'@   body {
+    #'@     background-color: darkgoldenrod;
+    #'@     color: #B8860B;
+    #'@   }
+    #'@ "))
+    #'@ ),
+    
+    fluidRow(
+      column(3, numericInput('num1', label = 'Home Win', value = 2.5)),
+      column(4, numericInput('num2', label = 'Draw', value = 3.20)),
+      column(5, numericInput('num3', label = 'Away Win', value = 2.5))),
+    fluidRow(
+      column(3, ''),
+      column(4, numericInput('spread', label = 'Spread / Vigorish / Overround', value = 1.12))),
+    hr(),
+    fluidRow(
+      column(3, ''),
+      column(4, verbatimTextOutput('txt'))),
+    fluidRow(
+      column(3, tableOutput('tab1')),
+      column(4, ''),
+      column(5, tableOutput('tab2'))),
+    fluidRow(
+      column(3, ''),
+      column(4, tableOutput('tab3'))),
+    fluidRow(
+      column(3, tableOutput('tab4')),
+      column(4, ''),
+      column(5, tableOutput('tab5')))),
+  
+  server = function(input, output) {
+
+    output$txt <- renderText({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      c(paste0('Home Win = ', round(fOdds[1], 3)), ';', paste0('Draw = ', round(fOdds[2], 3)), ';', paste0('Away Win = ', round(fOdds[3], 3)))
+    })
+    
+    output$tab1 <- renderTable({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      data_frame(Team = c('Home', 'Away'), Hdp = c('0.5', ''), Price = c(fOdds[1] - 1, ((fOdds[2] * fOdds[3]) / (fOdds[2] + fOdds[3])) - 1))
+    })
+    
+    output$tab2 <- renderTable({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      data_frame(Team = c('Home', 'Away'), Hdp = c('', '0.5'), Price = c(((fOdds[1] * fOdds[2]) / (fOdds[1] + fOdds[2])) - 1, fOdds[3] - 1))
+    })
+    
+    output$tab3 <- renderTable({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      data_frame(Team = c('Home', 'Away'), Hdp = c('0', '0'), Price = c(((fOdds[1] * fOdds[2]) - fOdds[1] - fOdds[2]) / fOdds[2], ((fOdds[2] * fOdds[3]) - fOdds[2] - fOdds[3]) / fOdds[2]))
+    })
+    
+    output$tab4 <- renderTable({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      data_frame(Team = c('Home', 'Away'), Hdp = c('0/0.5', ''), Price = c(((2 * fOdds[1] * fOdds[2]) - fOdds[1] - (2 * fOdds[2])) / (2 * fOdds[2]), ((2 * fOdds[2] * fOdds[3]) - (2 * fOdds[2]) - (2 * fOdds[3])) / ((2 * fOdds[2]) + fOdds[3])))
+    })
+    
+    output$tab5 <- renderTable({
+      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+      data_frame(Team = c('Home', 'Away'), Hdp = c('', '0/0.5'), Price = c(((2 * fOdds[1] * fOdds[2]) - (2 * fOdds[1]) - (2 * fOdds[2])) / ((2 * fOdds[2]) + fOdds[1]), ((2 * fOdds[2] * fOdds[3]) - fOdds[3] - (fOdds[2])) / (2 * fOdds[2])))
+    })
+    },
+  options = list(height = 500)
+  )
+```
+
+*shinyapp 4.2.2 : Comparison of the vigorish between AH and Fixed-Odds. Source from 1x2 to Combo AH version 1.1 by William Chen (2006)*

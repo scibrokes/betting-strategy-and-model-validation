@@ -289,24 +289,25 @@ stargazer(anova(lm14), type = 'html')
 ```
 
 *table 4.2.2 : Anova of linear models.*
-<\s>
+</s>
 
 ```{r shiny-summary, echo = FALSE, results = 'asis'}
-runApp(
-    list(
+#'@ runApp( ## Cannot use runApp() with list(ui, server) since it will open an independent webpage but unable embed into rmarkdown file. It will endless stuck in knitting progress...
+#'@     list(
+shinyApp(
       ui = fluidPage(
         titlePanel('Summary of linear models to test the efficiency of staking model of firm A.'), 
         
         ## this is your web page header information
-        #'@ tags$head(
+        tags$head(
         ## here you include your inline styles
-        #'@ tags$style(HTML("
-        #'@   body {
-        #'@     background-color: darkgoldenrod;
-        #'@     color: #B8860B;
-        #'@   }
-        #'@ "))
-        #'@ ),
+        tags$style(HTML("
+         body {
+           background-color: darkgoldenrod;
+           color: #B8860B;
+         }
+        "))
+        ),
         
         # Sidebar with a slider input for number of bins
         sidebarLayout(
@@ -314,8 +315,6 @@ runApp(
             h2('Select variables below for your linear model'),
             selectInput('response', label = h4('What is the column name of your response variable Y?'), choices = names(dat)),
             checkboxGroupInput('explan1', label = h4('What is the column(s) name of your explanatory variable X?'), choices = names(dat)),
-            checkboxInput('type', label = h4('Summary / Anova?'), choices = list('Summary', 'Anova')),
-            checkboxGroupInput('models', label = h4('Which models?'), choices = names(lms)),
             actionButton('analysis', 'Analyze!')),
           
           mainPanel(
@@ -350,30 +349,31 @@ runApp(
           y = ifelse(is.null(input$response)||is.na(input$response)||length(input$response) == 0, 'Return', input$response)
           x = ifelse(is.null(input$explan1)||is.na(input$explan1)||length(input$explan1) == 0, 'Stakes', input$explan1)
 
-          model = lm(formula(y ~ x), data = dat)
+          model = lm(as.formula(paste0(y, '~', paste(x, collapse = ' + '))), data = dat)
           output$modelSummary = renderPrint({
-            list(summary(model), anova(model))
+            list(Summary = summary(model), Anova = anova(model))
             })
           })
         
-        model0 <- renderPrint(list(summary(lm0), anova(lm0, lm1, lm2, lm3, lm4)))
-        model1 <- renderPrint(list(summary(lm1), anova(lm0, lm1, lm2, lm3, lm4)))
-        model2 <- renderPrint(list(summary(lm2), anova(lm0, lm1, lm2, lm3, lm4)))
-        model3 <- renderPrint(list(summary(lm3), anova(lm0, lm1, lm2, lm3, lm4)))
-        model4 <- renderPrint(list(summary(lm4), anova(lm0, lm1, lm2, lm3, lm4)))
-        model5 <- renderPrint(list(summary(lm5), anova(lm5)))
-        model6 <- renderPrint(list(summary(lm6), anova(lm6)))
-        model7 <- renderPrint(list(summary(lm7), anova(lm7)))
-        model8 <- renderPrint(list(summary(lm8), anova(lm8)))
-        model9 <- renderPrint(list(summary(lm9), anova(lm9)))
-        model10 <- renderPrint(list(summary(lm10), anova(lm10)))
-        model11 <- renderPrint(list(summary(lm11), anova(lm11)))
-        model12 <- renderPrint(list(summary(lm12), anova(lm12)))
-        model13 <- renderPrint(list(summary(lm13), anova(lm13)))
-        model14 <- renderPrint(list(summary(lm14), anova(lm14)))
+        output$model0 <- renderPrint(list(Summary = summary(lm0), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
+        output$model1 <- renderPrint(list(Summary = summary(lm1), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
+        output$model2 <- renderPrint(list(Summary = summary(lm2), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
+        output$model3 <- renderPrint(list(Summary = summary(lm3), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
+        output$model4 <- renderPrint(list(Summary = summary(lm4), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
+        output$model5 <- renderPrint(list(Summary = summary(lm5), Anova = anova(lm5)))
+        output$model6 <- renderPrint(list(Summary = summary(lm6), Anova = anova(lm6)))
+        output$model7 <- renderPrint(list(Summary = summary(lm7), Anova = anova(lm7)))
+        output$model8 <- renderPrint(list(Summary = summary(lm8), Anova = anova(lm8)))
+        output$model9 <- renderPrint(list(Summary = summary(lm9), Anova = anova(lm9)))
+        output$model10 <- renderPrint(list(Summary = summary(lm10), Anova = anova(lm10)))
+        output$model11 <- renderPrint(list(Summary = summary(lm11), Anova = anova(lm11)))
+        output$model12 <- renderPrint(list(Summary = summary(lm12), Anova = anova(lm12)))
+        output$model13 <- renderPrint(list(Summary = summary(lm13), Anova = anova(lm13)))
+        output$model14 <- renderPrint(list(Summary = summary(lm14), Anova = anova(lm14)))
         }
-      )
-    )
+  #'@    )
+  #'@  )
+  )
 ```
 
 *shinyapp 4.2.1 : Summary and anova of linear models.*
@@ -565,7 +565,7 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation 4.3.4$$
 
 ![*figure 4.4.1 : Comparison of various Poison models.*](figure/NikoMarttinen2001-01.jpg)
 
-  From *figure 4.4.1* above, the author 
+  From *figure 4.4.1* above, the author compare the deviance of the models^[Kindly refer to [Generalized Linear Models in R, Part 2: Understanding Model Fit in Logistic Regression Output](http://www.theanalysisfactor.com/r-glm-model-fit/), [devianceTest](http://www.mathworks.com/help/stats/generalizedlinearmodel.deviancetest.html?s_tid=gn_loc_drop) and [Use of Deviance Statistics for Comparing Models]() to learn baout the method of comparison.]
 
   - Weighted model : 
   
@@ -671,13 +671,13 @@ options(op)
 
   Due to the data-sets I collected just one among all agents among couple sports-bookmakers [4lowin](https://www.youtube.com/watch?v=eFYS0jdSiWc). Here I cannot determine if the sample data among the population...
 
-**JA**: What skills and academic training (example: college courses) are valuable to sports statisticians?
-**KW**: I would say there are three sets of skills you need to be a successful sports statistician:
+> JA : What skills and academic training (example: college courses) are valuable to sports statisticians?
+> KW : I would say there are three sets of skills you need to be a successful sports statistician:
   - Quantitative skills - the statistical and mathematical techniques you'll use to make sense of the data. Most kinds of coursework you'd find in an applied statistics program will be helpful. Regression methods, hypothesis testing, confidence intervals, inference, probability, ANOVA, multivariate analysis, linear and logistic models, clustering, time series, and data mining/machine learning would all be applicable. I'd include in this category designing charts, graphs, and other data visualizations to help present and communicate results.
   - Technical skills - learning one or more statistical software systems such as R/S-PLUS, SAS, SPSS, Stata, Matlab, etc. will give you the tools to apply quantitative skills in practice. Beyond that, the more self-reliant you are at extracting and manipulating your data directly, the more quickly you can explore your data and test ideas. So being adept with the technology you're likely to encounter will help tremendously. Most of the information you'd be dealing with in sports statistics would be in a database, so learning SQL or another query language is important. In addition, mastering advanced spreadsheet skills such as pivot tables, macros, scripting, and chart customization would be useful.
   - Domain knowledge - truly understanding the sport you want to analyze professionally is critical to being successful. Knowing the rules of the game; studying how front offices operate; finding out how players are recruited, developed, and evaluated; and even just learning the jargon used within the industry will help you integrate into the organization. You'll come to understand what problems are important to the GM and other decisionmakers, as well as what information is available, how it's collected, what it means, and what its limitations are. Also, I recommend keeping up with the discussions in your sport's analytic community so you know about the latest developments and what's considered the state of the art in the public sphere. One of the great things about being a sports statistician is getting to follow your favorite websites and blogs as a legitimate part of your job!
 
-source : [Preparing for a Career as a Sports Statistician: Two Interviews with People in the Field](http://stattrak.amstat.org/2012/08/01/sports-statistician/)
+**source : [Preparing for a Career as a Sports Statistician: Two Interviews with People in the Field](http://stattrak.amstat.org/2012/08/01/sports-statistician/)**
 
 ...
 ...
