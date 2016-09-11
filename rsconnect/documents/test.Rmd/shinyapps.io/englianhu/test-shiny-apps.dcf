@@ -1,0 +1,10 @@
+name: test-shiny-apps
+title:
+account: englianhu
+server: shinyapps.io
+appId: 124010
+bundleId: 549080
+url: https://englianhu.shinyapps.io/test-shiny-apps/
+when: 1473079527.59284
+asMultiple: FALSE
+asStatic: FALSE

@@ -1,7 +1,7 @@
 readfirmData <- function(years = years, parallel = FALSE){
   ## Loading the packages
   if(!suppressMessages(require('BBmisc'))){
-    suppressMessages(install.packages('BBmisc'))}
+    suppressMessages(install.packages('BBmisc', repos = 'https://cran.rstudio.com'))}
   
   suppressMessages(require('BBmisc'))
   pkgs <- c('magrittr', 'plyr', 'dplyr', 'purrr', 'stringr', 'lubridate', 'doParallel')
@@ -72,7 +72,7 @@ readfirmData <- function(years = years, parallel = FALSE){
   #'@                            format = '%d %b %Y %H:%M:%S'), format = '%d %b %Y %H:%M')), 
   #'@                            tz = 'Asia/Hong_Kong') %>% select(Date, DateUK)
   
-  dfm %<>% mutate(Month = month(dmy(Date)), DateUK = dmy_hm(paste0(Date, Time), tz = 'Europe/London'), 
+  dfm %<>% mutate(Month = lubridate::month(lubridate::dmy(Date)), DateUK = dmy_hm(paste0(Date, Time), tz = 'Europe/London'), 
                   Date = format(DateUK, tz = 'Asia/Taipei', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S'),
                   Selection = factor(Selection), Stakes = as.numeric(gsub('[^0-9]', '', Stakes)), 
                   PL = ifelse(Result == 'Loss', -as.numeric(gsub('[^0-9]', '', PL)), 
@@ -91,8 +91,8 @@ readfirmData <- function(years = years, parallel = FALSE){
                  Home = factor(Home), Away = factor(Home), Selection = factor(Selection), HCap = as.numeric(HCap), 
                  EUPrice = as.numeric(EUPrice), HKPrice = as.numeric(HKPrice), Stakes = as.numeric(Stakes), 
                  CurScore = factor(CurScore), Mins = factor(Mins), Result = factor(Result), PL = as.numeric(PL), 
-                 Rebates = as.numeric(Rebates), Return = as.numeric(Return)) %>% map_if(is.numeric, round, 2) %>% 
-    map_if(is.character, factor) %>% data.frame %>% tbl_df
+                 Rebates = as.numeric(Rebates), Return = as.numeric(Return)) %>% purrr::map_if(is.numeric, round, 2) %>% 
+    purrr::map_if(is.character, factor) %>% data.frame %>% tbl_df
   
   res <- list(datasets = dfm, others = others, corners = corners)
   

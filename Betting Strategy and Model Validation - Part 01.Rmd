@@ -5,6 +5,7 @@ author: "[®γσ, Eng Lian Hu](http://englianhu.wordpress.com) <img src='figure/
 date: "`r Sys.Date()`"
 output:
   tufte::tufte_html:
+    self_contained: no
     toc: yes
   tufte::tufte_handout:
     citation_package: natbib
@@ -131,6 +132,12 @@ suppressMessages(source('function/libs.R'))
   I tried to apply `RSelenium` on [**RStudio Server Centos7**](http://rstudio.scibrokes.com) to scrape the data from live-score website includes the odds price but the binary [phantomjs](https://github.com/ariya/phantomjs/issues/12948#issuecomment-131267076) is not available for Linux, and I also not familiar with the installation of `Java` as well as setting of the path for `rJava`. Kindly refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) for more information about the teams name matching.
 
 ```{r read-data-summary-table, echo = FALSE, results = 'asis'}
+## Setup Options, Loading Required Libraries and Preparing Environment
+## Loading the packages and setting adjustment again due to unable find the functions
+suppressMessages(library('utils'))
+suppressMessages(source('function/libs.R'))
+suppressMessages(require('DT', quietly = TRUE))
+
 ## Read the data
 ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
 years <- seq(2011, 2015)
@@ -251,6 +258,9 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
   Before we start analyse the staking model, we are firstly see some diversified periodic breakdown Stakes and Profit & Lose of the Agency A.
   
 ```{r data-annum-summary-plot, echo = FALSE, results = 'asis'}
+## Load googleVis again due to unable find the function.
+suppressMessages(require('googleVis', quietly = TRUE))
+
 ## Annual summry graph.
 m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL)) %>% data.frame %>% tbl_df
 
@@ -311,6 +321,9 @@ rm(dt1)#, r)
   From the table above, we realized that the Asian agency A make profit by follow the British sports betting consultancy firm A every year. Since thousands of bets (and maximum bet limit setting, league profile setting, and also value betting which properly based on Kelly model, mean value will be kinda bias) placed per month, here we take median will be accurate than mean value.
 
 ```{r data-month-summary-plots, echo = FALSE, results = 'asis'}
+## Load package 'zoo' due to unable find function as.yearmon()
+suppressMessages(require('zoo', quietly = TRUE))
+
 ## Monthly summary graph.
 ## the stakes amount display as $1 = $10,000
 m <- ddply(data.frame(Month = as.yearmon(dat$Date,'%b'), dat), .(Month), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL)) %>% mutate(Month = as.character(Month)) %>% tbl_df # mutate Month as.character() at last to make the Month hAxis arrange in order after summarise
@@ -785,10 +798,18 @@ options(op)
   - GitHub: [Source Code](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation)
   - Additional session information
   
-```{r info, echo = FALSE, results = 'asis'}
+```{r info, echo = FALSE, warning = FALSE, results = 'asis'}
+suppressMessages(require('dplyr', quietly = TRUE))
+suppressMessages(require('formattable', quietly = TRUE))
+
 lubridate::now()
-devtools::session_info()$platform
-Sys.info()
+sys1 <- devtools::session_info()$platform %>% unlist %>% data.frame(Category = names(.), session_info = .)
+rownames(sys1) <- NULL
+sys1 %>% formattable %>% as.htmlwidget
+
+data.frame(Sys.info()) %>% mutate(Category = rownames(.)) %>% .[2:1] %>% rename(Category = Category, Sys.info =  Sys.info..) %>% formattable %>% as.htmlwidget
+
+rm(sys1)
 ```
 
 **Powered by - Copyright® Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)個人の経営企業**

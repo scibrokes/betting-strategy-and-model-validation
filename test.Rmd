@@ -4,18 +4,38 @@ author: "®γσ, Eng Lian Hu"
 date: "August 28, 2016"
 output: html_document
 runtime: shiny
+resource_files:
+- data/livescore.zip
+- data/2011.csv
+- data/2012.csv
+- data/2013.csv
+- data/2014.csv
+- data/2015.csv
+- data/teamID.csv
+- function/readfirmData.R
+- function/arrDataElem.R
+- function/arrfirmData.R
+- function/arrTeamID.R
+- function/bvp.R
+- function/libs.R
+- function/makeList.R
+- function/partialMatch.R
+- function/readSPBO.R
+- function/scrapSPBO.R
+- function/signature.R
+- function/stringdistList.R
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-
 ```{r libs, message = FALSE, warning = FALSE, cache = TRUE, include = FALSE}
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
 suppressMessages(library('utils'))
 suppressMessages(source('function/libs.R'))
+#'@ suppressMessages(source('https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/function/libs.R'))
 ```
 
 # Abstract
@@ -124,7 +144,7 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 gvis.options <- list(title = "Bookmaker Net Probabilities -vs- Firm A EM Probabilities", series = "[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis = "{title:'Bookmaker Backed Net Prob'}", vAxis = "{title:'rEMProbB'},{title:'netProbB'}", pointSize = 2, width = 'automatic', height = 'automatic', gvis.editor = 'Edit me!')
 
 #'@ plot4.1.1 <- gvisLineChart(xvar = 'netProbB', yvar = 'rEMProbB', data = dat, options = gvis.options)
-plot4.1.1 <- gvisScatterChart(dat[c('netProbB', 'rEMProbB')], options = gvis.options)
+plot4.1.1 <- googleVis::gvisScatterChart(dat[c('netProbB', 'rEMProbB')], options = gvis.options)
 plot(plot4.1.1)
 
 rm(plot4.1.1)
@@ -149,7 +169,7 @@ m <- ddply(dat, .(Result), summarise, Stakes = sum(Stakes), Return = sum(Return)
 tv <- c('Total', colSums(m[-1])); tv[4] <- as.numeric(tv[3]) / as.numeric(tv[2])
 m <- suppressWarnings(rbind(m, tv))
 m$Result <- factor(c(as.character(m$Result)[-length(m$Result)], 'Total')); rm(tv)
-m %<>% map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
+m %<>% purrr::map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
 #'@ m %>% kable(caption = 'Table 4.1.3 : Summary of Betting Results')
 
 suppressMessages(library('formattable'))

@@ -15,13 +15,33 @@ output:
 bibliography: skeleton.bib
 link-citations: yes
 runtime: shiny
+resource_files:
+- data/livescore.zip
+- data/2011.csv
+- data/2012.csv
+- data/2013.csv
+- data/2014.csv
+- data/2015.csv
+- data/teamID.csv
+- function/readfirmData.R
+- function/arrDataElem.R
+- function/arrfirmData.R
+- function/arrTeamID.R
+- function/bvp.R
+- function/libs.R
+- function/makeList.R
+- function/partialMatch.R
+- function/readSPBO.R
+- function/scrapSPBO.R
+- function/signature.R
+- function/stringdistList.R
 ---
 
 ```{r libs, message = FALSE, warning = FALSE, cache = TRUE, include = FALSE}
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
 suppressMessages(library('utils'))
-suppressMessages(source('function/libs.R'))
+#'@ suppressMessages(source('function/libs.R'))
 ```
 
 # Abstract
@@ -291,6 +311,12 @@ stargazer(anova(lm14), type = 'html')
 *table 4.2.2 : Anova of linear models.*
 </s>
 
+  When I used to work in 188Bet and Singbet as well as AS3388, we know from the experience which is the odds price of favorite team win will be the standard reference and the draw odds will adjust a little bit while the underdog team will be ignore.
+
+  *Steven Xu (2013)*^[Kindly refer to 16th paper in [Reference for industry knowdelege and academic research portion for the paper.]] has do a case study on the comparison of the efficiency of opening and closing price of NFL and College American Football Leagues and get to know the closing price is more efficient and accurate compare to opening price nowadays compare to years 1980~1990. It might be due to multi-million dollars of stakes from informed traders or smart punters to tune up the closing price to be likelihood.
+  
+  In order to test the empirical clichés, I used to conduct a research thoroughly through *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 3rd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**, I completed the research on year 2010 but write the thesis in year 2016.] and concludes that the opening price of Asian Handicap and also Goal Lines of 29 bookmakers are efficient than mine. However in my later *®γσ, Eng Lian Hu (2014)*[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] applied Kelly staking model where made a return of more than 30% per sesson. Meanwhile, the *Dixon and Coles (1996)* and *Crowder, Dixon, Ledford and Robinson (2001)*^[Kindly refer to 27th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has built two models which compare the accuracy of home win, draw and away win. From a normal Poison model reported the home win is more accurate and therefore an add-hoc inflated parameter required in order to increase the accuracy of prediction. You are feel free to learn about the *Dixon and Coles (1996)* in section [4.4 Poisson Ⓜodel].
+
 ```{r shiny-summary, echo = FALSE, results = 'asis'}
 #'@ runApp( ## Cannot use runApp() with list(ui, server) since it will open an independent webpage but unable embed into rmarkdown file. It will endless stuck in knitting progress...
 #'@     list(
@@ -378,7 +404,7 @@ shinyApp(
 
 *shinyapp 4.2.1 : Summary and anova of linear models.*
 
-  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf).] and also anova to compare among the models.
+  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Fitting%20Linear%20Mixed-Effects%20Models%20Using%20lme4.pdf). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf).] and also anova to compare among the models.
   
   You might select Y response variable and X explanatory variable(s) to measure your model^[Refer to [Shiny height-weight example](runGist("https://gist.github.com/wch/4034323")) for further information about shinyapp for linear models.] or existing models.
 
@@ -554,7 +580,7 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation 4.3.4$$
 
 ## 4.4 Poisson Ⓜodel
 
-  *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] has enhanced the *Dixon and Coles (1996)*^[Kindly refer to 25th paper in [Reference for industry knowdelege and academic research portion for the paper.]] which are :
+  *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] has enhanced the *Dixon and Coles (1996)* which are :
   
   - Basic Poisson model : Independence Poisson model for both home and way teams with a constant home advantage parameter.
   - Independent home advantages model : Seperate the home advantage parameter depends on the teams accordingly.
@@ -565,11 +591,11 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation 4.3.4$$
 
 ![*figure 4.4.1 : Comparison of various Poison models.*](figure/NikoMarttinen2001-01.jpg)
 
-  From *figure 4.4.1* above, the author compare the deviance of the models^[Kindly refer to [Generalized Linear Models in R, Part 2: Understanding Model Fit in Logistic Regression Output](http://www.theanalysisfactor.com/r-glm-model-fit/), [devianceTest](http://www.mathworks.com/help/stats/generalizedlinearmodel.deviancetest.html?s_tid=gn_loc_drop) and [Use of Deviance Statistics for Comparing Models]() to learn baout the method of comparison.]
+  From *figure 4.4.1* above, the author compare the deviance of the models^[Kindly refer to [Generalized Linear Models in R, Part 2: Understanding Model Fit in Logistic Regression Output](http://www.theanalysisfactor.com/r-glm-model-fit/), [devianceTest](http://www.mathworks.com/help/stats/generalizedlinearmodel.deviancetest.html?s_tid=gn_loc_drop) and [Use of Deviance Statistics for Comparing Models](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Use%20of%20Deviance%20Statistics%20for%20Comparing%20Models.pdf) to learn baout the method of comparison.]
 
   - Weighted model : 
   
-  Here we introduce the *Dixon and Coles (1996)*^[Kindly refer to 25th paper in [Reference for industry knowdelege and academic research portion for the paper.]] Poisson model and its codes. You are freely learning from below links if interest.
+  Here we introduce the *Dixon and Coles (1996)* model and its codes. You are freely learning from below links if interest.
 
 - [Dixon and Cole's Poisson regression R Packages](http://lastplanetranking.blogspot.com/2013/11/code.html)
 - [Dixon and Coles Poisson model](http://opisthokonta.net/?p=890)
@@ -684,8 +710,10 @@ options(op)
 ...
 
 ## 6.2 Future Works
+
+  *Niko Marttinen (2001)* has conducted a very detail and useful but also applicable betting system in real life. There has a ordered probit model which shows a high accuracy predictive model compare to his Poisson (Escore) model. Well, the [*®γσ, Lian Hu ENG (2016)*](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers)^[Infact completed in year 2010] has build a weight inflated diagonal poisson model which is more complicated and shophitiscated and later [*®γσ, Lian Hu ENG (2014)*](https://github.com/scibrokes/kelly-criterion). However there has an automatically and systematically trading system which wrote in *VBA + S-Plus + Excel + SQL*^[the betting system has stated in his paper.] which is very useful as reference. The author use VBA to automac the algorithmic trading while there has no Asian Handicap and Goal Line odds price data to simulate compare to mine. While currently the shinyapps with RStudioConnect can also build an algorithmic trading system. However the *session timeout issue*^[The connection timeout issue might be a big issue for real time algorithmic trading] might need to consider. The [shinydashboard example](https://rstudio.github.io/shinydashboard/examples.html) from ｮStudio might probably cope with the issue.
   
-  I will be apply Shiny to write a dynamic website to utilise the function as web based apps. You are welcome to refer [SHOW ME SHINY](http://www.showmeshiny.com/category/topics/sports/).
+  I will be apply Shiny to write a dynamic website to utilise the function as web based apps. I am currently conducting another research on [corporate-finance-analysis](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers) which is an analysis on the public listed companies and also anonymous companies revenue and profit & loss. You are welcome to refer [SHOW ME SHINY](http://www.showmeshiny.com/category/topics/sports/) and build your own shinyapps.
   
   I will also write as a package to easier load and log.
 
@@ -711,10 +739,18 @@ options(op)
   - GitHub: [Source Code](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation)
   - Additional session information
   
-```{r info, echo = FALSE, results = 'asis'}
+```{r info, echo = FALSE, warning = FALSE, results = 'asis'}
+suppressMessages(require('dplyr', quietly = TRUE))
+suppressMessages(require('formattable', quietly = TRUE))
+
 lubridate::now()
-devtools::session_info()$platform
-Sys.info()
+sys1 <- devtools::session_info()$platform %>% unlist %>% data.frame(Category = names(.), session_info = .)
+rownames(sys1) <- NULL
+sys1 %>% formattable %>% as.htmlwidget
+
+data.frame(Sys.info()) %>% mutate(Category = rownames(.)) %>% .[2:1] %>% rename(Category = Category, Sys.info =  Sys.info..) %>% formattable %>% as.htmlwidget
+
+rm(sys1)
 ```
 
 ## 7.2 Versions' Log
@@ -743,6 +779,8 @@ Sys.info()
 
 <iframe width="420" height="315" src="https://www.youtube.com/embed/Pv-KRj9XxXc" frameborder="0" allowfullscreen></iframe>
 
+  Due to the rmarkdown file has quite some sections and titles, you might expand or collapse the codes by refer to [Code Folding and Sections](https://support.rstudio.com/hc/en-us/articles/200484568) for easier reading.
+
   There are quite some errors when I **knit HTML**:
   
   - let say always stuck (which is not response and consider as completed) at 29%. I tried couple times while sometimes prompt me different errors (upgrade Droplet to larger RAM memory space doesn't helps) and eventually apply `rm() and gc()` to remove the object after use and also clear the memory space.
@@ -754,6 +792,8 @@ Sys.info()
   - `xtable` always shows LaTeX output but not table. Raised a question in COS : [求助！knitr Rmd pdf 中文编译 *2016年8月19日 下午9:56 7 楼*](http://cos.name/cn/topic/411119/#post-417637).Here I try other packages like [`textreg`](http://www2.uaem.mx/r-mirror/web/packages/texreg/vignettes/texreg.pdf) and [`stargazer`](http://www.princeton.edu/~otorres/NiceOutputR.pdf). You can refer to [Test version](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02test.html#linear-odel) to view the output of `stargazer` function and the source codes I reserved but added `eval = FALSE` in chunks named `lm-summary` and `lm-anova` to unexecute the codes.
   
   - I refer to [R Shiny: Rendering summary.ivreg output](http://stackoverflow.com/questions/27245173/r-shiny-rendering-summary-ivreg-output) and tried to plot the output table, but there has no bottom statistical information like *Residual standard error*, *Degree of Freedom*, *R-Squared*, *F-statistical value* and also *p-value*, therefore I use [R Shiny App for Linear Regression, Issue with Render Functions](http://stackoverflow.com/questions/33874298/r-shiny-app-for-linear-regression-issue-with-render-functions) which simply `renderPrint()` the `verbatimTextOutput()` in *shinyapp 4.2.1*.
+  
+  - I tried to raise an issue about post the shinyapps to RStudioConnect at [Unable publish to RStudio Connect : Error in yaml::yaml.load(enc2utf8(string), ...) : Reader error: control characters are not allowed: #81 at 276 #115](https://github.com/rstudio/rsconnect/issues/115). You might try to refer to the gif files in [#issue 115](https://github.com/rstudio/rsconnect/issues/115#issuecomment-244084859) for further information.
   
 ## 7.4 References
 
@@ -784,7 +824,8 @@ Sys.info()
   23. [**An introduction to football modelling at Smartodds** *by Robert Johnson (2011)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/An%20Introduction%20to%20Football%20Modelling%20at%20SmartOdds%20(v1).pdf)
   24. [**The Value of Statistical Forecasts in the UK Association Football Betting Market** *by Dixon and Pope (2003)*](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/reference/DixonPope2004.pdf)
   25. [**Modelling Association Football Scores and Inefficiencies in the Football Betting Market** *by Dixon & Coles (1996)*](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/reference/DixonColes1996.pdf)
-  26. [**A New Interpretation of Information Rate** *by John Kelly (1956)*]()
+  26. [**A New Interpretation of Information Rate** *by John Kelly (1956)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20New%20Interpretation%20of%20Information%20Rate.pdf)
+  27. [**Dynamic Modelling and Prediction of English Football League Matches for Betting** *by Crowder, Dixon, Ledford and Robinson (2001)*](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/reference/DixonLedfordRobinson2001.pdf)
 
 ####  Reference for technical research on programming and coding portion for the paper.
 
