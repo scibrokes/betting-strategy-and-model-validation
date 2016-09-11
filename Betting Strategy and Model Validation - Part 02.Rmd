@@ -41,7 +41,7 @@ resource_files:
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
 suppressMessages(library('utils'))
-#'@ suppressMessages(source('function/libs.R'))
+suppressMessages(source('function/libs.R'))
 ```
 
 # Abstract
@@ -104,10 +104,17 @@ dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$oth
 ## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
 m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), Return = sum(Return), n = length(Sess), rRates = Return / Stakes)
 
-m %>% formattable %>% as.htmlwidget
+m %>% formattable(list(
+  Stakes = color_tile('white', 'darkgoldenrod'),
+  Return = formatter('span', 
+                     style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.2f (rank: %02d)', x, rank(-x))),
+  n = color_tile('white', '#9B870C'),
+  rRates = formatter('span', 
+                     style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.2f (rank: %02d)', x, rank(-x)))
+)) %>% as.htmlwidget
 ```
 
-*table 4.1.1* : `r paste0(dim(m), collapse=' x ')` : *Return of annually investment summary table.*
+*table 4.1.1* : `r paste0(dim(m), collapse=' x ')` : *Return of annually investment summary table.*^[Kindly refer to the list of colors via [Dark yellow with hexadecimal color code #9b870c](http://encycolorpedia.com/9b870c) for plot the stylist table.]
 
 $$\Re = \sum_{i=1}^{n}\rho_{i}^{EM}/\sum_{i=1}^{n}\rho_{i}^{BK} \cdots equation 4.1.1$$
 
@@ -150,7 +157,7 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 gvis.options <- list(title = "Bookmaker Net Probabilities -vs- Firm A EM Probabilities", series = "[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis = "{title:'Bookmaker Backed Net Prob'}", vAxis = "{title:'rEMProbB'},{title:'netProbB'}", pointSize = 2, width = 'automatic', height = 'automatic', gvis.editor = 'Edit me!')
 
 #'@ plot4.1.1 <- gvisLineChart(xvar = 'netProbB', yvar = 'rEMProbB', data = dat, options = gvis.options)
-plot4.1.1 <- gvisScatterChart(dat[c('netProbB', 'rEMProbB')], options = gvis.options)
+plot4.1.1 <- googleVis::gvisScatterChart(dat[c('netProbB', 'rEMProbB')], options = gvis.options)
 plot(plot4.1.1)
 
 rm(plot4.1.1)
@@ -175,7 +182,7 @@ m <- ddply(dat, .(Result), summarise, Stakes = sum(Stakes), Return = sum(Return)
 tv <- c('Total', colSums(m[-1])); tv[4] <- as.numeric(tv[3]) / as.numeric(tv[2])
 m <- suppressWarnings(rbind(m, tv))
 m$Result <- factor(c(as.character(m$Result)[-length(m$Result)], 'Total')); rm(tv)
-m %<>% map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
+m %<>% purrr::map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
 #'@ m %>% kable(caption = 'Table 4.1.3 : Summary of Betting Results')
 
 suppressMessages(library('formattable'))
@@ -409,9 +416,6 @@ shinyApp(
   You might select Y response variable and X explanatory variable(s) to measure your model^[Refer to [Shiny height-weight example](runGist("https://gist.github.com/wch/4034323")) for further information about shinyapp for linear models.] or existing models.
 
 ```{r shiny-calc01, echo = FALSE, results = 'asis'}
-library('shiny')
-library('dplyr')
-
 shinyApp(
   ui = fluidPage(
     titlePanel('1 x 2 Combo to AH (by William Chen 2006)'),
@@ -683,7 +687,7 @@ Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 
   Here I apply the `arules` and `arulesViz` packages to analyse the market basket of the bets.
 
-```{r, echo = FALSE, results = 'asis'}
+```{r gvis-options, echo = FALSE, results = 'asis'}
 ## Set options back to original options
 options(op)
 ```
