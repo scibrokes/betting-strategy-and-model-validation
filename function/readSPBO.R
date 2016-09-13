@@ -28,7 +28,7 @@ readSPBO <- function(dateID = dateID, parallel = FALSE){
   dateIDex <- dateID[!dateID %in% dateIDdir]
   
   ## Read spbo livescore datasets.
-  dfm <- rbind_all(llply(as.list(dateIDin), function(x){
+  dfm <- bind_rows(llply(as.list(dateIDin), function(x){
     data.frame(read.csv(file = paste0('./data/livescore/', x, '.csv')))}, .parallel = parallel))
   
   unlink('./data/livescore', recursive = TRUE)

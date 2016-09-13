@@ -1,7 +1,7 @@
 ---
 title: "Betting Strategy and Ⓜodel Validation - Part II"
 subtitle: "Betting Model Analysis on Sportsbook Consultancy Firm A"
-author: "[®γσ, Eng Lian Hu](http://englianhu.wordpress.com) <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸則道®"
+author: "[®γσ, Eng Lian Hu](https://englianhu.github.io/) <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸則道®"
 date: "`r Sys.Date()`"
 output:
   tufte::tufte_html:
@@ -48,18 +48,21 @@ suppressMessages(source('function/libs.R'))
 
   This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the *Dixon and Pope (2004)*^[Kindly refer to 24th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**], due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the *Tony Hirst (2014)*^[Kindly refer to 1st paper in [Reference for technical research on programming and coding portion for the paper.] in **7.4 References**] if you are getting interest to write a data analysis on Sports-book.
 
-# 1. Introduction to the Betting Stategics
+# [1. Introduction to the Betting Stategics](http://rstudio-pubs-static.s3.amazonaws.com/208637_3c45a2408ed94b9e8620b01714a4af41.html#introduction-to-the-betting-stategics)
 
-  - Section [1.1 Introducing Betting Strategies] - Introduce Betting Strategies
-  - Section [1.2 Value Betting] - Odds Price and Overrounds Changared by Bookmakers
-  - Section [1.3 Professional Gambler] - Punters' life and How Hedge Fund Works
+  - Section [1.1 Introducing Betting Strategies](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#introducing-betting-strategies) - Introduce Betting Strategies
+  - Section [1.2 Value Betting](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#value-betting) - Odds Price and Overrounds Changared by Bookmakers
+  - Section [1.3 Professional Gambler](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#professional-gambler) - Punters' life and How Hedge Fund Works
 
-# 2. Data
+# [2. Data](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#data)
 
-  - Section [2.1 Collect and Reprocess the Data] - Data from Firm A
-  - Section [2.2 Overrounds / Vigorish] - Odds Price and Overrounds Changared by Bookmakers
+  - Section [2.1 Collect and Reprocess the Data](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#collect-and-reprocess-the-data) - Data from Firm A
+  - Section [2.2 Overrounds / Vigorish](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#overrounds-vigorish) - Odds Price and Overrounds Changared by Bookmakers
 
-```{r read-data-summary-table, echo = FALSE, results = 'asis'}
+```{r read-data-summary-table, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
+## Load package again due to unable find function
+suppressMessages(require('magrittr', quietly = TRUE))
+
 ## Read the data
 ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
 years <- seq(2011, 2015)
@@ -77,13 +80,13 @@ mbase <- readfirmData(years = years) %>% arrfirmData(lProfile = lProfile)
 dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$others)) %>% mutate(Stakes = Stakes/10000, Return = Return/10000, PL = PL/10000)
 ```
 
-# 3. Summarise the Staking Model
+# [3. Summarise the Staking Model](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#summarise-the-staking-model)
 
-  - Section [3.1 Summarise Diversified Periodic Stakes] - Summarise the Stakes and Return
-  - Section [3.2 Summarise the Staking Handicap] - Summarise the Staking Handicap Breakdown
-  - Section [3.3 Summarise the Staking Prices] - Summarise the Staking Price Range Breakdown
-  - Section [3.4 Summarise the In-Play Staking Timing] - Summarise the In-Play Staking Breakdown by Time Range
-  - Section [3.5 Summarise the In-Play Staking Based on Current Score] - Summarise the In-Play Staking Breakdown by Current Score
+  - Section [3.1 Summarise Diversified Periodic Stakes](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#summarise-diversified-periodic-stakes) - Summarise the Stakes and Return
+  - Section [3.2 Summarise the Staking Handicap](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#summarise-the-staking-handicap) - Summarise the Staking Handicap Breakdown
+  - Section [3.3 Summarise the Staking Prices](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#summarise-the-staking-prices) - Summarise the Staking Price Range Breakdown
+  - Section [3.4 Summarise the In-Play Staking Timing](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#summarise-the-in-play-staking-timing) - Summarise the In-Play Staking Breakdown by Time Range
+  - Section [3.5 Summarise the In-Play Staking Based on Current Score](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#summarise-the-in-play-staking-based-on-current-score) - Summarise the In-Play Staking Breakdown by Current Score
 
 # 4. Staking Ⓜodel
 
@@ -99,6 +102,9 @@ dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$oth
   Before we start modelling, we look at the summary of investment return rates.
 
 ```{r data-return-summary-table1, echo = FALSE, results = 'asis'}
+## Load package again due to cannot find the function
+suppressMessages(require('formattable', quietly = TRUE))
+
 ## Get the investment return rates per annun
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
 ## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
@@ -139,7 +145,7 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 
   Above table list a part of sample odds prices and probabilities of soccer match $i$ while $n$ indicates the number of soccer matches. We can know the values `rEMProbB`, `netProbB` and so forth.
 
-```{r data-prob-plot2, echo = FALSE, results = 'asis'}
+```{r data-prob-plot2, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
 ## Linear model
 ## Learn about API authentication here: https://plot.ly/r/getting-started
 ## Find your api_key here: https://plot.ly/settings/api
@@ -318,13 +324,19 @@ stargazer(anova(lm14), type = 'html')
 *table 4.2.2 : Anova of linear models.*
 </s>
 
+>  Due to the coefficient of the regression models ocuppied a long space in this article. Here I write in a shiny app which perform the summary and anova of the models. **Kindly click on [*Report with ShinyApps*](https://beta.rstudioconnect.com/connect/1766) to use the ShinyApp**. It will take few minutes time to open the website since the dataset contain 5 years soccer data from firm A staking via agent A made it a heavily loading.
+
   When I used to work in 188Bet and Singbet as well as AS3388, we know from the experience which is the odds price of favorite team win will be the standard reference and the draw odds will adjust a little bit while the underdog team will be ignore.
 
   *Steven Xu (2013)*^[Kindly refer to 16th paper in [Reference for industry knowdelege and academic research portion for the paper.]] has do a case study on the comparison of the efficiency of opening and closing price of NFL and College American Football Leagues and get to know the closing price is more efficient and accurate compare to opening price nowadays compare to years 1980~1990. It might be due to multi-million dollars of stakes from informed traders or smart punters to tune up the closing price to be likelihood.
   
   In order to test the empirical clichés, I used to conduct a research thoroughly through *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 3rd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**, I completed the research on year 2010 but write the thesis in year 2016.] and concludes that the opening price of Asian Handicap and also Goal Lines of 29 bookmakers are efficient than mine. However in my later *®γσ, Eng Lian Hu (2014)*[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] applied Kelly staking model where made a return of more than 30% per sesson. Meanwhile, the *Dixon and Coles (1996)* and *Crowder, Dixon, Ledford and Robinson (2001)*^[Kindly refer to 27th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has built two models which compare the accuracy of home win, draw and away win. From a normal Poison model reported the home win is more accurate and therefore an add-hoc inflated parameter required in order to increase the accuracy of prediction. You are feel free to learn about the *Dixon and Coles (1996)* in section [4.4 Poisson Ⓜodel].
 
-```{r shiny-summary, echo = FALSE, results = 'asis'}
+![Kindly click on [*Report with ShinyApps*](https://beta.rstudioconnect.com/connect/1766) to use the ShinyApp](figure/20160914_004315.gif)
+
+```{r shiny-summary, eval = FALSE, echo = FALSE, results = 'asis'}
+suppressMessages(require('shiny', quietly = TRUE))
+
 #'@ runApp( ## Cannot use runApp() with list(ui, server) since it will open an independent webpage but unable embed into rmarkdown file. It will endless stuck in knitting progress...
 #'@     list(
 shinyApp(
@@ -415,7 +427,9 @@ shinyApp(
   
   You might select Y response variable and X explanatory variable(s) to measure your model^[Refer to [Shiny height-weight example](runGist("https://gist.github.com/wch/4034323")) for further information about shinyapp for linear models.] or existing models.
 
-```{r shiny-calc01, echo = FALSE, results = 'asis'}
+![Kindly click on [*Report with ShinyApps*](https://beta.rstudioconnect.com/connect/1766) to use the ShinyApp](figure/20160914_004802.gif)
+
+```{r shiny-calc01, eval = FALSE, echo = FALSE, results = 'asis'}
 shinyApp(
   ui = fluidPage(
     titlePanel('1 x 2 Combo to AH (by William Chen 2006)'),
@@ -494,12 +508,6 @@ shinyApp(
 
   Here I simply attached with a Fixed Odds to Asian Handicap's calculator which refer to my *ex-colleague William Chen's*^[My ex-colleague and best friend in sportsbook industry which known since join sportsbook industry year 2005 ------ Telebiz and later Caspo Inc.] spreadsheet version 1.1 in year 2006. You can simply input the home win, draw, away win (in decimal format) as well as the overround.^[Kindly refer to my previous research to know the vigorish / overround.]
 
-```{r shiny-calc02, echo = FALSE, results = 'asis'}
-
-```
-
-*shinyapp 4.2.3 : Convertion between AH and Fixed-Odds.*
-
 ```
 Section : reverse modelling to get the EMProb prior to calculate the coefficient of the staking model. Otherwise might rearrange the order of applied Poison model here by refer to international competitions.
 ```
@@ -514,7 +522,9 @@ draft :
   - reverse engineering on staking-profit linear regression model to get/retrieve EMProb value since now only get the coefficients figire of EMProb. Although incompleted soccer teams... 2ndly, reversed poison model from EMProb might is not workable on one-sided competition, need to refer to some international competition as references for incompleted dataset.
 ```
 
-  *John Fingleton & Patrick Waldron (1999)*^[You are feel free to refer to [Reference for industry knowdelege and academic research portion for the paper] in **7.4 References** for further details] apply Shin's model and finally conclude suggests that bookmakers in Ireland are infinitely risk-averse and balance their books. The authors cannot distinguish between inside information and operating costs, merely concluding that combined they account for up to 3.7% of turnover. They compare different versions of our model, using data from races in Ireland in 1993. The authors' empirical results can be summarised as follows:
+  *John Fingleton & Patrick Waldron (1999)*^[Kindly refer to 13th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] apply Shin's model and finally conclude suggests that bookmakers in Ireland are infinitely risk-averse and balance their books. The authors cannot distinguish between inside information and operating costs, merely concluding that combined they account for up to 3.7% of turnover while normally Asian bookmakers made less than 1% and a anonymous company has made around 2%. However the revenue or the stakes are farly more than European bookmakers.^[You can refer to my another project [Analyse the Finance and Stocks Price of Bookmakers](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers) which analysis the financial report of public listed companies and also profitable products' revenue and profit & loss of anonymous company.]. 
+  
+  They compare different versions of our model, using data from races in Ireland in 1993. The authors' empirical results can be summarised as follows:
   
   - They reject the hypothesis that bookmakers behave in a risk neutral manner;
   - They cannot reject the hypothesis that they are infinitely riskaverse;
@@ -607,6 +617,9 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation 4.3.4$$
 - [Predicting Football Using R](http://pena.lt/y/2014/11/02/predicting-football-using-r/)
 
 ```{r data-Poisson, echo = FALSE, results = 'asis'}
+## Load package again due to cannot find the function
+suppressMessages(require('DT', quietly = TRUE))
+
 ## Apply Poisson model to simulate different scores to maximum likelihood value ρ.
 ## reverse Kelly Criterion to abtain the average EMPrice, reversed bivarite poisson to get the EMprobB
 ##
@@ -634,7 +647,7 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
   
   We know above edge is same but due to the probability of occurance an event/goal at 0.4 is smaller than 0.64. Here I try to bootstrap/resampling the scores of matches of the dataset and apply maximum likelihood on the poisson model to test the Kelly model and get the mean/likelihood value. Boostrapping the scores and staking model will be falling in the following sections [4.5 Staking Ⓜodel and Ⓜoney Management] and  [4.6 Expectation Ⓜaximization and Staking Simulation].
 
-## 4.5 Staking Ⓜodel and Ⓜoney Management
+## 4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement
 
 ```{r, echo = FALSE, results = 'asis'}
 ## Bootstrap and apply maximum likelihood model
@@ -702,10 +715,14 @@ options(op)
   Due to the data-sets I collected just one among all agents among couple sports-bookmakers [4lowin](https://www.youtube.com/watch?v=eFYS0jdSiWc). Here I cannot determine if the sample data among the population...
 
 > JA : What skills and academic training (example: college courses) are valuable to sports statisticians?
+
 > KW : I would say there are three sets of skills you need to be a successful sports statistician:
-  - Quantitative skills - the statistical and mathematical techniques you'll use to make sense of the data. Most kinds of coursework you'd find in an applied statistics program will be helpful. Regression methods, hypothesis testing, confidence intervals, inference, probability, ANOVA, multivariate analysis, linear and logistic models, clustering, time series, and data mining/machine learning would all be applicable. I'd include in this category designing charts, graphs, and other data visualizations to help present and communicate results.
-  - Technical skills - learning one or more statistical software systems such as R/S-PLUS, SAS, SPSS, Stata, Matlab, etc. will give you the tools to apply quantitative skills in practice. Beyond that, the more self-reliant you are at extracting and manipulating your data directly, the more quickly you can explore your data and test ideas. So being adept with the technology you're likely to encounter will help tremendously. Most of the information you'd be dealing with in sports statistics would be in a database, so learning SQL or another query language is important. In addition, mastering advanced spreadsheet skills such as pivot tables, macros, scripting, and chart customization would be useful.
-  - Domain knowledge - truly understanding the sport you want to analyze professionally is critical to being successful. Knowing the rules of the game; studying how front offices operate; finding out how players are recruited, developed, and evaluated; and even just learning the jargon used within the industry will help you integrate into the organization. You'll come to understand what problems are important to the GM and other decisionmakers, as well as what information is available, how it's collected, what it means, and what its limitations are. Also, I recommend keeping up with the discussions in your sport's analytic community so you know about the latest developments and what's considered the state of the art in the public sphere. One of the great things about being a sports statistician is getting to follow your favorite websites and blogs as a legitimate part of your job!
+
+>  - Quantitative skills - the statistical and mathematical techniques you'll use to make sense of the data. Most kinds of coursework you'd find in an applied statistics program will be helpful. Regression methods, hypothesis testing, confidence intervals, inference, probability, ANOVA, multivariate analysis, linear and logistic models, clustering, time series, and data mining/machine learning would all be applicable. I'd include in this category designing charts, graphs, and other data visualizations to help present and communicate results.
+
+>  - Technical skills - learning one or more statistical software systems such as R/S-PLUS, SAS, SPSS, Stata, Matlab, etc. will give you the tools to apply quantitative skills in practice. Beyond that, the more self-reliant you are at extracting and manipulating your data directly, the more quickly you can explore your data and test ideas. So being adept with the technology you're likely to encounter will help tremendously. Most of the information you'd be dealing with in sports statistics would be in a database, so learning SQL or another query language is important. In addition, mastering advanced spreadsheet skills such as pivot tables, macros, scripting, and chart customization would be useful.
+
+>  - Domain knowledge - truly understanding the sport you want to analyze professionally is critical to being successful. Knowing the rules of the game; studying how front offices operate; finding out how players are recruited, developed, and evaluated; and even just learning the jargon used within the industry will help you integrate into the organization. You'll come to understand what problems are important to the GM and other decisionmakers, as well as what information is available, how it's collected, what it means, and what its limitations are. Also, I recommend keeping up with the discussions in your sport's analytic community so you know about the latest developments and what's considered the state of the art in the public sphere. One of the great things about being a sports statistician is getting to follow your favorite websites and blogs as a legitimate part of your job!
 
 **source : [Preparing for a Career as a Sports Statistician: Two Interviews with People in the Field](http://stattrak.amstat.org/2012/08/01/sports-statistician/)**
 
@@ -797,8 +814,8 @@ rm(sys1)
   
   - I refer to [R Shiny: Rendering summary.ivreg output](http://stackoverflow.com/questions/27245173/r-shiny-rendering-summary-ivreg-output) and tried to plot the output table, but there has no bottom statistical information like *Residual standard error*, *Degree of Freedom*, *R-Squared*, *F-statistical value* and also *p-value*, therefore I use [R Shiny App for Linear Regression, Issue with Render Functions](http://stackoverflow.com/questions/33874298/r-shiny-app-for-linear-regression-issue-with-render-functions) which simply `renderPrint()` the `verbatimTextOutput()` in *shinyapp 4.2.1*.
   
-  - I tried to raise an issue about post the shinyapps to RStudioConnect at [Unable publish to RStudio Connect : Error in yaml::yaml.load(enc2utf8(string), ...) : Reader error: control characters are not allowed: #81 at 276 #115](https://github.com/rstudio/rsconnect/issues/115). You might try to refer to the gif files in [#issue 115](https://github.com/rstudio/rsconnect/issues/115#issuecomment-244084859) for further information.
-  
+  - I tried to raise an issue about post the shinyapps to RStudioConnect at [Unable publish to RStudio Connect : Error in yaml::yaml.load(enc2utf8(string), ...) : Reader error: control characters are not allowed: #81 at 276 #115](https://github.com/rstudio/rsconnect/issues/115). You might try to refer to the gif files in [#issue 115](https://github.com/rstudio/rsconnect/issues/115#issuecomment-244084859) for further information. I tried couple times and find the solution but there has no an effective solution and only allowed post to ｮPubs.com where I finally decide to seperate the dynamic shinyApp into another web url.
+
 ## 7.4 References
 
 ####  Reference for industry knowdelege and academic research portion for the paper.
@@ -837,5 +854,6 @@ rm(sys1)
   2. [**Interactive visualizations with R - a minireview** *by Juuso Parkkinen (2014)*](http://ouzor.github.io/blog/2014/11/21/interactive-visualizations.html)
   3. [**R + htmlwidgets + DT + sparkline** *by Matthew Leonawicz (2015)*](https://blog.snap.uaf.edu/2015/10/01/r-htmlwidgets-dt-sparkline/)
   4. [**Programming Assignment 2 Submission : Data Visualization by University of Illinois at Urbana-Champaign** *by ®γσ, Eng Lian Hu (2016)*](https://beta.rstudioconnect.com/englianhu/Programming-Assignment-2-Submission/#read-data)
+  5. [Using Roles via googleVis](https://cran.r-project.org/web/packages/googleVis/vignettes/Using_Roles_via_googleVis.html)
 
 **Powered by - Copyright® Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)個人の経営企業**

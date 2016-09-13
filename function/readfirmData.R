@@ -30,7 +30,7 @@ readfirmData <- function(years = years, parallel = FALSE){
   }
   ## Read the datasets
   ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
-  dfm <- rbind_all(llply(years, function(x) {
+  dfm <- bind_rows(llply(years, function(x) {
     data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'), header = TRUE, sep = ','))}, 
     .parallel = parallel))
   

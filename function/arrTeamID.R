@@ -28,7 +28,7 @@ arrTeamID <- function(mbase, spboData, method=c('osa', 'lv', 'dl', 'hamming',
   df2 <- llply(seq(nrow(dfm$partialData)), function(i){
            stringdistList(method=method, tmID_A=dfm$partialData$tmID[i], 
                      tmID_B=na.omit(unlist(dfm$partialData[i, 4:ncol(dfm$partialData)])), parallel=parallel)
-           }, .parallel=parallel) %>% rbind_all
+           }, .parallel=parallel) %>% bind_rows
                      ## levDist=0.1 depreciated but auto turned to Inf, here I omit to set levDist
          
   df1 <- dfm$matchData %>% .[2:ncol(.)] %>% as.list %>% rep(., 10) %>% 

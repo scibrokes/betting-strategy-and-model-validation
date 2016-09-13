@@ -251,7 +251,7 @@ makeList <- function(mbase, spboData, levDist=0.1, parallel=FALSE){
                   mt %>% data.frame
               })})
   
-  dfm <- llply(df.agrep, rbind_all) %>% rbind_all %>% cbind(Sex=substr(names(unlist(tmID6)), 1, 2),
+  dfm <- llply(df.agrep, bind_rows) %>% bind_rows %>% cbind(Sex=substr(names(unlist(tmID6)), 1, 2),
          List=str_replace_all(substring(names(unlist(tmID6)), 4), '\\.\\S+', '') %>% unlist,
          tmID=unlist(tmID6), .) %>% data.frame %>% filter(!is.na(tmID))
   rm(len, mx)

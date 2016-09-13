@@ -2,5 +2,5 @@
 options(rpubs.upload.method = "internal")
 
 #### -- Packrat Autoloader (version 0.4.7-25) -- ####
-source("packrat/init.R")
+#'@ source("packrat/init.R")
 #### -- End Packrat Autoloader -- ####

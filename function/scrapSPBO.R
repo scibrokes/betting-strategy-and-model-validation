@@ -47,7 +47,7 @@ scrapSPBO <- function(lnk = lnk, dateID = dateID, path = path, parallel = FALSE)
       rownames %>% as.numeric
     irng <- c(ncolID.df, length(dataElem))
     ncol.df <- diff(irng)
-    dfm <- as.matrix(rbind_all(llply(seq(1, length(ncol.df)), function(j) {
+    dfm <- as.matrix(bind_rows(llply(seq(1, length(ncol.df)), function(j) {
       data.frame(matrix(dataElem[irng[j]:(irng[j + 1] - 1)], byrow = TRUE, ncol = ncol.df[[j]]))}, 
       .parallel = parallel)))
     

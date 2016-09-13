@@ -18,9 +18,17 @@ link-citations: yes
 ---
 
 ```{r libs, message = FALSE, warning = FALSE, cache = TRUE, include = FALSE}
+##   tufte::tufte_html:
+##     self_contained: no
+
+suppressMessages(require('tufte', quietly = TRUE))
+# invalidate cache when the tufte version changes
+knitr::opts_chunk$set(tidy = FALSE, cache.extra = packageVersion('tufte'))
+options(htmltools.dir.version = FALSE)
+
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
-suppressMessages(library('utils'))
+suppressMessages(require('utils', quietly = TRUE))
 suppressMessages(source('function/libs.R'))
 ```
 
@@ -86,17 +94,15 @@ suppressMessages(source('function/libs.R'))
 
   Section [1.1 Introducing Betting Strategies] describe some basic concepts about betting strategies. Now we focus on [Value betting](http://www.valuepunter.com/valuebetting.htm) and it is the popular and efficient staking strategy since money management is the key for betting strategy.
 
-```
-  It's not a matter of life or death. But if that team, that result or that referee's decision goes against them, the lives of their wives and their children are affected. The mortgage does not get paid. Holidays are cancelled. They are not players or managers. They are football's professional gamblers.
+>  It's not a matter of life or death. But if that team, that result or that referee's decision goes against them, the lives of their wives and their children are affected. The mortgage does not get paid. Holidays are cancelled. They are not players or managers. They are football's professional gamblers.
 
-  It is their full-time job to win money betting on the game. There are not many successful enough to survive. It is estimated, by the gamblers interviewed here, that fewer than 3 percent of gamblers who have what it takes to "go pro" can earn a living from betting.
+>  It is their full-time job to win money betting on the game. There are not many successful enough to survive. It is estimated, by the gamblers interviewed here, that fewer than 3 percent of gamblers who have what it takes to "go pro" can earn a living from betting.
 
-  No wonder they are a secretive, paranoid bunch. Never do they reveal exactly how they win their money or how much. Their greatest secret is what is known as "the edge". That nugget of information which tells them that the odds on the football betting market is wrong. Only then do they hand over their hard-won dough.
+>  No wonder they are a secretive, paranoid bunch. Never do they reveal exactly how they win their money or how much. Their greatest secret is what is known as "the edge". That nugget of information which tells them that the odds on the football betting market is wrong. Only then do they hand over their hard-won dough.
 
-  It takes hours of eye-bleeding research to find "the edge". Most pros spend hours, and thousands of pounds, building statistical models. Others will employ specialists—analysts and statisticians—to build a complex algorithm for them. If successful enough, they will attract wealthy investors who will hand over thousands, sometimes millions, to bet for them and be promised a healthy return.
+>  It takes hours of eye-bleeding research to find "the edge". Most pros spend hours, and thousands of pounds, building statistical models. Others will employ specialists—analysts and statisticians—to build a complex algorithm for them. If successful enough, they will attract wealthy investors who will hand over thousands, sometimes millions, to bet for them and be promised a healthy return.
 
-  Tony Bloom, a legendary gambler known as "The Lizard" is one such operator. So revered, Bloom runs Star Lizard, a company that employs a raft of people to analyse football matches for his millionaire-only investors. Bloom is rumoured to be worth more than £1 billion and owns Brighton, the Premier League wannabes.
-```
+>  Tony Bloom, a legendary gambler known as "The Lizard" is one such operator. So revered, Bloom runs Star Lizard, a company that employs a raft of people to analyse football matches for his millionaire-only investors. Bloom is rumoured to be worth more than £1 billion and owns Brighton, the Premier League wannabes.
 
   source : [Mugs and Millionaires: Inside the Murky World of Professional Football Gambling](http://bleacherreport.com/articles/2200795-mugs-and-millionaires-inside-the-murky-world-of-professional-football-gambling)
 
@@ -105,12 +111,14 @@ suppressMessages(source('function/libs.R'))
 ## 1.3 Professional Gambler
   
   Nowadays, operates make a lot of restriction to increase their profits. For example: single bet maximum stakes per account, triggers upon staking per bet, single match maximum stakes per account, vigorous/spreads margin (Which will describe in [2.2 Overrounds / Vigorish]). As a professional gambler we are require a high level mathematical skill in order to take profit from operators. Below are some articles about sports betting data analysis.
+  
   - [Play Data, Play Ball!Exploring Baseball Data with R](http://suensummit.github.io/playBall/#1)
   - [openWAR](http://statsinthewild.com/openwar/)
   - [How Predictable is the English Premier League?](http://www.r-bloggers.com/how-predictable-is-the-english-premier-league/)
   - [It's boffins versus bookies on the World Cup Rankings](http://www.theregister.co.uk/2010/06/27/world_cup_update/)
   
   As we know George Soros and Jim Rogers are two of most successness punters in financial market while they used to analyse more than 25 companies from financial reports and also their business when they was working in Atom fund. Environment and the life of punters.
+  
   - [Preparing for a Career as a Sports Statistician: Two Interviews with People in the Field](http://stattrak.amstat.org/2012/08/01/sports-statistician/)
   - [How hedge funds work](http://www.economist.com/blogs/economist-explains/2015/03/economist-explains-16?fsrc=scn%2Ffb%2Fwl%2Fee%2Fhowhedgefundswork)
   - [Rob Mastrodomenico uses data to estimate the outcomes of sports events for professional punters, and it's a complicated business](http://www.theguardian.com/money/2011/jun/11/working-life-quantitative-analyst)
@@ -176,9 +184,7 @@ rm(mbase) ## We need to scrap the livescore data based on the raw data mbase wit
 
 *table 2.1.1* : `r paste0(dim(dat), collapse = ' x ')` : *Sample data collected for the research.*
 
-```
-  About 90 percent of money wagered will be on the Asian handicap, a market that allows the team expected to win a "head start" of a quarter of a goal or more to the opposition. The rest of the money staked will go on a market for over or under a certain number of goals and the match-result market.
-```
+>  About 90 percent of money wagered will be on the Asian handicap, a market that allows the team expected to win a "head start" of a quarter of a goal or more to the opposition. The rest of the money staked will go on a market for over or under a certain number of goals and the match-result market.
 
   source : [Mugs and Millionaires: Inside the Murky World of Professional Football Gambling](http://bleacherreport.com/articles/2200795-mugs-and-millionaires-inside-the-murky-world-of-professional-football-gambling)
 
@@ -337,7 +343,7 @@ rm(m)
 
 *graph 3.1.2* : *Investment monthly trend graph.*
 
-```{r data-daily-summary, echo = FALSE, results = 'asis'}
+```{r data-daily-summary, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
 dt2 <- dat %>% group_by(Sess, Month, Day) %>% summarise(S.total = sum(Stakes), S.median = median(Stakes), S.mean = round(mean(Stakes), 4), S.sd = round(sd(Stakes), 4), Count = length(PL), minHKPrcB = min(HKPrice), maxHKPrcB = max(HKPrice), minProbB = min(netProbB), maxProbB = max(netProbB), Return = sum(PL, Stakes), PL = sum(PL), PL.percent = sprintf(sum(PL)/sum(Stakes), fmt = "%1.4f%%"), Samples = paste(Stakes, collapse = ",")) %>% mutate(Series = Samples)
 #'@ names(dt2)[1] <- 'Sess'
 ddim <- dim(dt2)
@@ -752,36 +758,36 @@ rm(line.gvis)
 
   While the further linear model will also take above criteria for investment. You can also refer to my previous research which is [Odds Modelling and Testing Inefficiency of Sports-Bookmakers](https://www.dropbox.com/sh/ifwczokjptt6re0/AADv1VarJoQ6IgIitZBzG5c6a?dl=0).
 
-# [4. Staking Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#staking-odel)
+# [4. Staking Ⓜodel](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#staking-odel)
 
-  - Section [4.1 Basic Equation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#basic-equation) - Analyse the Odds Price and Probabilities
-  - Section [4.2 Linear Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#linear-odel) - Reversed Engineer to get the EMOdds derived from Stakes
-  - Section [4.3 Kelly Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#kelly-odel) - Test the Kelly Model.
-  - Section [4.4 Poisson Ⓜodel](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#poisson-odel) - Soccer Scores, Odds Price and Stakes modelling.
-  - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#staking-odel-and-oney-management) - Simulate the staking model.
-  - Section [4.6 Expectation Ⓜaximization and Staking Simulation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#expectation-aximization-and-staking-simulation) - Enhance by weighted function on Staking model and Simulation.
+  - Section [4.1 Basic Equation](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#basic-equation) - Analyse the Odds Price and Probabilities
+  - Section [4.2 Linear Ⓜodel](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#linear-odel) - Reversed Engineer to get the EMOdds derived from Stakes
+  - Section [4.3 Kelly Ⓜodel](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#kelly-odel) - Test the Kelly Model.
+  - Section [4.4 Poisson Ⓜodel](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#poisson-odel) - Soccer Scores, Odds Price and Stakes modelling.
+  - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#staking-odel-and-oney-anagement) - Simulate the staking model.
+  - Section [4.6 Expectation Ⓜaximization and Staking Simulation](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#expectation-aximization-and-staking-simulation) - Enhance by weighted function on Staking model and Simulation.
 
-# [5. Result](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#result)
+# [5. ｮesult](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#esult)
 
-  - Section [5.1 Comparison of the Results](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#comparison-of-the-results) - Comparison of the Returns of Staking Models.
-  - Section [5.2 Market Basket](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#market-basket) - Analyse the Hedging or Double up Invest by Firm A.
+  - Section [5.1 Comparison of the ｮesults](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#comparison-of-the-esults) - Comparison of the Returns of Staking Models.
+  - Section [5.2 Ⓜarket Basket](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#arket-basket) - Analyse the Hedging or Double up Invest by Firm A.
 
 ```{r, echo = FALSE, results = 'asis'}
 ## Set options back to original options
 options(op)
 ```
 
-# [6. Conclusion](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#conclusion)
+# [6. Conclusion](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#conclusion)
 
-  - Section [6.1 Conclusion](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#conclusion-1) - Conclusion of this Research Paper.
-  - Section [6.2 Future Works](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#future-works) - Future Research or Enhancement.
+  - Section [6.1 Conclusion](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#conclusion-1) - Conclusion of this Research Paper.
+  - Section [6.2 Future Works](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#future-works) - Future Research or Enhancement.
 
-# [7. Appendices](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#appendices)
+# [7. Appendices](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#appendices)
 
-  - Section [7.1 Documenting File Creation](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#documenting-file-creation) - Information of the Paper.
-  - Section [7.2 Versions' Log](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#versions-log) - Version Log of the Paper.
-  - Section [7.3 Speech and Blooper](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#speech-and-blooper) - Speech and Blooper during Conducting the Research.
-  - Section [7.4 References](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html#references) - Reference Papers for the Paper.
+  - Section [7.1 Documenting File Creation](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#documenting-file-creation) - Information of the Paper.
+  - Section [7.2 Versions' Log](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#versions-log) - Version Log of the Paper.
+  - Section [7.3 Speech and Blooper](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#speech-and-blooper) - Speech and Blooper during Conducting the Research.
+  - Section [7.4 References](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#references) - Reference Papers for the Paper.
 
 ## 7.1 Documenting File Creation 
 

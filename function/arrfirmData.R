@@ -84,7 +84,7 @@ arrfirmData <- function(dfmList, lProfile = c(AH = 0.10, OU = 0.12), parallel = 
     
     dfm <- llply(split(dfm, dfm$InPlay2), function(x) {
       data.frame(x, ipRange = str_replace_na(suppressWarnings(cut(as.numeric(
-      as.character(x$Mins2)), breaks = seq(0, 90, 5)))), 'No')}, .parallel = parallel) %>% rbind_all %>% mutate(
+      as.character(x$Mins2)), breaks = seq(0, 90, 5)))), 'No')}, .parallel = parallel) %>% bind_rows %>% mutate(
         ipRange = ifelse(ipRange == 'NA', as.character(Mins2), ipRange) %>% ifelse(. == 0, as.character(InPlay), .))
     dfm$X.No. <- NULL
     

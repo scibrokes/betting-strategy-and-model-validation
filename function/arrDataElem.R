@@ -3,7 +3,7 @@ arrDataElem <- function(dataElem=dataElem, dateID=dateID, i=i, n.col=n.col){
   ##   Therefore here we use 15 and split the postponed matches into 2nd list, Other sports to 3rd list
   #'@ n.data <- unlist(sapply(1:length(dataElem), function(i) i[length(dataElem)%%i==0]))
   
-  dataElem=dataElem; dateID=dateID; i=i; n.col=n.col
+  dataElem = dataElem; dateID = dateID; i = i; n.col = n.col
   
   if(n.col==15){
     ## Defult suspended matches have 15 columns but there will be only 13 or 14 columns if no cards given

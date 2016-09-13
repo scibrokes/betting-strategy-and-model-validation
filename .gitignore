@@ -10,4 +10,4 @@
 vignettes/*.html
 vignettes/*.pdf
 .Rproj.user
-packrat/lib*/
+# packrat/lib*/
