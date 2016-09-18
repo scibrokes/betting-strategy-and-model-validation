@@ -332,9 +332,11 @@ stargazer(anova(lm14), type = 'html')
   
   In order to test the empirical clichés, I used to conduct a research thoroughly through *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 3rd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**, I completed the research on year 2010 but write the thesis in year 2016.] and concludes that the opening price of Asian Handicap and also Goal Lines of 29 bookmakers are efficient than mine. However in my later *®γσ, Eng Lian Hu (2014)*[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] applied Kelly staking model where made a return of more than 30% per sesson. Meanwhile, the *Dixon and Coles (1996)* and *Crowder, Dixon, Ledford and Robinson (2001)*^[Kindly refer to 27th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has built two models which compare the accuracy of home win, draw and away win. From a normal Poison model reported the home win is more accurate and therefore an add-hoc inflated parameter required in order to increase the accuracy of prediction. You are feel free to learn about the *Dixon and Coles (1996)* in section [4.4 Poisson Ⓜodel].
 
-![Kindly click on [*Report with ShinyApps*](https://beta.rstudioconnect.com/connect/1766) to use the ShinyApp](figure/20160914_004315.gif)
+![Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp](figure/20160918_163958.gif)
 
 ```{r shiny-summary, eval = FALSE, echo = FALSE, results = 'asis'}
+## completed verson kindly refer to https://beta.rstudioconnect.com/content/1807/
+
 suppressMessages(require('shiny', quietly = TRUE))
 
 #'@ runApp( ## Cannot use runApp() with list(ui, server) since it will open an independent webpage but unable embed into rmarkdown file. It will endless stuck in knitting progress...
@@ -383,9 +385,10 @@ shinyApp(
               tabPanel('Reference', h4('Reference:'),
                    p('1. ', HTML("<a href='https://www.youtube.com/watch?v=66z_MRwtFJM'>Linear Regression in R (R Tutorial 5.1 to 5.11)</a>")),
                    p('2. ', HTML("<a href='http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/'>Getting Started with Mixed Effect Models in R</a>")),
-                   p('3. ', HTML("<a href='...'>A very basic tutorial for performing linear mixed effects analyses</a>")),
-                   p('4. ', HTML("<a href='...'>Linear Models with R</a>")),
-                   p('5. ', HTML("<a href='...'>Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models</a>")))))
+                   p('3. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20Very%20Basic%20Tutorial%20for%20Performing%20Linear%20Mixed%20Effects%20Analyses.pdf'>A very basic tutorial for performing linear mixed effects analyses</a>")),
+                   p('4. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Linear%20Models%20with%20R.pdf'>Linear Models with R</a>")),
+                   p('5. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Extending%20the%20Linear%20Model%20with%20R%20-%20Generalized%20Linear%2C%20Mixed%20Effects%20and%20Nonparametric%20Regression%20Models.pdf'>Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models</a>")),
+                   p('6. ', HTML("<a href='http://www.ats.ucla.edu/stat/mult_pkg/whatstat/'>What statistical analysis should I use?</a>")))))
           )
         ),
       
@@ -423,13 +426,15 @@ shinyApp(
 
 *shinyapp 4.2.1 : Summary and anova of linear models.*
 
-  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Fitting%20Linear%20Mixed-Effects%20Models%20Using%20lme4.pdf). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf).] and also anova to compare among the models.
+  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Fitting%20Linear%20Mixed-Effects%20Models%20Using%20lme4.pdf). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf). Besides, [What statistical analysis should I use?](http://www.ats.ucla.edu/stat/mult_pkg/whatstat/) summarise a table for test analysis and data validation.] and also anova to compare among the models.
   
   You might select Y response variable and X explanatory variable(s) to measure your model^[Refer to [Shiny height-weight example](runGist("https://gist.github.com/wch/4034323")) for further information about shinyapp for linear models.] or existing models.
 
-![Kindly click on [*Report with ShinyApps*](https://beta.rstudioconnect.com/connect/1766) to use the ShinyApp](figure/20160914_004802.gif)
+![Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp](figure/20160918_163958.gif)
 
 ```{r shiny-calc01, eval = FALSE, echo = FALSE, results = 'asis'}
+## completed verson kindly refer to https://beta.rstudioconnect.com/content/1807/
+
 shinyApp(
   ui = fluidPage(
     titlePanel('1 x 2 Combo to AH (by William Chen 2006)'),
@@ -506,7 +511,7 @@ shinyApp(
 
 *shinyapp 4.2.2 : Comparison of the vigorish between AH and Fixed-Odds. Source from 1x2 to Combo AH version 1.1 by William Chen (2006)*
 
-  Here I simply attached with a Fixed Odds to Asian Handicap's calculator which refer to my *ex-colleague William Chen's*^[My ex-colleague and best friend in sportsbook industry which known since join sportsbook industry year 2005 ------ Telebiz and later Caspo Inc.] spreadsheet version 1.1 in year 2006. You can simply input the home win, draw, away win (in decimal format) as well as the overround.^[Kindly refer to my previous research to know the vigorish / overround.]
+  Here I simply attached with a Fixed Odds to Asian Handicap's calculator which refer to my *ex-colleague William Chen's*^[My ex-colleague and best friend in sportsbook industry which known since join sportsbook industry year 2005 ------ Telebiz and later Caspo Inc.] spreadsheet version 1.1 in year 2006. You can simply input the home win, draw, away win (in decimal format) as well as the overround to get the conversion result from the simple an basic equation.^[Kindly refer to my previous research to know the vigorish / overround.]
 
 ```
 Section : reverse modelling to get the EMProb prior to calculate the coefficient of the staking model. Otherwise might rearrange the order of applied Poison model here by refer to international competitions.
@@ -530,6 +535,17 @@ draft :
   - They cannot reject the hypothesis that they are infinitely riskaverse;
   - They estimate gross margins to be up to 4 per cent of total oncourse turnover; and
   - They estimate that 3.1 to 3.7% (by value) of all bets are placed by punters with inside information.
+
+$$P = \rho_{i}... \rho_{n} \cdots equation 4.2.1$$
+
+Where $0 < \rho_{i} < 1$ and $i = 1,2,3,...n$ as well as $\sum_{i=1}_{n} \rho_{i} = 1$
+
+  - the beliefs of a punter with positive inside information about staked team are represented by the vector
+  
+$$(1 - \alpha)P + \alphae_{i} \cdots equation 4.2.2$$
+
+where $e_{i} = (0, ..., 0, 1, 0, ..., 0)$ is the degenerate distribution
+assigning all probability mass to the $i$th team and $0 < \alpha <= 1$ and
 
   Here I try to test our data if there has any insider information.
 
@@ -815,6 +831,8 @@ rm(sys1)
   - I refer to [R Shiny: Rendering summary.ivreg output](http://stackoverflow.com/questions/27245173/r-shiny-rendering-summary-ivreg-output) and tried to plot the output table, but there has no bottom statistical information like *Residual standard error*, *Degree of Freedom*, *R-Squared*, *F-statistical value* and also *p-value*, therefore I use [R Shiny App for Linear Regression, Issue with Render Functions](http://stackoverflow.com/questions/33874298/r-shiny-app-for-linear-regression-issue-with-render-functions) which simply `renderPrint()` the `verbatimTextOutput()` in *shinyapp 4.2.1*.
   
   - I tried to raise an issue about post the shinyapps to RStudioConnect at [Unable publish to RStudio Connect : Error in yaml::yaml.load(enc2utf8(string), ...) : Reader error: control characters are not allowed: #81 at 276 #115](https://github.com/rstudio/rsconnect/issues/115). You might try to refer to the gif files in [#issue 115](https://github.com/rstudio/rsconnect/issues/115#issuecomment-244084859) for further information. I tried couple times and find the solution but there has no an effective solution and only allowed post to ｮPubs.com where I finally decide to seperate the dynamic shinyApp into another web url.
+  
+  - **Remark** : When I rewrite *Report with ShinyApps : Linear Regression Analysis on Odds Price of Stakes* and would like to post to ｮStudioConnect, the wizard only allowed me post to rPubs.com (but everyone know rPubs only allow static document which is not effort to support Shinyapp). Therefore kindly refer to <https://beta.rstudioconnect.com/content/1766/>. You might download and run locally due to web base version always affected by wizards and sometimes only view datatable but sometimes only can view googleVis while sometimes unable access.
 
 ## 7.4 References
 

@@ -90,11 +90,11 @@ arrfirmData <- function(dfmList, lProfile = c(AH = 0.10, OU = 0.12), parallel = 
     
     ## 2. Set the current handicap right before scoring a goal
     ##
-    SC <- ldply(strsplit(ifelse(dfm$CurScore == 'No', '0-0', as.character(dfm$CurScore)), '-'))
+    SC <- suppressAll(ldply(strsplit(ifelse(dfm$CurScore == 'No', '0-0', as.character(dfm$CurScore)), '-')))
     SC <- data.frame(lapply(SC, as.numeric))
     names(SC) <- c('HG', 'AG')
     dfm %<>% mutate(HG = SC$HG, AG = SC$AG)
-    rm(SC, mPrice)
+    suppressAll(rm(SC, mPrice))
     
     ## First half, Full-time or Extra time
     dfm %<>% mutate(FHFTET = factor(ifelse(str_detect(Home, '1st Half'), 'FH',

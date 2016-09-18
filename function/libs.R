@@ -35,7 +35,7 @@ rm(pkgs)
 
 ## Load the functions
 funs <- c('scrapSPBO.R', 'readfirmData.R', 'arrfirmData.R', 'readSPBO.R')
-l_ply(funs, function(x) source(paste0('function/', x))); rm(funs)
+plyr::l_ply(funs, function(x) source(paste0('function/', x))); rm(funs)
 
 ## Creating a parallel computing Cluster and support functions.
 ## Preparing the parallel cluster using the cores
