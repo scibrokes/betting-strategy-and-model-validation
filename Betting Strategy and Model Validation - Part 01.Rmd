@@ -34,7 +34,7 @@ suppressMessages(source('function/libs.R'))
 
 # Abstract
 
-  This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the *Dixon and Pope (2004)*^[Kindly refer to 24th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**], due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the *Tony Hirst (2014)*^[Kindly refer to 1st paper in [Reference for technical research on programming and coding portion for the paper.] in **7.4 References**] if you are getting interest to write a data analysis on Sports-book.
+  This is an academic research by apply R statistics analysis to an agency A of an existing betting consultancy firm A. According to the *Dixon and Pope (2004)*^[Kindly refer to 24th paper in [Reference for industry knowdelege and academic research portion for the paper.](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#reference-for-industry-knowdelege-and-academic-research-portion-for-the-paper.) in **7.4 References**], due to business confidential and privacy I am also using agency A and firm A in this paper. **The purpose of the anaysis is measure the staking model of the firm A**. For more sample which using R for Soccer Betting see <http://rpubs.com/englianhu>. Here is the references of [rmarkdown](http://rmarkdown.rstudio.com/authoring_basics.html) and [An Introduction to R Markdown](http://rpubs.com/mansun_kuo/24330). You are welcome to read the *Tony Hirst (2014)*^[Kindly refer to 1st paper in [Reference for technical research on programming and coding portion for the paper.](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#reference-for-technical-research-on-programming-and-coding-portion-for-the-paper.) in **7.4 References**] if you are getting interest to write a data analysis on Sports-book.
 
 # 1. Introduction to the Betting Stategics
 
@@ -137,7 +137,7 @@ suppressMessages(source('function/libs.R'))
 
   I collect the data-set of World Wide soccer matches from year 2011 until 2015 from a British betting consultancy named firm A. All bets placed by display on HK currency, and the odds price also measure based on Hong Kong price.
   
-  I tried to apply `RSelenium` on [**RStudio Server Centos7**](http://rstudio.scibrokes.com) to scrape the data from live-score website includes the odds price but the binary [phantomjs](https://github.com/ariya/phantomjs/issues/12948#issuecomment-131267076) is not available for Linux, and I also not familiar with the installation of `Java` as well as setting of the path for `rJava`. Kindly refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) for more information about the teams name matching.
+  I tried to apply `RSelenium` on [**®Studio Server Centos7**](http://rstudio.scibrokes.com) to scrape the data from live-score website includes the odds price but the binary [phantomjs](https://github.com/ariya/phantomjs/issues/12948#issuecomment-131267076) is not available for Linux, and I also not familiar with the installation of `Java` as well as setting of the path for `rJava`. Kindly refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) for more information about the teams name matching.
 
 ```{r read-data-summary-table, echo = FALSE, results = 'asis'}
 ## Setup Options, Loading Required Libraries and Preparing Environment
@@ -155,7 +155,7 @@ years <- seq(2011, 2015)
 ## Here we term as Fair Odds
 lProfile <- c(AH = 0.10, OU = 0.12)
 
-mbase <- readfirmData(years = years) %>% arrfirmData(lProfile = lProfile)
+mbase <- readfirmData(years = years, pth = './data/') %>% arrfirmData(lProfile = lProfile)
 
 ## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
 ## the stakes amount display as $1 = $10,000
@@ -236,7 +236,9 @@ rm(dateID, spboDate, readSPBO)
   
 $$P_i^{HK_{Lay}} = 1/P_i^{HK_{Back}}-\nu_{j}$$   *equation 2.2.1*
   
-  While $\nu$ is the vigorish and $j={1,2}$ which are `r names(lProfile)[1]`=`r lProfile[1]` and `r names(lProfile)[2]`=`r lProfile[1]`. I have just simply calculated the Layed Fair odds (Odds Price with Vigorish which offer by operators), here I apply a setting profile which is term as `lProfile` (you can casually edit the soccer match profile setting) to get the Real Odds (Net Odds Price without Vigorish). As well as the Value $Value = Real Price/Fair Odds$. Here we can use the Bet Stake Calculator [Kelly Staking Calculator](http://www.sportsbettingcalculator.co.uk/kelly-staking-calculator/). I simply reverse value $\Re$ to get the estimated $P_{i}^{EM}$ (firm A) where we will talk in Section [4.1 Linear Model] and later [4.3 Poisson Modelling] about odds modelling.
+  While $\nu$ is the vigorish and $j={1,2}$ which are `r names(lProfile)[1]`=`r lProfile[1]` and `r names(lProfile)[2]`=`r lProfile[1]`. I have just simply calculated the Layed Fair odds (Odds Price with Vigorish which offer by operators), here I apply a setting profile which is term as `lProfile` (you can casually edit the soccer match profile setting) to get the Real Odds (Net Odds Price without Vigorish). As well as the Value $Value = Real Price/Fair Odds$. Here we can use the Bet Stake Calculator [Kelly Staking Calculator](http://www.sportsbettingcalculator.co.uk/kelly-staking-calculator/). I simply reverse value $\Re$ to get the estimated $P_{i}^{EM}$ (firm A) where we will talk in Section [4.2 Linear Ⓜodel](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#linear-omdel)^[I write a simple odds convertion from fixed odds to Asian Handicap at [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp]. Youcan change the vigorish casually and observe the outcome of the odds price.].
+  
+  Besides, *John Fingleton & Patrick Waldron (1999)*^[Kindly refer to 13th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**. I've summarise the paper and brief some points in section [4.2 Linear Ⓜodel](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#linear-omdel).] had conducted a research on the use of vigorish (bookmakers need to pay tax, labor cost, overhead and also other cost, therefore the odds price without vigorish will definately make loss to bookmakers) and how to differentiate the punters and ordinary gamblers as well as the optimal odds price, the Shin model measure the threaten and the portion of smart punters among gamblers.
 
 ```{r data-prob-table1, echo = FALSE, results = 'asis'}
 ## Calculate the Real Odds (Net Odds Price without Vigorish)
@@ -767,9 +769,9 @@ rm(line.gvis)
   - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#staking-odel-and-oney-anagement) - Simulate the staking model.
   - Section [4.6 Expectation Ⓜaximization and Staking Simulation](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#expectation-aximization-and-staking-simulation) - Enhance by weighted function on Staking model and Simulation.
 
-# [5. ｮesult](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#esult)
+# [5. ®esult](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#esult)
 
-  - Section [5.1 Comparison of the ｮesults](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#comparison-of-the-esults) - Comparison of the Returns of Staking Models.
+  - Section [5.1 Comparison of the ®esults](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#comparison-of-the-esults) - Comparison of the Returns of Staking Models.
   - Section [5.2 Ⓜarket Basket](http://rstudio-pubs-static.s3.amazonaws.com/208636_147313e52754447e89b38cc3456c5009.html#arket-basket) - Analyse the Hedging or Double up Invest by Firm A.
 
 ```{r, echo = FALSE, results = 'asis'}
@@ -799,9 +801,9 @@ options(op)
   - R version (short form): `r getRversion()`
   - [**rmarkdown** package](https://github.com/rstudio/rmarkdown) version: `r packageVersion('rmarkdown')`
   - [**tufte** package](https://github.com/rstudio/tufte) version: `r packageVersion('tufte')`
-  - File version: 1.0.0
+  - File version: 1.0.1
   - Author Profile: [®γσ, Eng Lian Hu](https://beta.rstudioconnect.com/englianhu/ryo-eng/)
-  - GitHub: [Source Code](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation)
+  - GitHub: [Source Code](https://github.com/scibrokes/betting-strategy-and-model-validation)
   - Additional session information
   
 ```{r info, echo = FALSE, warning = FALSE, results = 'asis'}

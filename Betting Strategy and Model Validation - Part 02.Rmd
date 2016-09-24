@@ -14,27 +14,6 @@ output:
     latex_engine: xelatex
 bibliography: skeleton.bib
 link-citations: yes
-runtime: shiny
-resource_files:
-- data/livescore.zip
-- data/2011.csv
-- data/2012.csv
-- data/2013.csv
-- data/2014.csv
-- data/2015.csv
-- data/teamID.csv
-- function/readfirmData.R
-- function/arrDataElem.R
-- function/arrfirmData.R
-- function/arrTeamID.R
-- function/bvp.R
-- function/libs.R
-- function/makeList.R
-- function/partialMatch.R
-- function/readSPBO.R
-- function/scrapSPBO.R
-- function/signature.R
-- function/stringdistList.R
 ---
 
 ```{r libs, message = FALSE, warning = FALSE, cache = TRUE, include = FALSE}
@@ -72,12 +51,43 @@ years <- seq(2011, 2015)
 ## Here we term as Fair Odds
 lProfile <- c(AH = 0.10, OU = 0.12)
 
-mbase <- readfirmData(years = years) %>% arrfirmData(lProfile = lProfile)
+mbase <- readfirmData(years = years, pth = './data/') %>% arrfirmData(lProfile = lProfile)
 
 ## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
 ## the stakes amount display as $1 = $10,000
 #'@ mbase$datasets[!(mbase$datasets$Home %in% mbase$corners)|!(mbase$datasets$Away %in% mbase$corners),]
 dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$others)) %>% mutate(Stakes = Stakes/10000, Return = Return/10000, PL = PL/10000)
+```
+
+```{r scrap-data, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
+## Scrape the leagues and also overrounds which provides by a sportsbookmaker named Firm B
+#'@ lnk <- 'http://data.nowgoal.com/history/handicap.htm'
+## Above website provides odds price history but sendkeyElements cannot work in RSelenium, will follow-up
+## https://github.com/ropensci/RSelenium/issues/55
+## Therefore scrape spbo link to know the league of matches
+
+## Besides, need to scrap the final-scores / half-time scores / result of soccer matches
+#'@ dateID <- sort(unique(mbase$datasets$Date)); spboDate <- gsub('-','',dateID)
+#'@ lnk <- paste0('http://www8.spbo.com/history.plex?day=', spboDate, '&l=en')
+## kick-off time(GMT+8) - 12hrs since livescore website start count a day from 12pm(GMT+8)
+dateID <- as.Date(sort(unique(dat$Date) - hm('12:00'))); spboDate <- gsub('-', '', dateID)
+
+## Due to the scrapSPBO function scrapped unmatched data, example lnk[827],
+##  therefore I rewrite the function as scrapSPBO2
+#'@ suppressAll(source('function/scrapSPBO2.R'))
+#'@ scrapSPBO2(lnk = lnk, dateID = dateID, path = 'livescore', parallel = TRUE)
+
+## Read spbo livescore datasets.
+spboData <- suppressAll(readSPBO(dateID = dateID, parallel = FALSE)$data)
+
+## Apply stringdist() to 'exactly matching' and 'approximate matching' team names
+#'@ method <- c('osa', 'lv', 'dl', 'hamming', 'lcs', 'qgram', 'cosine', 'jaccard', 'jw', 'soundex')
+#'@ source(paste0(getwd(),'/function/arrTeamID.R'))
+#'@ tmID <- arrTeamID(mbase, spboData, parallel = FALSE)
+tmIDdata <- read.csv('./data/teamID.csv', header = TRUE, sep = ',') %>% mutate_each(funs(as.character)) %>% data.frame %>% tbl_df %>% filter(spbo != 'Kuban Krasnodar')
+spboData %<>% filter((Home %in% tmIDdata$spbo)|(Away %in% tmIDdata$spbo))
+
+rm(dateID, spboDate, readSPBO)
 ```
 
 # [3. Summarise the Staking Model](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#summarise-the-staking-model)
@@ -120,7 +130,7 @@ m %>% formattable(list(
 )) %>% as.htmlwidget
 ```
 
-*table 4.1.1* : `r paste0(dim(m), collapse=' x ')` : *Return of annually investment summary table.*^[Kindly refer to the list of colors via [Dark yellow with hexadecimal color code #9b870c](http://encycolorpedia.com/9b870c) for plot the stylist table.]
+*table 4.1.1* : `r paste0(dim(m), collapse=' x ')` : *Return of annually investment summary table.*^[Kindly refer to the list of colors via [Dark yellow with hexadecimal color code #9B870C](http://encycolorpedia.com/9b870c) for plot the stylist table.]
 
 $$\Re = \sum_{i=1}^{n}\rho_{i}^{EM}/\sum_{i=1}^{n}\rho_{i}^{BK} \cdots equation 4.1.1$$
 
@@ -193,20 +203,21 @@ m %<>% purrr::map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
 
 suppressMessages(library('formattable'))
 m %>% formattable(list(
-    caption = 'Table 4.1.3 : Summary of Betting Results', 
-    Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
-                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
-    Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
-                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
-    Rates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
-                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
-    n = color_tile('white', 'green'), 
-    S.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
-                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
-    R.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
-                       x ~ sprintf('%.2f (rank: %02f)', x, rank(-x))), 
-    prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), 
-                     x ~ sprintf('%.2f (rank: %02f)', x, rank(-x)))
+    caption = 'Table 4.1.3 : Summary of Betting Results',
+    
+    Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
+    
+    Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
+    
+    Rates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x))),
+    
+    n = color_tile('white', 'green'),
+    
+    S.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %2d)', x, rank(-x))),
+    
+    R.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x))),
+    
+    prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x)))
 )) %>% as.htmlwidget
 ```
 
@@ -295,7 +306,7 @@ stargazer(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm
 #'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm13, lm14) %>% llply(., texreg)
 ```
 
-*table 4.2.1 : Summary of linear models.*
+*table 4.2.1 : Summary of linear models.*^[Kindly refer to below *shinyapp 4.2.1* as I wrote as an shiny app.]
 
 ```{r lm-anova, echo = FALSE, eval = FALSE, results = 'asis'}
 ## xtable always shows LaTeX output but not table.
@@ -321,213 +332,40 @@ stargazer(anova(lm14), type = 'html')
 #'@ list(lm0, lm1, lm2, lm3, lm4, lm5, lm6, lm7, lm8, lm9, lm10, lm11, lm12, lm13, lm14) %>% llply(., function(x) texreg(anova(x)))
 ```
 
-*table 4.2.2 : Anova of linear models.*
+*table 4.2.2 : Anova of linear models.*^[Kindly refer to below *shinyapp 4.2.1* as I wrote as an shiny app.]
 </s>
-
->  Due to the coefficient of the regression models ocuppied a long space in this article. Here I write in a shiny app which perform the summary and anova of the models. **Kindly click on [*Report with ShinyApps*](https://beta.rstudioconnect.com/connect/1766) to use the ShinyApp**. It will take few minutes time to open the website since the dataset contain 5 years soccer data from firm A staking via agent A made it a heavily loading.
 
   When I used to work in 188Bet and Singbet as well as AS3388, we know from the experience which is the odds price of favorite team win will be the standard reference and the draw odds will adjust a little bit while the underdog team will be ignore.
 
   *Steven Xu (2013)*^[Kindly refer to 16th paper in [Reference for industry knowdelege and academic research portion for the paper.]] has do a case study on the comparison of the efficiency of opening and closing price of NFL and College American Football Leagues and get to know the closing price is more efficient and accurate compare to opening price nowadays compare to years 1980~1990. It might be due to multi-million dollars of stakes from informed traders or smart punters to tune up the closing price to be likelihood.
   
-  In order to test the empirical clichés, I used to conduct a research thoroughly through *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 3rd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**, I completed the research on year 2010 but write the thesis in year 2016.] and concludes that the opening price of Asian Handicap and also Goal Lines of 29 bookmakers are efficient than mine. However in my later *®γσ, Eng Lian Hu (2014)*[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] applied Kelly staking model where made a return of more than 30% per sesson. Meanwhile, the *Dixon and Coles (1996)* and *Crowder, Dixon, Ledford and Robinson (2001)*^[Kindly refer to 27th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has built two models which compare the accuracy of home win, draw and away win. From a normal Poison model reported the home win is more accurate and therefore an add-hoc inflated parameter required in order to increase the accuracy of prediction. You are feel free to learn about the *Dixon and Coles (1996)* in section [4.4 Poisson Ⓜodel].
+  In order to test the empirical clichés, I used to conduct a research thoroughly through *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 3rd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**, I completed the research on year 2010 but write the thesis in year 2016.] and concludes that the opening price of Asian Handicap and also Goal Lines of 29 bookmakers are efficient than mine. However in my later *®γσ, Eng Lian Hu (2014)*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] applied Kelly staking model where made a return of more than 30% per sesson. Meanwhile, the *Dixon and Coles (1996)* and *Crowder, Dixon, Ledford and Robinson (2001)*^[Kindly refer to 27th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has built two models which compare the accuracy of home win, draw and away win. From a normal Poison model reported the home win is more accurate and therefore an add-hoc inflated parameter required in order to increase the accuracy of prediction. You are feel free to learn about the *Dixon and Coles (1996)* in section [4.4 Poisson Ⓜodel].
 
-![Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp](figure/20160918_163958.gif)
+  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20Very%20Basic%20Tutorial%20for%20Performing%20Linear%20Mixed%20Effects%20Analyses.pdf) and [Fitting Linear Mixed-Effects Models using lme4](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Fitting%20Linear%20Mixed-Effects%20Models%20Using%20lme4.pdf). Otherwise you can read [Linear Models with R](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Linear%20Models%20with%20R.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Extending%20the%20Linear%20Model%20with%20R%20-%20Generalized%20Linear%2C%20Mixed%20Effects%20and%20Nonparametric%20Regression%20Models.pdf). Besides, [What statistical analysis should I use?](http://www.ats.ucla.edu/stat/mult_pkg/whatstat/) summarise a table for test analysis and data validation. [Fit models to data](https://www.zoology.ubc.ca/~schluter/R/fit-model/) provides examples for application of linear regression and model selection, the main model-fitting commands covered *lm (linear models for fixed effects)*, *lme (linear models for mixed effects)*, *glm (generalized linear models)*, *nls (nonlinear least squares)*, *gam (generalized additive models)* and also *visreg (to visualize model fits)*. The answer from [How to use R anova() results to select best model?](http://stats.stackexchange.com/questions/172782/how-to-use-r-anova-results-to-select-best-model) eleborates the use of ANOVA and [AIC criterion](https://en.wikipedia.org/wiki/Akaike_information_criterion) to choose the best fit model. [How to Choose the Best Regression Model](http://blog.minitab.com/blog/adventures-in-statistics/how-to-choose-the-best-regression-model) describes how to find the best regresion model to fit and applicable to the real world. [ANOVA - Model Selection
+]() summarised a lecture notes in slideshow while [Model Selection in R]() conducts a research on model selection for both nested and non-nested linear models.] and also anova to compare among the models.
 
-```{r shiny-summary, eval = FALSE, echo = FALSE, results = 'asis'}
-## completed verson kindly refer to https://beta.rstudioconnect.com/content/1807/
-
-suppressMessages(require('shiny', quietly = TRUE))
-
-#'@ runApp( ## Cannot use runApp() with list(ui, server) since it will open an independent webpage but unable embed into rmarkdown file. It will endless stuck in knitting progress...
-#'@     list(
-shinyApp(
-      ui = fluidPage(
-        titlePanel('Summary of linear models to test the efficiency of staking model of firm A.'), 
-        
-        ## this is your web page header information
-        tags$head(
-        ## here you include your inline styles
-        tags$style(HTML("
-         body {
-           background-color: darkgoldenrod;
-           color: #B8860B;
-         }
-        "))
-        ),
-        
-        # Sidebar with a slider input for number of bins
-        sidebarLayout(
-          sidebarPanel(
-            h2('Select variables below for your linear model'),
-            selectInput('response', label = h4('What is the column name of your response variable Y?'), choices = names(dat)),
-            checkboxGroupInput('explan1', label = h4('What is the column(s) name of your explanatory variable X?'), choices = names(dat)),
-            actionButton('analysis', 'Analyze!')),
-          
-          mainPanel(
-            tabsetPanel(
-              tabPanel('Your model', verbatimTextOutput('modelSummary')),
-              tabPanel('Model 01', verbatimTextOutput('model0')),
-              tabPanel('Model 02', verbatimTextOutput('model1')),
-              tabPanel('Model 03', verbatimTextOutput('model2')),
-              tabPanel('Model 04', verbatimTextOutput('model3')),
-              tabPanel('Model 05', verbatimTextOutput('model4')),
-              tabPanel('Model 06', verbatimTextOutput('model5')),
-              tabPanel('Model 07', verbatimTextOutput('model6')),
-              tabPanel('Model 08', verbatimTextOutput('model7')),
-              tabPanel('Model 09', verbatimTextOutput('model8')),
-              tabPanel('Model 10', verbatimTextOutput('model9')),
-              tabPanel('Model 11', verbatimTextOutput('model10')),
-              tabPanel('Model 12', verbatimTextOutput('model11')),
-              tabPanel('Model 13', verbatimTextOutput('model12')),
-              tabPanel('Model 14', verbatimTextOutput('model13')),
-              tabPanel('Model 15', verbatimTextOutput('model14')),
-              tabPanel('Reference', h4('Reference:'),
-                   p('1. ', HTML("<a href='https://www.youtube.com/watch?v=66z_MRwtFJM'>Linear Regression in R (R Tutorial 5.1 to 5.11)</a>")),
-                   p('2. ', HTML("<a href='http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/'>Getting Started with Mixed Effect Models in R</a>")),
-                   p('3. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20Very%20Basic%20Tutorial%20for%20Performing%20Linear%20Mixed%20Effects%20Analyses.pdf'>A very basic tutorial for performing linear mixed effects analyses</a>")),
-                   p('4. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Linear%20Models%20with%20R.pdf'>Linear Models with R</a>")),
-                   p('5. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Extending%20the%20Linear%20Model%20with%20R%20-%20Generalized%20Linear%2C%20Mixed%20Effects%20and%20Nonparametric%20Regression%20Models.pdf'>Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models</a>")),
-                   p('6. ', HTML("<a href='http://www.ats.ucla.edu/stat/mult_pkg/whatstat/'>What statistical analysis should I use?</a>")))))
-          )
-        ),
-      
-      server = function(input, output) {
-        observeEvent(input$analysis, {
-          y = ifelse(is.null(input$response)||is.na(input$response)||length(input$response) == 0, 'Return', input$response)
-          x = ifelse(is.null(input$explan1)||is.na(input$explan1)||length(input$explan1) == 0, 'Stakes', input$explan1)
-
-          model = lm(as.formula(paste0(y, '~', paste(x, collapse = ' + '))), data = dat)
-          output$modelSummary = renderPrint({
-            list(Summary = summary(model), Anova = anova(model))
-            })
-          })
-        
-        output$model0 <- renderPrint(list(Summary = summary(lm0), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
-        output$model1 <- renderPrint(list(Summary = summary(lm1), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
-        output$model2 <- renderPrint(list(Summary = summary(lm2), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
-        output$model3 <- renderPrint(list(Summary = summary(lm3), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
-        output$model4 <- renderPrint(list(Summary = summary(lm4), Anova = anova(lm0, lm1, lm2, lm3, lm4)))
-        output$model5 <- renderPrint(list(Summary = summary(lm5), Anova = anova(lm5)))
-        output$model6 <- renderPrint(list(Summary = summary(lm6), Anova = anova(lm6)))
-        output$model7 <- renderPrint(list(Summary = summary(lm7), Anova = anova(lm7)))
-        output$model8 <- renderPrint(list(Summary = summary(lm8), Anova = anova(lm8)))
-        output$model9 <- renderPrint(list(Summary = summary(lm9), Anova = anova(lm9)))
-        output$model10 <- renderPrint(list(Summary = summary(lm10), Anova = anova(lm10)))
-        output$model11 <- renderPrint(list(Summary = summary(lm11), Anova = anova(lm11)))
-        output$model12 <- renderPrint(list(Summary = summary(lm12), Anova = anova(lm12)))
-        output$model13 <- renderPrint(list(Summary = summary(lm13), Anova = anova(lm13)))
-        output$model14 <- renderPrint(list(Summary = summary(lm14), Anova = anova(lm14)))
-        }
-  #'@    )
-  #'@  )
-  )
-```
-
-*shinyapp 4.2.1 : Summary and anova of linear models.*
-
-  Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](http://www.bodowinter.com/tutorial/bw_LME_tutorial2.pdf) and [Fitting Linear Mixed-Effects Models using lme4](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Fitting%20Linear%20Mixed-Effects%20Models%20Using%20lme4.pdf). Otherwise you can read [Linear Models with R](https://englianhu.files.wordpress.com/2016/01/faraway-linear-models-with-r-e28093-2004.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://englianhu.files.wordpress.com/2016/01/faraway-extending-the-linear-model-with-r-e28093-2006.pdf). Besides, [What statistical analysis should I use?](http://www.ats.ucla.edu/stat/mult_pkg/whatstat/) summarise a table for test analysis and data validation.] and also anova to compare among the models.
-  
-  You might select Y response variable and X explanatory variable(s) to measure your model^[Refer to [Shiny height-weight example](runGist("https://gist.github.com/wch/4034323")) for further information about shinyapp for linear models.] or existing models.
-
-![Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp](figure/20160918_163958.gif)
-
-```{r shiny-calc01, eval = FALSE, echo = FALSE, results = 'asis'}
-## completed verson kindly refer to https://beta.rstudioconnect.com/content/1807/
-
-shinyApp(
-  ui = fluidPage(
-    titlePanel('1 x 2 Combo to AH (by William Chen 2006)'),
-    
-    ## this is your web page header information
-    #'@ tags$head(
-    ## here you include your inline styles
-    #'@ tags$style(HTML("
-    #'@   body {
-    #'@     background-color: darkgoldenrod;
-    #'@     color: #B8860B;
-    #'@   }
-    #'@ "))
-    #'@ ),
-    
-    fluidRow(
-      column(3, numericInput('num1', label = 'Home Win', value = 2.5)),
-      column(4, numericInput('num2', label = 'Draw', value = 3.20)),
-      column(5, numericInput('num3', label = 'Away Win', value = 2.5))),
-    fluidRow(
-      column(3, ''),
-      column(4, numericInput('spread', label = 'Spread / Vigorish / Overround', value = 1.12))),
-    hr(),
-    fluidRow(
-      column(3, ''),
-      column(4, verbatimTextOutput('txt'))),
-    fluidRow(
-      column(3, tableOutput('tab1')),
-      column(4, ''),
-      column(5, tableOutput('tab2'))),
-    fluidRow(
-      column(3, ''),
-      column(4, tableOutput('tab3'))),
-    fluidRow(
-      column(3, tableOutput('tab4')),
-      column(4, ''),
-      column(5, tableOutput('tab5')))),
-  
-  server = function(input, output) {
-
-    output$txt <- renderText({
-      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-      c(paste0('Home Win = ', round(fOdds[1], 3)), ';', paste0('Draw = ', round(fOdds[2], 3)), ';', paste0('Away Win = ', round(fOdds[3], 3)))
-    })
-    
-    output$tab1 <- renderTable({
-      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-      data_frame(Team = c('Home', 'Away'), Hdp = c('0.5', ''), Price = c(fOdds[1] - 1, ((fOdds[2] * fOdds[3]) / (fOdds[2] + fOdds[3])) - 1))
-    })
-    
-    output$tab2 <- renderTable({
-      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-      data_frame(Team = c('Home', 'Away'), Hdp = c('', '0.5'), Price = c(((fOdds[1] * fOdds[2]) / (fOdds[1] + fOdds[2])) - 1, fOdds[3] - 1))
-    })
-    
-    output$tab3 <- renderTable({
-      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-      data_frame(Team = c('Home', 'Away'), Hdp = c('0', '0'), Price = c(((fOdds[1] * fOdds[2]) - fOdds[1] - fOdds[2]) / fOdds[2], ((fOdds[2] * fOdds[3]) - fOdds[2] - fOdds[3]) / fOdds[2]))
-    })
-    
-    output$tab4 <- renderTable({
-      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-      data_frame(Team = c('Home', 'Away'), Hdp = c('0/0.5', ''), Price = c(((2 * fOdds[1] * fOdds[2]) - fOdds[1] - (2 * fOdds[2])) / (2 * fOdds[2]), ((2 * fOdds[2] * fOdds[3]) - (2 * fOdds[2]) - (2 * fOdds[3])) / ((2 * fOdds[2]) + fOdds[3])))
-    })
-    
-    output$tab5 <- renderTable({
-      fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-      data_frame(Team = c('Home', 'Away'), Hdp = c('', '0/0.5'), Price = c(((2 * fOdds[1] * fOdds[2]) - (2 * fOdds[1]) - (2 * fOdds[2])) / ((2 * fOdds[2]) + fOdds[1]), ((2 * fOdds[2] * fOdds[3]) - fOdds[3] - (fOdds[2])) / (2 * fOdds[2])))
-    })
-    },
-  options = list(height = 500)
-  )
-```
-
-*shinyapp 4.2.2 : Comparison of the vigorish between AH and Fixed-Odds. Source from 1x2 to Combo AH version 1.1 by William Chen (2006)*
+![*shinyapp 4.2.1 : WDW-AH convertion and summary and anova of linear models.* Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807)^[You might select Y response variable and X explanatory variable(s) to measure your model^[Refer to [Shiny height-weight example](runGist("https://gist.github.com/wch/4034323")) for further information about shinyapp for linear models.] or existing models.] to use the ShinyApp](figure/20160918_163958.gif)
 
   Here I simply attached with a Fixed Odds to Asian Handicap's calculator which refer to my *ex-colleague William Chen's*^[My ex-colleague and best friend in sportsbook industry which known since join sportsbook industry year 2005 ------ Telebiz and later Caspo Inc.] spreadsheet version 1.1 in year 2006. You can simply input the home win, draw, away win (in decimal format) as well as the overround to get the conversion result from the simple an basic equation.^[Kindly refer to my previous research to know the vigorish / overround.]
 
-```
-Section : reverse modelling to get the EMProb prior to calculate the coefficient of the staking model. Otherwise might rearrange the order of applied Poison model here by refer to international competitions.
+  From the summary of *shinyapp 4.2.1*, we know the comparison among the models to get the best fitted model.
+
+```{r comp, echo = FALSE, results = 'asis'}
+compare <- ldply(lms, function(x) {
+    y <- summary(x)$fstatistic
+    df <- data.frame(t(summary(x)$df), 'p.value' = pf(y[1], y[2], y[3], lower.tail = FALSE))
+    names(df) <- c('df', 'residuals', 'df', 'p.value'); df}) %>% tbl_df
+
+compare %>% formattable(list(
+  df = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+  
+  residuals = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+  
+  p.value = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %02d)', x, rank(-x)))
+  )) %>% as.htmlwidget
 ```
 
-  *Galema, Plantinga and Scholtens (2008)*^[You are feel free to refer to [Reference for industry knowdelege and academic research portion for the paper] in **7.4 References** for further details]
-
-### reminder (temporary noted for further):
-```
-draft : 
-  - http://www.moneychimp.com/articles/risk/regression.htm
-  - read *Galema, Plantinga and Scholtens (2008)* https://englianhu.files.wordpress.com/2016/06/the-stocks-at-stake-return-and-risk-in-socially-responsible-investment.pdf
-  - reverse engineering on staking-profit linear regression model to get/retrieve EMProb value since now only get the coefficients figire of EMProb. Although incompleted soccer teams... 2ndly, reversed poison model from EMProb might is not workable on one-sided competition, need to refer to some international competition as references for incompleted dataset.
-```
-
-  *John Fingleton & Patrick Waldron (1999)*^[Kindly refer to 13th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] apply Shin's model and finally conclude suggests that bookmakers in Ireland are infinitely risk-averse and balance their books. The authors cannot distinguish between inside information and operating costs, merely concluding that combined they account for up to 3.7% of turnover while normally Asian bookmakers made less than 1% and a anonymous company has made around 2%. However the revenue or the stakes are farly more than European bookmakers.^[You can refer to my another project [Analyse the Finance and Stocks Price of Bookmakers](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers) which analysis the financial report of public listed companies and also profitable products' revenue and profit & loss of anonymous company.]. 
+  *John Fingleton & Patrick Waldron (1999)* apply Shin's model and finally conclude suggests that bookmakers in Ireland are infinitely risk-averse and balance their books. The authors cannot distinguish between inside information and operating costs, merely concluding that combined they account for up to 3.7% of turnover while normally Asian bookmakers made less than 1% and a anonymous company has made around 2%. However the revenue or the stakes are farly more than European bookmakers.^[You can refer to my another project [Analyse the Finance and Stocks Price of Bookmakers](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers) which analysis the financial report of public listed companies and also profitable products' revenue and profit & loss of anonymous company.]. 
   
   They compare different versions of our model, using data from races in Ireland in 1993. The authors' empirical results can be summarised as follows:
   
@@ -536,32 +374,15 @@ draft :
   - They estimate gross margins to be up to 4 per cent of total oncourse turnover; and
   - They estimate that 3.1 to 3.7% (by value) of all bets are placed by punters with inside information.
 
-$$P = \rho_{i}... \rho_{n} \cdots equation 4.2.1$$
-
-Where $0 < \rho_{i} < 1$ and $i = 1,2,3,...n$ as well as $\sum_{i=1}_{n} \rho_{i} = 1$
-
-  - the beliefs of a punter with positive inside information about staked team are represented by the vector
-  
-$$(1 - \alpha)P + \alphae_{i} \cdots equation 4.2.2$$
-
-where $e_{i} = (0, ..., 0, 1, 0, ..., 0)$ is the degenerate distribution
-assigning all probability mass to the $i$th team and $0 < \alpha <= 1$ and
-
-  Here I try to test our data if there has any insider information.
-
-```{r}
-
-```
-
-
+  Due to the Shin model inside the paper research for the sake of bookmakers and this sportsbook consultancy firm is indeed the informed trading (means smart punters or actuarial hedge fund but not ordinary gambler place bets with luck). Here I think of test our previous data in paper *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 3rd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References** which collect the dataset of opening and also closing odds price of 40 bookmakers and 29 among them with Asian Handicap and Goal Line. Meanwhile, there has another research on smart punters (*Punters Account Review (Agenda).xlsx*) which make million dollars profit from Ladbrokes. You are feel free to browse over the [dataset](https://www.dropbox.com/sh/ifwczokjptt6re0/AADv1VarJoQ6IgIitZBzG5c6a?dl=0) for the paper.] and also the anonymous companies's revenue and P&L to analyse the portion of smart punters among the customers in [Analyse the Finance and Stocks Price of Bookmakers](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers). However the betslip of every single bet require to analyse it. The sparkR amd RHadoop as well as noSQL require in order to analyse the multiple millions bets. It is interesting to analyse *the threaten of hedge fund*^[Kindly refer to [富传奇色彩的博彩狙击公司EM2](https://englianhu.wordpress.com/sportsbook/%E5%AF%8C%E4%BC%A0%E5%A5%87%E8%89%B2%E5%BD%A9%E7%9A%84%E5%8D%9A%E5%BD%A9%E7%8B%99%E5%87%BB%E5%85%AC%E5%8F%B8em2-expectation-maximization/) to know the history and the threaten of EM2 sportsbook consultancy company to World wide known bankers.] since there has a anonymous brand among the brands under Caspo Inc had closed due to a lot of smart punters' stakes and made loss. Well, here I leave it for future research^[Here I put in [6.2 Future Works].] if the dataset is available.
 
 ## 4.3 Kelly Ⓜodel
 
-  From the papers *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] and *Jeffrey Alan Logan Snyder (2013)*^[Kindly refer to 2nd paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] both applying **Full-Kelly**,**Half-Kelly** and also **Quarter-Kelly** models which similar with my previous Kelly-Criterion model *®γσ, Eng Lian Hu 2014*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] but enhanced.
+  From the papers *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] and *Jeffrey Alan Logan Snyder (2013)*^[Kindly refer to 2nd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] both applying **Full-Kelly**,**Half-Kelly** and also **Quarter-Kelly** models which similar with my previous Kelly-Criterion model *®γσ, Eng Lian Hu 2014*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] but enhanced.
 
   To achieve the level of profitable betting, one must develop a correct money management procedure. The aim for a punter is to maximize the winnings and minimize the losses. If the punter is capable of predicting accurate probabilities for each match, the *Edward O. Thorp (2006)*^[Kindly refer to 6th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] has proven to work effectively in betting. It was named after an American economist *John Kelly (1956)*^[Kindly refer to 26th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] and originally designed for information transmission. The Kelly criterion is described below:
 
-$$S=(\rho*\sigma-1)/(\sigma-1) \cdots equation-4.3.1$$
+$$S=(\rho*\sigma-1)/(\sigma-1) \cdots equation 4.3.1$$
 
   Where S = the stake expressed as a fraction of one's total bankroll, $\rho$ = probability of an event to take place, $\sigma$ = odds for an event offered by the bookmaker. Three important properties, mentioned by *Hausch and Ziemba (1994)* ([Efficiency of Racetrack Betting Markets (2008Edition)](http://stocksfirst.com/books/trading-econ-investing/Efficiency%20of%20Racetrack%20Betting%20Mkts%20-%20Ziemba%202008.pdf)), arise when using this criterion to determine a proper stake for each bet:
 
@@ -586,11 +407,11 @@ exp(mean(log(dat$Stakes)))
 
 ```
 
-$$K = \frac{(B + 1)p - 1} {B} \cdots equation 4.3.1$$
+$$K = \frac{(B + 1)p - 1} {B} \cdots equation 4.3.2$$
 
-$$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1/N}{\log}\left( {\frac{{{BR_N}}}{{{BR_0}}}} \right) \cdots equation 4.3.2$$
+$$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1/N}{\log}\left( {\frac{{{BR_N}}}{{{BR_0}}}} \right) \cdots equation 4.3.3$$
 
-$$BR_N = (1 + K)^W(1 - K)^L BR_0 \cdots equation 4.3.3$$
+$$BR_N = (1 + K)^W(1 - K)^L BR_0 \cdots equation 4.3.4$$
 
   Kelly K-value [凯利模式资金管理](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)
 
@@ -603,7 +424,7 @@ $$BR_N = (1 + K)^W(1 - K)^L BR_0 \cdots equation 4.3.3$$
   
   In order to get the optimal value, I apply the bootrapping and resampling method.
   
-$$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation 4.3.4$$
+$$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation 4.3.5$$
   
   Now we look at abpve function from a different perspective by considering the observed values $x1, x2, …, xn$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
 
@@ -671,7 +492,21 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 
 ```
 
-  *Martin Spann and Bernd Skiera (2009)*^[Kindly refer to 19th paper in [7.4 References]] applied a basic probability sets on the draw games and also the portion of win and loss. The author simply measured the portion of the draw result with win/loss to get the edge to place a bet. However it made a loss on Italian operator Oddset due to the 25% high vigorish but profitable in 12%. Secondly, the bets placed on fixed odds but not Asian Handicap and also a fixed amount $100.
+```
+Section : reverse modelling to get the EMProb prior to calculate the coefficient of the staking model. Otherwise might rearrange the order of applied Poison model here by refer to international competitions.
+```
+
+  *Galema, Plantinga and Scholtens (2008)*^[You are feel free to refer to [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References** for further details]
+
+### reminder (temporary noted for further):
+```
+draft : 
+  - http://www.moneychimp.com/articles/risk/regression.htm
+  - read *Galema, Plantinga and Scholtens (2008)* https://englianhu.files.wordpress.com/2016/06/the-stocks-at-stake-return-and-risk-in-socially-responsible-investment.pdf
+  - reverse engineering on staking-profit linear regression model to get/retrieve EMProb value since now only get the coefficients figire of EMProb. Although incompleted soccer teams... 2ndly, reversed poison model from EMProb might is not workable on one-sided competition, need to refer to some international competition as references for incompleted dataset.
+```
+
+  *Martin Spann and Bernd Skiera (2009)*^[Kindly refer to 19th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] applied a basic probability sets on the draw games and also the portion of win and loss. The author simply measured the portion of the draw result with win/loss to get the edge to place a bet. However it made a loss on Italian operator Oddset due to the 25% high vigorish but profitable in 12%. Secondly, the bets placed on fixed odds but not Asian Handicap and also a fixed amount $100.
 
   sample... Geometric Mean
 
@@ -694,12 +529,12 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 
   sample...
 
-# 5. Result
+# 5. ®esult
 
-  - Section [5.1 Comparison of the Results] - Comparison of the Returns of Staking Models.
+  - Section [5.1 Comparison of the ®esults] - Comparison of the Returns of Staking Models.
   - Section [5.2 Ⓜarket Basket] - Analyse the Hedging or Double up Invest by Firm A.
 
-## 5.1 Comparison of the Results
+## 5.1 Comparison of the ®esults
 
 Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 
@@ -748,9 +583,11 @@ options(op)
 
 ## 6.2 Future Works
 
-  *Niko Marttinen (2001)* has conducted a very detail and useful but also applicable betting system in real life. There has a ordered probit model which shows a high accuracy predictive model compare to his Poisson (Escore) model. Well, the [*®γσ, Lian Hu ENG (2016)*](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers)^[Infact completed in year 2010] has build a weight inflated diagonal poisson model which is more complicated and shophitiscated and later [*®γσ, Lian Hu ENG (2014)*](https://github.com/scibrokes/kelly-criterion). However there has an automatically and systematically trading system which wrote in *VBA + S-Plus + Excel + SQL*^[the betting system has stated in his paper.] which is very useful as reference. The author use VBA to automac the algorithmic trading while there has no Asian Handicap and Goal Line odds price data to simulate compare to mine. While currently the shinyapps with RStudioConnect can also build an algorithmic trading system. However the *session timeout issue*^[The connection timeout issue might be a big issue for real time algorithmic trading] might need to consider. The [shinydashboard example](https://rstudio.github.io/shinydashboard/examples.html) from ｮStudio might probably cope with the issue.
+  *Niko Marttinen (2001)* has conducted a very detail and useful but also applicable betting system in real life. There has a ordered probit model which shows a high accuracy predictive model compare to his Poisson (Escore) model. Well, the *®γσ, Lian Hu ENG (2016)*^[The research modelling with testing the efficiency of odds price which had completed in year 2010. Kindly refer to 3rd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has build a weight inflated diagonal poisson model which is more complicated and shophitiscated and later *®γσ, Lian Hu ENG (2014)*^[Kindly refer to 4th paper inside [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**]. However there has an automatically and systematically trading system which wrote in *VBA + S-Plus + Excel + SQL*^[the betting system has stated in his paper.] which is very useful as reference. The author use VBA to automac the algorithmic trading while there has no Asian Handicap and Goal Line odds price data to simulate compare to mine. While currently the shinyapps with RStudioConnect can also build an algorithmic trading system. However the *session timeout issue*^[The connection timeout issue might be a big issue for real time algorithmic trading] might need to consider. The [shinydashboard example](https://rstudio.github.io/shinydashboard/examples.html) from ｮStudio might probably cope with the issue.
   
-  I will be apply Shiny to write a dynamic website to utilise the function as web based apps. I am currently conducting another research on [corporate-finance-analysis](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers) which is an analysis on the public listed companies and also anonymous companies revenue and profit & loss. You are welcome to refer [SHOW ME SHINY](http://www.showmeshiny.com/category/topics/sports/) and build your own shinyapps.
+  *John Fingleton & Patrick Waldron (1999)* applied Shin model to test the portion of hedge funds and smart punters. As I stated in [4.2 Linear Ⓜodel], the sparkR, RHadoop and noSQL require in order to analyse the high volume betslips dataset. Its interesting and will conduct the research if all betslips of bookmaker(s) is(are) available in the future.
+
+  I will be apply Shiny to write a dynamic website to utilise the function as web based apps. I am currently conducting another research on [Analyse the Finance and Stocks Price of Bookmakers](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers) which is an analysis on the public listed companies and also anonymous companies revenue and profit & loss. You are welcome to refer [SHOW ME SHINY](http://www.showmeshiny.com/category/topics/sports/) and build your own shinyapps.
   
   I will also write as a package to easier load and log.
 
@@ -833,6 +670,10 @@ rm(sys1)
   - I tried to raise an issue about post the shinyapps to RStudioConnect at [Unable publish to RStudio Connect : Error in yaml::yaml.load(enc2utf8(string), ...) : Reader error: control characters are not allowed: #81 at 276 #115](https://github.com/rstudio/rsconnect/issues/115). You might try to refer to the gif files in [#issue 115](https://github.com/rstudio/rsconnect/issues/115#issuecomment-244084859) for further information. I tried couple times and find the solution but there has no an effective solution and only allowed post to ｮPubs.com where I finally decide to seperate the dynamic shinyApp into another web url.
   
   - **Remark** : When I rewrite *Report with ShinyApps : Linear Regression Analysis on Odds Price of Stakes* and would like to post to ｮStudioConnect, the wizard only allowed me post to rPubs.com (but everyone know rPubs only allow static document which is not effort to support Shinyapp). Therefore kindly refer to <https://beta.rstudioconnect.com/content/1766/>. You might download and run locally due to web base version always affected by wizards and sometimes only view datatable but sometimes only can view googleVis while sometimes unable access.
+
+  - I am currently work as a customer service operator and self research as a smart punter. Hope to setup my sportsbook hedge fund company website **Scibrokes®** and running business and back to the sportsbook betting industry soon...
+
+![**Terminator II**](figure/Ill-Be-Back-Terminator.gif)
 
 ## 7.4 References
 

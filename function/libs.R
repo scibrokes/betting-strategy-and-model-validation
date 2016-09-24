@@ -21,11 +21,11 @@ suppressMessages(library('BBmisc'))
 #'@ library(c('dplyrr', 'nycflights13'))
 
 ## Loading multiple packages at once
-pkgs <- c('tufte', 'devtools', 'zoo', 'chron', 'stringr', 'reshape', 'reshape2', 'data.table', 'sparkline', 'lme4', 
-          'stringdist', 'DT', 'plyr', 'dplyr', 'purrr', 'magrittr', 'foreach', 'manipulate', 'ggplot2', 
-          'ggthemes', 'proto', 'extrafont', 'directlabels', 'PerformanceAnalytics', 'plotly', 'rstan', 
-          'doParallel', 'rvest', 'highlightHTML', 'knitr', 'rmarkdown', 'scales', 'lubridate', 'tidyr', 
-          'whisker', 'gtable', 'grid', 'gridExtra', 'arules', 'arulesViz', 'googleVis', 'formattable', 
+pkgs <- c('tufte', 'devtools', 'zoo', 'chron', 'stringr', 'reshape', 'reshape2', 'data.table', 'lme4',
+          'stringdist', 'DT', 'plyr', 'tidyverse', 'magrittr', 'foreach', 'manipulate', 'sparkline',
+          'ggthemes', 'proto', 'extrafont', 'directlabels', 'PerformanceAnalytics', 'plotly', 'rstan',
+          'doParallel', 'rvest', 'highlightHTML', 'knitr', 'rmarkdown', 'scales', 'lubridate', 
+          'whisker', 'gtable', 'grid', 'gridExtra', 'arules', 'arulesViz', 'googleVis', 'formattable',
           'xtable', 'rCharts', 'stargazer', 'shiny', 'shinyjs')
 #'@ c('memoise', 'RStudioAMI', 'pander', 'parallel', 'sqldf', 'BiocParallel', 'RSelenium', 
 #'@   'doMC', 'editR', textreg') #load if needed

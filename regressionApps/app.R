@@ -1,10 +1,14 @@
+## ========= Setup Options =================================
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
 suppressMessages(library('utils'))
 suppressMessages(require('shiny', quietly = TRUE))
 suppressMessages(require('shinyjs', quietly = TRUE))
+suppressMessages(require('plyr', quietly = TRUE))
 suppressMessages(require('dplyr', quietly = TRUE))
 suppressMessages(require('magrittr', quietly = TRUE))
+suppressMessages(require('broom', quietly = TRUE))
+suppressMessages(require('formattable', quietly = TRUE))
 
 appCSS <- "
 #loading-content {
@@ -21,7 +25,7 @@ appCSS <- "
 }
 "
 
-## =========================================
+## ========= Read Data =================================
 ## Read the data
 ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
 #'@ years <- seq(2011, 2015)
@@ -54,7 +58,7 @@ appCSS <- "
 ## Run above codes and save.images() and now directly load for shinyApp use.
 load('./shinyData.RData', envir = .GlobalEnv)
 
-## =========================================
+## ========= Linear Regression ================================
 ## Choosing the variables of linear models
 ## The net probabilities might open diversified handicap, therefore the HCap 
 ##   parameter need to be insert as one of parameter since the return of 
@@ -91,7 +95,12 @@ lms <<- list(lm0 = lm0, lm1 = lm1, lm2 = lm2, lm3 = lm3, lm4 = lm4, lm5 = lm5,
             lm6 = lm6, lm7 = lm7, lm8 = lm8, lm9 = lm9, lm10 = lm10, 
             lm11 = lm11, lm12 = lm12, lm13 = lm13, lm14 = lm14)
 
-## =========================================
+compare <<- ldply(lms, function(x) {
+  y = summary(x)$fstatistic
+  df = data.frame(t(summary(x)$df), 'p.value' = pf(y[1], y[2], y[3], lower.tail = FALSE))
+  names(df) = c('df', 'residuals', 'df', 'p.value'); df}) %>% tbl_df
+
+## ========= ShinyApp ================================
 # Define UI for application that draws a histogram
 ui <- shinyUI(fluidPage(
   
@@ -103,8 +112,7 @@ ui <- shinyUI(fluidPage(
                     Text color: yellow;
                     background-color: darkgoldenrod;
                     }
-                    "))
-    ),
+                    "))),
   
   useShinyjs(),
   inlineCSS(appCSS),
@@ -170,13 +178,16 @@ ui <- shinyUI(fluidPage(
             tabPanel('Model 13', verbatimTextOutput('model12')),
             tabPanel('Model 14', verbatimTextOutput('model13')),
             tabPanel('Model 15', verbatimTextOutput('model14')),
+            tabPanel('Comparison', formattableOutput('table')),
             tabPanel('Reference', h4('Reference:'),
                      p('1. ', HTML("<a href='https://www.youtube.com/watch?v=66z_MRwtFJM'>Linear Regression in R (R Tutorial 5.1 to 5.11)</a>")),
                      p('2. ', HTML("<a href='http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/'>Getting Started with Mixed Effect Models in R</a>")),
                      p('3. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20Very%20Basic%20Tutorial%20for%20Performing%20Linear%20Mixed%20Effects%20Analyses.pdf'>A very basic tutorial for performing linear mixed effects analyses</a>")),
                      p('4. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Linear%20Models%20with%20R.pdf'>Linear Models with R</a>")),
                      p('5. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Extending%20the%20Linear%20Model%20with%20R%20-%20Generalized%20Linear%2C%20Mixed%20Effects%20and%20Nonparametric%20Regression%20Models.pdf'>Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models</a>")),
-                     p('6. ', HTML("<a href='http://www.ats.ucla.edu/stat/mult_pkg/whatstat/'>What statistical analysis should I use?</a>")))),
+                     p('6. ', HTML("<a href='http://www.ats.ucla.edu/stat/mult_pkg/whatstat/'>What statistical analysis should I use?</a>")),
+                     p('6. ', HTML("<a href='http://r4ds.had.co.nz/many-models.html'>Linear Models with R</a>")),
+                     p('7. ', HTML("<a href='http://biostat.mc.vanderbilt.edu/wiki/Main/RmS'>REGRESSION MODELING STRATEGIES with Applications to Linear Models, Logistic and Ordinal Regression, and Survival Analysis</a>")))),
           p("Powered by - Copyright® Intellectual Property Rights of ",
             tags$a(href='http://www.scibrokes.com', target='_blank',
                    tags$img(height = '20px', alt='hot', #align='right',
@@ -223,6 +234,16 @@ server <- shinyServer(function(input, output) {
   output$model12 <- renderPrint(list(Summary = summary(lm12), Anova = anova(lm12)))
   output$model13 <- renderPrint(list(Summary = summary(lm13), Anova = anova(lm13)))
   output$model14 <- renderPrint(list(Summary = summary(lm14), Anova = anova(lm14)))
+  
+  output$table <- renderFormattable({
+    compare %>% formattable(list(
+      df = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+      
+      residuals = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+      
+      p.value = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %02d)', x, rank(-x)))
+    ))
+  })
   
   output$txt <- renderText({
     fOdds <- c(input$num1, input$num2, input$num3) / input$spread
