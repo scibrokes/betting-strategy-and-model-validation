@@ -112,30 +112,40 @@ ui <- shinyUI(fluidPage(
                     Text color: yellow;
                     background-color: darkgoldenrod;
                     }
-                    "))),
-  
+					"))),
   useShinyjs(),
   inlineCSS(appCSS),
   
   # Loading message
-  div(
-    id = "loading-content",
-    h2("Loading...")
-  ),
+  div(id = 'loading-content', h2('Loading...')),
   
   # The main app code goes here
   hidden(
-    div(
-      id = "app-content",
+    div(id = 'app-content',
       titlePanel('Summary of linear models to test the efficiency of staking model of firm A.'), 
       
       # Sidebar with a slider input for number of bins
       sidebarLayout(
         sidebarPanel(
-          h2('Select variables below for your linear model'),
-          selectInput('response', label = h4('What is the column name of your response variable Y?'), choices = names(dat)),
-          checkboxGroupInput('explan1', label = h4('What is the column(s) name of your explanatory variable X?'), choices = names(dat)),
-          actionButton('analysis', 'Analyze!')),
+          div(id = 'models',
+              h2('Select variables below for your linear model'),
+              a(id = 'toggleModels', 'Select variables for your model', href = '#'),
+              hidden(
+                div(id = 'yourmodel',
+                    selectInput('response', label = h4('What is the column name of your response variable Y?'), choices = names(dat)),
+                    checkboxGroupInput('explan1', label = h4('What is the column(s) name of your explanatory variable X?'), choices = names(dat)),
+                    actionButton('analysis', 'Analyze!'))),
+              br(),
+              a(id = 'toggleAdvanced', 'Show/hide advanced info', href = '#'),
+              hidden(
+                div(id = "advanced",
+                    p('- Author Profile:', HTML("<a href='https://beta.rstudioconnect.com/englianhu/ryo-eng/'>®γσ, Eng Lian Hu</a>")),
+                    p('- GitHub:', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation'>Source Code</a>")))),
+              br(),
+              p('Timestamp: ',
+                span(id = 'time', date()),
+                a(id = 'update', 'Update', href = '#')),
+              actionButton('reset', 'Reset form'))),
         
         mainPanel(
           tabsetPanel(
@@ -188,13 +198,13 @@ ui <- shinyUI(fluidPage(
                      p('06. ', HTML("<a href='http://www.ats.ucla.edu/stat/mult_pkg/whatstat/'>What statistical analysis should I use?</a>"),
                        tags$a(href='https://beta.rstudioconnect.com/englianhu/ryo-eng', target='_blank', 
                               tags$img(height = '20px', alt='hot', #align='right', 
-                                       src='http://www.clipartbest.com/cliparts/niB/z9r/niBz9roiA.jpeg'))),
+                                       src='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/figure/hot.jpg?raw=true'))),
                      p('07. ', HTML("<a href='http://r4ds.had.co.nz/many-models.html'>Linear Models with R</a>")),
-                     p('08. ', HTML("<a href='http://biostat.mc.vanderbilt.edu/wiki/Main/RmS'>REGRESSION MODELING STRATEGIES with Applications to Linear Models, Logistic and Ordinal Regression, and Survival Analysis</a>")))),
+                     p('08. ', HTML("<a href='http://biostat.mc.vanderbilt.edu/wiki/Main/RmS'>REGRESSION MODELING STRATEGIES with Applications to Linear Models, Logistic and Ordinal Regression, and Survival Analysis</a>")),
                      p('09. ', HTML("<a href='https://www.zoology.ubc.ca/~schluter/R/fit-model/'>Fit models to data</a>"),
                        tags$a(href='https://beta.rstudioconnect.com/englianhu/ryo-eng', target='_blank', 
                               tags$img(height = '20px', alt='hot', #align='right', 
-                                       src='http://www.clipartbest.com/cliparts/niB/z9r/niBz9roiA.jpeg'))),
+                                       src='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/figure/hot.jpg?raw=true'))),
                      p('10. ', HTML("<a href='http://stats.stackexchange.com/questions/172782/how-to-use-r-anova-results-to-select-best-model'>How to use R anova() results to select best model?</a>")),
                      p('11. ', HTML("<a href='http://blog.minitab.com/blog/adventures-in-statistics/how-to-choose-the-best-regression-model'>How to Choose the Best Regression Model</a>")),
                      p('12. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/ANOVA%20-%20Model%20Selection.pdf'>ANOVA - Model Selection</a>")),
@@ -202,7 +212,7 @@ ui <- shinyUI(fluidPage(
           p("Powered by - Copyright® Intellectual Property Rights of ",
             tags$a(href='http://www.scibrokes.com', target='_blank',
                    tags$img(height = '20px', alt='hot', #align='right',
-                            src='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/figure/oda-army.jpg')), HTML("<a href='http://www.scibrokes.com'>Scibrokes®</a>"), "個人の経営企業")
+                            src='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/figure/oda-army.jpg?raw=true')), HTML("<a href='http://www.scibrokes.com'>Scibrokes®</a>"), "個人の経営企業")
           )
         )
       )
@@ -217,8 +227,12 @@ server <- shinyServer(function(input, output) {
   Sys.sleep(1)
   
   # Hide the loading message when the rest of the server function has executed
-  hide(id = "loading-content", anim = TRUE, animType = "fade")    
-  show("app-content")
+  hide(id = 'loading-content', anim = TRUE, animType = 'fade')    
+  show('app-content')
+  
+  onclick('toggleModels', shinyjs::toggle(id = 'yourmodel', anim = TRUE))
+  onclick('toggleAdvanced', shinyjs::toggle(id = 'advanced', anim = TRUE))    
+  onclick('update', shinyjs::html('time', date()))
   
   observeEvent(input$analysis, {
     y = ifelse(is.null(input$response)||is.na(input$response)||length(input$response) == 0, 'Return', input$response)
@@ -248,15 +262,15 @@ server <- shinyServer(function(input, output) {
   
   output$table <- renderFormattable({
     compare %>% formattable(list(
-      AIC = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+      AIC = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
       
-      BIC = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+      BIC = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
       
-      df = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+      df = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
       
-      residuals = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
+      residuals = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
       
-      p.value = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x)))
+      p.value = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x)))
     ))
   })
   
