@@ -96,9 +96,9 @@ lms <<- list(lm0 = lm0, lm1 = lm1, lm2 = lm2, lm3 = lm3, lm4 = lm4, lm5 = lm5,
             lm11 = lm11, lm12 = lm12, lm13 = lm13, lm14 = lm14)
 
 compare <<- ldply(lms, function(x) {
-  y = summary(x)$fstatistic
-  df = data.frame(t(summary(x)$df), 'p.value' = pf(y[1], y[2], y[3], lower.tail = FALSE))
-  names(df) = c('df', 'residuals', 'df', 'p.value'); df}) %>% tbl_df
+  y <- summary(x)$fstatistic
+  df <- data.frame(AIC = AIC(x), BIC = BIC(x), t(summary(x)$df), 'p.value' = pf(y[1], y[2], y[3], lower.tail = FALSE))
+  names(df) <- c('AIC', 'BIC', 'df', 'residuals', 'df', 'p.value'); df}) %>% tbl_df
 
 ## ========= ShinyApp ================================
 # Define UI for application that draws a histogram
@@ -180,14 +180,25 @@ ui <- shinyUI(fluidPage(
             tabPanel('Model 15', verbatimTextOutput('model14')),
             tabPanel('Comparison', formattableOutput('table')),
             tabPanel('Reference', h4('Reference:'),
-                     p('1. ', HTML("<a href='https://www.youtube.com/watch?v=66z_MRwtFJM'>Linear Regression in R (R Tutorial 5.1 to 5.11)</a>")),
-                     p('2. ', HTML("<a href='http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/'>Getting Started with Mixed Effect Models in R</a>")),
-                     p('3. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20Very%20Basic%20Tutorial%20for%20Performing%20Linear%20Mixed%20Effects%20Analyses.pdf'>A very basic tutorial for performing linear mixed effects analyses</a>")),
-                     p('4. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Linear%20Models%20with%20R.pdf'>Linear Models with R</a>")),
-                     p('5. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Extending%20the%20Linear%20Model%20with%20R%20-%20Generalized%20Linear%2C%20Mixed%20Effects%20and%20Nonparametric%20Regression%20Models.pdf'>Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models</a>")),
-                     p('6. ', HTML("<a href='http://www.ats.ucla.edu/stat/mult_pkg/whatstat/'>What statistical analysis should I use?</a>")),
-                     p('6. ', HTML("<a href='http://r4ds.had.co.nz/many-models.html'>Linear Models with R</a>")),
-                     p('7. ', HTML("<a href='http://biostat.mc.vanderbilt.edu/wiki/Main/RmS'>REGRESSION MODELING STRATEGIES with Applications to Linear Models, Logistic and Ordinal Regression, and Survival Analysis</a>")))),
+                     p('01. ', HTML("<a href='https://www.youtube.com/watch?v=66z_MRwtFJM'>Linear Regression in R (R Tutorial 5.1 to 5.11)</a>")),
+                     p('02. ', HTML("<a href='http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/'>Getting Started with Mixed Effect Models in R</a>")),
+                     p('03. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20Very%20Basic%20Tutorial%20for%20Performing%20Linear%20Mixed%20Effects%20Analyses.pdf'>A very basic tutorial for performing linear mixed effects analyses</a>")),
+                     p('04. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Linear%20Models%20with%20R.pdf'>Linear Models with R</a>")),
+                     p('05. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Extending%20the%20Linear%20Model%20with%20R%20-%20Generalized%20Linear%2C%20Mixed%20Effects%20and%20Nonparametric%20Regression%20Models.pdf'>Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models</a>")),
+                     p('06. ', HTML("<a href='http://www.ats.ucla.edu/stat/mult_pkg/whatstat/'>What statistical analysis should I use?</a>"),
+                       tags$a(href='https://beta.rstudioconnect.com/englianhu/ryo-eng', target='_blank', 
+                              tags$img(height = '20px', alt='hot', #align='right', 
+                                       src='http://www.clipartbest.com/cliparts/niB/z9r/niBz9roiA.jpeg'))),
+                     p('07. ', HTML("<a href='http://r4ds.had.co.nz/many-models.html'>Linear Models with R</a>")),
+                     p('08. ', HTML("<a href='http://biostat.mc.vanderbilt.edu/wiki/Main/RmS'>REGRESSION MODELING STRATEGIES with Applications to Linear Models, Logistic and Ordinal Regression, and Survival Analysis</a>")))),
+                     p('09. ', HTML("<a href='https://www.zoology.ubc.ca/~schluter/R/fit-model/'>Fit models to data</a>"),
+                       tags$a(href='https://beta.rstudioconnect.com/englianhu/ryo-eng', target='_blank', 
+                              tags$img(height = '20px', alt='hot', #align='right', 
+                                       src='http://www.clipartbest.com/cliparts/niB/z9r/niBz9roiA.jpeg'))),
+                     p('10. ', HTML("<a href='http://stats.stackexchange.com/questions/172782/how-to-use-r-anova-results-to-select-best-model'>How to use R anova() results to select best model?</a>")),
+                     p('11. ', HTML("<a href='http://blog.minitab.com/blog/adventures-in-statistics/how-to-choose-the-best-regression-model'>How to Choose the Best Regression Model</a>")),
+                     p('12. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/ANOVA%20-%20Model%20Selection.pdf'>ANOVA - Model Selection</a>")),
+                     p('13. ', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Model%20Selection%20in%20R.pdf'>Model Selection in R</a>")))),
           p("Powered by - Copyright® Intellectual Property Rights of ",
             tags$a(href='http://www.scibrokes.com', target='_blank',
                    tags$img(height = '20px', alt='hot', #align='right',
@@ -237,11 +248,15 @@ server <- shinyServer(function(input, output) {
   
   output$table <- renderFormattable({
     compare %>% formattable(list(
-      df = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+      AIC = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
       
-      residuals = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+      BIC = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
       
-      p.value = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %02d)', x, rank(-x)))
+      df = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+      
+      residuals = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
+      
+      p.value = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x)))
     ))
   })
   
