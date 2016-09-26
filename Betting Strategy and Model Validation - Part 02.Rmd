@@ -263,33 +263,69 @@ n1$addControls('color', value = 'Stakes', values = names(dat))
 n1
 ```
 
-  Again, I don't pretend to know the correct Ⓜodel, here I simply apply linear model to retrieve the value of *EMOdds* derived from stakes. The purpose of measure the edge overcame bookmakers' vigorish is *to know the levarage of the staking activities onto 1 unit edge of odds price by firm A to agency A*.
+  Again, I don't pretend to know the correct Ⓜodel, here I simply apply linear model to retrieve the value of *EMOdds* derived from stakes. The purpose of measure the edge overcame bookmakers' vigorish is *to know the levarage of the staking activities onto 1 unit edge of odds price by firm A to agency A*. By refer to *figure 4.4.1*, I includes the models which split the pre-match and in-play ito comparison.
 
 ```{r linear-models, echo = FALSE, results = 'asis'}
 ## Choosing the variables of linear models
 ## The net probabilities might open diversified handicap, therefore the HCap parameter need to be insert as one of parameter since the return of draw-no-bet, win-half, win-full, loss-half, loss-full (example : 0, 0/0.5, 0.5, 0.5/1, 1) affect the return of investment.
+## lm0 indicate matches include prematch and inplay. lm0pm is subsetted with only prematch while lmip subsetted which only inplay matches.
+
 lm0 <- lm(Return ~ Stakes, data = dat)
+lm0pm <- lm(Return ~ Stakes, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
+lm0ip <- lm(Return ~ Stakes, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm1 <- lm(Return ~ Stakes + HCap, data = dat)
+lm1pm <- lm(Return ~ Stakes + HCap, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
+lm1ip <- lm(Return ~ Stakes + HCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm2 <- lm(Return ~ Stakes + netProbB, data = dat)
+lm2pm <- lm(Return ~ Stakes + netProbB, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
+lm2ip <- lm(Return ~ Stakes + netProbB, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm3 <- lm(Return ~ Stakes + HCap + netProbB, data = dat)
+lm3pm <- lm(Return ~ Stakes + HCap + netProbB, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
+lm3ip <- lm(Return ~ Stakes + HCap + netProbB, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm4 <- lm(Return ~ Stakes + ipRange, data = dat)
+lm4ip <- lm(Return ~ Stakes + ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm5 <- lm(Return ~ Stakes + ipHCap, data = dat)
+lm5ip <- lm(Return ~ Stakes + ipHCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm6 <- lm(Return ~ Stakes + HCap + ipRange, data = dat)
+lm6ip <- lm(Return ~ Stakes + HCap + ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm7 <- lm(Return ~ Stakes + CurScore + ipHCap, data = dat)
+lm7ip <- lm(Return ~ Stakes + CurScore + ipHCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm8 <- lm(Return ~ Stakes + CurScore + ipRange, data = dat)
+lm8ip <- lm(Return ~ Stakes + CurScore + ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm9 <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap, data = dat)
+lm9ip <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
 
 ## Linear Interative Effect Models
 lm10 <- lm(Return ~ HCap + netProbB + HCap:netProbB, data = dat)
+lm10pm <- lm(Return ~ HCap + netProbB + HCap:netProbB, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
+lm10ip <- lm(Return ~ HCap + netProbB + HCap:netProbB, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm11 <- lm(Return ~ Stakes + ipHCap + ipRange + ipHCap:ipRange, data = dat)
+lm11ip <- lm(Return ~ Stakes + ipHCap + ipRange + ipHCap:ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
 lm12 <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRange, data = dat)
+lm12ip <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
 
 ## Linear Mixed Effects Models
 ## Mixed effect categorised the parameters by group... similar with current score during living betting modelling, the scoring rate (intensity of scores) during 0-0 is different with scoring rates during 1-0 etc.
 lm13 <- lm(Return ~ Stakes + (1|HCap), data = dat)
-lm14 <- lm(Return ~ HCap + (1|Stakes), data = dat) # the stakes amount placed by firm A must be based on the degree of the edges to punter. Here I try to test the effect. (Although firm A might bet via several agents, here I can only took available sample from population to test the efficiency.)
+lm13pm <- lm(Return ~ Stakes + (1|HCap), data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
+lm13ip <- lm(Return ~ Stakes + (1|HCap), data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
 
-lms <- list(lm0 = lm0, lm1 = lm1, lm2 = lm2, lm3 = lm3, lm4 = lm4, lm5 = lm5, lm6 = lm6, lm7 = lm7, lm8 = lm8, lm9 = lm9, lm10 = lm10, lm11 = lm11, lm12 = lm12, lm13 = lm13, lm14 = lm14)
+lm14 <- lm(Return ~ HCap + (1|Stakes), data = dat) # the stakes amount placed by firm A must be based on the degree of the edges to punter. Here I try to test the effect. (Although firm A might bet via several agents, here I can only took available sample from population to test the efficiency.)
+lm14pm <- lm(Return ~ HCap + (1|Stakes), data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
+lm14ip <- lm(Return ~ HCap + (1|Stakes), data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+
+lms <- list(lm0 = lm0, lm0pm = lm0pm, lm0ip = lm0ip, lm1 = lm1, lm1pm = lm1pm, lm1ip = lm1ip, lm2 = lm2, lm2pm = lm2pm, lm2ip = lm2ip, lm3 = lm3, lm3pm = lm3pm, lm3ip = lm3ip, lm4 = lm4, lm4ip = lm4ip, lm5 = lm5, lm5ip = lm5ip, lm6 = lm6, lm6ip = lm6ip, lm7 = lm7, lm7ip = lm7ip, lm8 = lm8, lm8ip = lm8ip, lm9 = lm9, lm9ip = lm9ip, lm10 = lm10, lm10pm = lm10pm, lm10ip = lm10ip, lm11 = lm11, lm11ip = lm11ip, lm12 = lm12, lm12ip = lm12ip, lm13 = lm13, lm13pm = lm13pm, lm13ip = lm13ip, lm14 = lm14, lm14pm = lm14pm, lm14ip = lm14ip)
 ```
 
 <s>
@@ -349,37 +385,44 @@ stargazer(anova(lm14), type = 'html')
 
   From the summary of *shinyapp 4.2.1*, we know the comparison among the models to get the best fitted model.
 
-```{r comp, echo = FALSE, results = 'asis'}
+```{r compare, echo = FALSE, results = 'asis'}
 compare <- ldply(lms, function(x) {
     y <- summary(x)$fstatistic
     df <- data.frame(AIC = AIC(x), BIC = BIC(x), t(summary(x)$df), 'p.value' = pf(y[1], y[2], y[3], lower.tail = FALSE))
     names(df) <- c('AIC', 'BIC', 'df', 'residuals', 'df', 'p.value'); df}) %>% tbl_df
 
+compare %<>% mutate(delta.AIC = AIC - min(AIC), Loglik.AIC = exp(-0.5 * delta.AIC), weight.AIC = Loglik.AIC/sum(Loglik.AIC), delta.BIC = BIC - min(BIC), Loglik.BIC = exp(-0.5 * delta.BIC), weight.BIC = Loglik.BIC/sum(Loglik.BIC))
+
 compare %>% formattable(list(
-  AIC = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
   
-  BIC = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
   
-  df = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+  df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
   
-  residuals = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
+  residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
   
-  p.value = formatter('span', style = x ~ style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x)))
+  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
+  
+  delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
+
   )) %>% as.htmlwidget
 ```
 
 *table 4.2.1 : Best model to test the efficiency of staking.*
-
 ```
->> Draft:
->> AIC and BIC
->> deviance required to compare the degree of freedom and residuals, and then refer to p value to determine the best fitted model.
-
->> prematch and In-Play need to separates.
+  Base on above summary, we can decide that the model *`r filter(compare, BIC == min(BIC), AIC == min(AIC)) %>% .$.id`*^[BIC will be primary reference while AIC is the secondary reference. The smallest value is the best model.] is the best fit to determine the factors and effects to place stakes for all matches^[mixed InPlay + Pre-match, all observations or soccer matches placed betsare `r nrow(dat)`.]. The timing of InPlay and the stakes amount is the major effects to the return of investment.
 ```
-
-  Base on above summary, we can decide that the model <s>xxxxxxxxxxxxxxxxxxx</s> is the best fit to determine the factors and effects to place stakes.
-
   *John Fingleton & Patrick Waldron (1999)* apply Shin's model and finally conclude suggests that bookmakers in Ireland are infinitely risk-averse and balance their books. The authors cannot distinguish between inside information and operating costs, merely concluding that combined they account for up to 3.7% of turnover while normally Asian bookmakers made less than 1% and a anonymous company has made around 2%. However the revenue or the stakes are farly more than European bookmakers.^[You can refer to my another project [Analyse the Finance and Stocks Price of Bookmakers](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers) which analysis the financial report of public listed companies and also profitable products' revenue and profit & loss of anonymous company.]. 
   
   They compare different versions of our model, using data from races in Ireland in 1993. The authors' empirical results can be summarised as follows:
@@ -529,7 +572,7 @@ draft :
 
 [**Parimutuel Betting**](https://en.wikipedia.org/wiki/Parimutuel_betting)
 
-  
+
 
 
 ## 4.6 Expectation Ⓜaximization and Staking Simulation
@@ -601,6 +644,8 @@ options(op)
   *Niko Marttinen (2001)* has conducted a very detail and useful but also applicable betting system in real life. There has a ordered probit model which shows a high accuracy predictive model compare to his Poisson (Escore) model. Well, the *®γσ, Lian Hu ENG (2016)*^[The research modelling with testing the efficiency of odds price which had completed in year 2010. Kindly refer to 3rd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has build a weight inflated diagonal poisson model which is more complicated and shophitiscated and later *®γσ, Lian Hu ENG (2014)*^[Kindly refer to 4th paper inside [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**]. However there has an automatically and systematically trading system which wrote in *VBA + S-Plus + Excel + SQL*^[the betting system has stated in his paper.] which is very useful as reference. The author use VBA to automac the algorithmic trading while there has no Asian Handicap and Goal Line odds price data to simulate compare to mine. While currently the shinyapps with RStudioConnect can also build an algorithmic trading system. However the *session timeout issue*^[The connection timeout issue might be a big issue for real time algorithmic trading] might need to consider. The [shinydashboard example](https://rstudio.github.io/shinydashboard/examples.html) from ｮStudio might probably cope with the issue.
   
   *John Fingleton & Patrick Waldron (1999)* applied Shin model to test the portion of hedge funds and smart punters. As I stated in [4.2 Linear Ⓜodel], the sparkR, RHadoop and noSQL require in order to analyse the high volume betslips dataset. Its interesting and will conduct the research if all betslips of bookmaker(s) is(are) available in the future.
+
+  From the [4.3 Kelly Ⓜodel] we test the staking model, the *table 4.2.1* we apply the linear models and choose the best fit model based on the edge of odds price. [4.4 Poisson Ⓜodel] we try to reverse the odds price placed to get the probabilities of scoring different scores. Now we try to test the return of staking on different handicap (ex: 0, 0.25, 0.5, 0.75, 1 etc.) to know which handicap earn the most. Nowadays the hotest matches of four major leagues provides few handicaps market, there will be another case study and research to increase the profit base on same probabilities  and also edge but staking on different handicap. The dataset will be collect for research beyond the future.
 
   I will be apply Shiny to write a dynamic website to utilise the function as web based apps. I am currently conducting another research on [Analyse the Finance and Stocks Price of Bookmakers](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers) which is an analysis on the public listed companies and also anonymous companies revenue and profit & loss. You are welcome to refer [SHOW ME SHINY](http://www.showmeshiny.com/category/topics/sports/) and build your own shinyapps.
   
@@ -684,7 +729,9 @@ rm(sys1)
   
   - I tried to raise an issue about post the shinyapps to RStudioConnect at [Unable publish to RStudio Connect : Error in yaml::yaml.load(enc2utf8(string), ...) : Reader error: control characters are not allowed: #81 at 276 #115](https://github.com/rstudio/rsconnect/issues/115). You might try to refer to the gif files in [#issue 115](https://github.com/rstudio/rsconnect/issues/115#issuecomment-244084859) for further information. I tried couple times and find the solution but there has no an effective solution and only allowed post to ｮPubs.com where I finally decide to seperate the dynamic shinyApp into another web url.
   
-  - **Remark** : When I rewrite *Report with ShinyApps : Linear Regression Analysis on Odds Price of Stakes* and would like to post to ｮStudioConnect, the wizard only allowed me post to rPubs.com (but everyone know rPubs only allow static document which is not effort to support Shinyapp). Therefore kindly refer to <https://beta.rstudioconnect.com/content/1766/>. You might download and run locally due to web base version always affected by wizards and sometimes only view datatable but sometimes only can view googleVis while sometimes unable access.
+  - **Remark** : When I rewrite *Report with ShinyApps : Linear Regression Analysis on Odds Price of Stakes* and would like to post to ®StudioConnect, the wizard only allowed me post to rPubs.com (but everyone know rPubs only allow static document which is not effort to support Shinyapp). Therefore kindly refer to <https://beta.rstudioconnect.com/content/1766/>. You might download and run locally due to web base version always affected by wizards and sometimes only view datatable but sometimes only can view googleVis while sometimes unable access.
+  
+  - [Using formattable and plotly simultaneously](http://stackoverflow.com/questions/39319427/using-formattable-and-plotly-simultaneously) and [Possible namespace issue with plotly::last_plot() #41](https://github.com/renkun-ken/formattable/issues/41#issuecomment-171590677) solved the formattable issue.
 
   - I am currently work as a customer service operator and self research as a smart punter. Hope to setup my sportsbook hedge fund company website **Scibrokes®** and running business and back to the sportsbook betting industry soon...
 
