@@ -25,8 +25,8 @@ pkgs <- c('tufte', 'devtools', 'zoo', 'chron', 'stringr', 'reshape', 'reshape2',
           'stringdist', 'DT', 'plyr', 'tidyverse', 'magrittr', 'foreach', 'manipulate', 'sparkline',
           'ggthemes', 'proto', 'extrafont', 'directlabels', 'PerformanceAnalytics', 'plotly', 'rstan',
           'doParallel', 'rvest', 'highlightHTML', 'knitr', 'rmarkdown', 'scales', 'lubridate', 
-          'whisker', 'gtable', 'grid', 'gridExtra', 'arules', 'arulesViz', 'googleVis', 'formattable',
-          'xtable', 'rCharts', 'stargazer', 'shiny', 'shinyjs')
+          'whisker', 'gtable', 'grid', 'gridExtra', 'arules', 'arulesViz', 'googleVis', 'highcharter', 
+          'xtable', 'rCharts', 'stargazer', 'shiny', 'shinyjs', 'formattable')
 #'@ c('memoise', 'RStudioAMI', 'pander', 'parallel', 'sqldf', 'BiocParallel', 'RSelenium', 
 #'@   'doMC', 'editR', textreg') #load if needed
 #'@ suppressAll(lib(pkgs)

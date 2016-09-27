@@ -9,6 +9,7 @@ suppressMessages(require('dplyr', quietly = TRUE))
 suppressMessages(require('magrittr', quietly = TRUE))
 suppressMessages(require('broom', quietly = TRUE))
 suppressMessages(require('formattable', quietly = TRUE))
+suppressMessages(require('stringr', quietly = TRUE))
 
 appCSS <- "
 #loading-content {
@@ -129,11 +130,16 @@ lms <<- list(lm0 = lm0, lm0pm = lm0pm, lm0ip = lm0ip, lm1 = lm1, lm1pm = lm1pm, 
 compare <<- ldply(lms, function(x) {
   y <- summary(x)$fstatistic
   df <- data.frame(AIC = AIC(x), BIC = BIC(x), t(summary(x)$df), 'p.value' = pf(y[1], y[2], y[3], lower.tail = FALSE))
-  names(df) <- c('AIC', 'BIC', 'df', 'residuals', 'df', 'p.value'); df}) %>% tbl_df
+  names(df) <- c('AIC', 'BIC', 'df', 'residuals', 'df', 'p.value'); df}) %>% data.frame(No = seq(nrow(.)), Cat = ifelse(str_detect(.$.id, 'pm'), 'pm', ifelse(str_detect(.$.id, 'ip'), 'ip', 'all')), .) %>% tbl_df
 
 compare %<>% mutate(delta.AIC = AIC - min(AIC), Loglik.AIC = exp(-0.5 * delta.AIC), weight.AIC = Loglik.AIC/sum(Loglik.AIC), delta.BIC = BIC - min(BIC), Loglik.BIC = exp(-0.5 * delta.BIC), weight.BIC = Loglik.BIC/sum(Loglik.BIC))
 
-## ========= ShinyApp ================================
+## Refer to *figure 4.4.1* to compare the models, between "all" and "pm + ip".
+bestlm <<- compare %>% filter(p.value < 0.05) %>% group_by(Cat) %>% slice(which.min(BIC)) #best model for every single category.
+
+compare %<>% split(., .$Cat) #split the category and list the ranking.
+
+## ========= ShinyUI ================================
 # Define UI for application that draws a histogram
 ui <- shinyUI(fluidPage(
   
@@ -221,7 +227,14 @@ ui <- shinyUI(fluidPage(
               tabPanel('Model 13', verbatimTextOutput('model12')),
               tabPanel('Model 14', verbatimTextOutput('model13')),
               tabPanel('Model 15', verbatimTextOutput('model14')),
-              tabPanel('Comparison', formattableOutput('table')),
+              tabPanel('Comparison', 
+                       fluidRow(formattableOutput('table1A')),
+                       hr(),
+                       fluidRow(formattableOutput('table1B')),
+                       hr(),
+                       fluidRow(formattableOutput('table1C')),
+                       hr(),
+                       fluidRow(formattableOutput('table2'))),
               tabPanel('Reference', h4('Reference:'),
                        p('01. ', HTML("<a href='https://www.youtube.com/watch?v=66z_MRwtFJM'>Linear Regression in R (R Tutorial 5.1 to 5.11)</a>")),
                        p('02. ', HTML("<a href='http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/'>Getting Started with Mixed Effect Models in R</a>")),
@@ -248,11 +261,12 @@ ui <- shinyUI(fluidPage(
                               src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/regressionApps/oda-army.jpg')), HTML("<a href='http://www.scibrokes.com'>Scibrokes®</a>"), "個人の経営企業")
           )
         )
+      )
     )
   )
-    )
-    )
+)
 
+## ========= ShinyServer ================================
 # Define server logic required to draw a histogram
 server <- shinyServer(function(input, output) {
   
@@ -357,17 +371,17 @@ server <- shinyServer(function(input, output) {
                                      Summary.lm13ip = summary(lm13ip), 
                                      Anova = anova(lm6, lm8, lm10, lm13, lm14), 
                                      Anova.pm = anova(lm0pm, lm1pm, lm2pm, lm3pm, lm10pm, lm13pm, lm14pm), 
-                                     Anova.ip = anova(lm6ip, lm8ip, lm9ip, lm10ip, lm13ip, lm14ip)))
+                                     Anova.ip = anova(lm6ip, lm8ip, lm10ip, lm13ip, lm14ip)))
   
   output$model14 <- renderPrint(list(Summary.lm14 = summary(lm14), 
                                      Summary.lm14pm = summary(lm14pm), 
                                      Summary.lm14ip = summary(lm14ip), 
                                      Anova = anova(lm6, lm8, lm10, lm13, lm14), 
                                      Anova.pm = anova(lm0pm, lm1pm, lm2pm, lm3pm, lm10pm, lm13pm, lm14pm), 
-                                     Anova.ip = anova(lm6ip, lm8ip, lm9ip, lm10ip, lm13ip, lm14ip)))
+                                     Anova.ip = anova(lm6ip, lm8ip, lm10ip, lm13ip, lm14ip)))
   
-  output$table <- renderFormattable({
-    compare %>% formattable(list(
+  output$table1A <- renderFormattable({
+    compare[[1]] %>% formattable(list(
       AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
       
       BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
@@ -377,6 +391,87 @@ server <- shinyServer(function(input, output) {
       residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
       
       p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
+      
+      delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
+      
+    ))
+  })
+
+  output$table1B <- renderFormattable({
+    compare[[3]] %>% formattable(list(
+      AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+      
+      BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+      
+      df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+      
+      residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
+      
+      p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
+      
+      delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
+      
+    ))
+  })
+  
+  output$table1C <- renderFormattable({
+    compare[[2]] %>% formattable(list(
+      AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+      
+      BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+      
+      df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+      
+      residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
+      
+      p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
+      
+      delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+      
+      weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
+      
+    ))
+  })
+  
+  output$table2 <- renderFormattable({
+    bestlm %>% formattable(list(
+      AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+      
+      BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+      
+      df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(-x))),
+      
+      residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+      
+      p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
       
       delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
       
@@ -424,6 +519,7 @@ server <- shinyServer(function(input, output) {
   })
 })
 
+## ========= ShinyApp ================================
 # Run the application 
 shinyApp(ui = ui, server = server)
 

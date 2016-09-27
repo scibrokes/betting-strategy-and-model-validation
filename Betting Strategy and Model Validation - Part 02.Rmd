@@ -155,7 +155,7 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 
   Above table list a part of sample odds prices and probabilities of soccer match $i$ while $n$ indicates the number of soccer matches. We can know the values `rEMProbB`, `netProbB` and so forth.
 
-```{r data-prob-plot2, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
+```{r data-prob-plot2, eval = FALSE, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
 ## Linear model
 ## Learn about API authentication here: https://plot.ly/r/getting-started
 ## Find your api_key here: https://plot.ly/settings/api
@@ -170,13 +170,22 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 
 #'@ ggplot(dat, aes(x = netProbB, y = rEMProbB)) + geom_point(aes(y = netProbB, color = 'netProbB')) + geom_point(aes(y = rEMProbB, color = 'rEMProbB')) + xlab('Bookmaker Backed Net Prob') + ylab('Calculated EM Backed Prob') + theme_economist(base_family='Verdana') + scale_colour_economist() + ggtitle('Bookmaker Net Probabilities -vs- Firm A EM Probabilities')
 
-gvis.options <- list(title = "Bookmaker Net Probabilities -vs- Firm A EM Probabilities", series = "[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis = "{title:'Bookmaker Backed Net Prob'}", vAxis = "{title:'rEMProbB'},{title:'netProbB'}", pointSize = 2, width = 'automatic', height = 'automatic', gvis.editor = 'Edit me!')
+gvis.options <- list(title = "Bookmaker Net Probabilities -vs- Firm A EM Probabilities", series = "[{targetAxisIndex:0},{targetAxisIndex:1}]", hAxis = "{title:'Bookmaker Backed Net Prob'}", vAxis = "{title:'rEMProbB'},{title:'netProbB'}", pointSize = 2, width = 'automatic', height = 'automatic', gvis.editor = 'Edit me!', gvis.plot.tag = 'chart')
 
 #'@ plot4.1.1 <- gvisLineChart(xvar = 'netProbB', yvar = 'rEMProbB', data = dat, options = gvis.options)
 plot4.1.1 <- googleVis::gvisScatterChart(dat[c('netProbB', 'rEMProbB')], options = gvis.options)
 plot(plot4.1.1)
 
 rm(plot4.1.1)
+```
+
+```{r data-prob-plot2b, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
+## Due to gvisScatterChart inside `data-prob-plot2` keep plot javascript output, here I use alternate `highcharter` package to plot the graph.
+
+## Load package again due to unable found the function.
+suppressMessages(require('highcharter', quietly = TRUE))
+
+hchart(dat[c('netProbB', 'rEMProbB', 'pMYRange')], 'scatter', x = netProbB, y = rEMProbB, group = pMYRange)
 ```
 
 *graph 4.1.1* : *A sample graph about the relationship between the investmental probabilities -vs- bookmakers' probabilities.*
@@ -326,6 +335,8 @@ lm14pm <- lm(Return ~ HCap + (1|Stakes), data = subset(dat, InPlay == 'No' & InP
 lm14ip <- lm(Return ~ HCap + (1|Stakes), data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
 
 lms <- list(lm0 = lm0, lm0pm = lm0pm, lm0ip = lm0ip, lm1 = lm1, lm1pm = lm1pm, lm1ip = lm1ip, lm2 = lm2, lm2pm = lm2pm, lm2ip = lm2ip, lm3 = lm3, lm3pm = lm3pm, lm3ip = lm3ip, lm4 = lm4, lm4ip = lm4ip, lm5 = lm5, lm5ip = lm5ip, lm6 = lm6, lm6ip = lm6ip, lm7 = lm7, lm7ip = lm7ip, lm8 = lm8, lm8ip = lm8ip, lm9 = lm9, lm9ip = lm9ip, lm10 = lm10, lm10pm = lm10pm, lm10ip = lm10ip, lm11 = lm11, lm11ip = lm11ip, lm12 = lm12, lm12ip = lm12ip, lm13 = lm13, lm13pm = lm13pm, lm13ip = lm13ip, lm14 = lm14, lm14pm = lm14pm, lm14ip = lm14ip)
+
+rm(lm0, lm0pm, lm0ip, lm1, lm1pm, lm1ip, lm2, lm2pm, lm2ip, lm3, lm3pm, lm3ip, lm4, lm4ip, lm5, lm5ip, lm6, lm6ip, lm7, lm7ip, lm8, lm8ip, lm9, lm9ip, lm10, lm10pm, lm10ip, lm11, lm11ip, lm12, lm12ip, lm13, lm13pm, lm13ip, lm14, lm14pm, lm14ip)
 ```
 
 <s>
@@ -379,7 +390,7 @@ stargazer(anova(lm14), type = 'html')
 
   Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20Very%20Basic%20Tutorial%20for%20Performing%20Linear%20Mixed%20Effects%20Analyses.pdf) and [Fitting Linear Mixed-Effects Models using lme4](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Fitting%20Linear%20Mixed-Effects%20Models%20Using%20lme4.pdf). Otherwise you can read [Linear Models with R](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Linear%20Models%20with%20R.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Extending%20the%20Linear%20Model%20with%20R%20-%20Generalized%20Linear%2C%20Mixed%20Effects%20and%20Nonparametric%20Regression%20Models.pdf). Besides, [What statistical analysis should I use?](http://www.ats.ucla.edu/stat/mult_pkg/whatstat/) summarise a table for test analysis and data validation. [Fit models to data](https://www.zoology.ubc.ca/~schluter/R/fit-model/) provides examples for application of linear regression and model selection, the main model-fitting commands covered *lm (linear models for fixed effects)*, *lme (linear models for mixed effects)*, *glm (generalized linear models)*, *nls (nonlinear least squares)*, *gam (generalized additive models)* and also *visreg (to visualize model fits)*. The answer from [How to use R anova() results to select best model?](http://stats.stackexchange.com/questions/172782/how-to-use-r-anova-results-to-select-best-model) eleborates the use of ANOVA and [AIC criterion](https://en.wikipedia.org/wiki/Akaike_information_criterion) to choose the best fit model. [How to Choose the Best Regression Model](http://blog.minitab.com/blog/adventures-in-statistics/how-to-choose-the-best-regression-model) describes how to find the best regresion model to fit and applicable to the real world. [ANOVA - Model Selection](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/ANOVA%20-%20Model%20Selection.pdf) summarised a lecture notes in slideshow while [Model Selection in R](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Model%20Selection%20in%20R.pdf) conducts a research on model selection for non-nested linear and polynomial models.] and also anova to compare among the models.
 
-![*shinyapp 4.2.1 : WDW-AH convertion and summary and anova of linear models.* Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807)^[You might select Y response variable and X explanatory variable(s) to measure your model (Refer to [Shiny height-weight example](runGist("https://gist.github.com/wch/4034323")) for further information about shinyapp for linear models.) or existing models.] to use the ShinyApp.](figure/20160918_163958.gif)
+![*shinyapp 4.2.1 : WDW-AH convertion and summary and anova of linear models.* Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807)^[You might select Y response variable and X explanatory variable(s) to measure your model (Refer to [Shiny height-weight example](runGist("https://gist.github.com/wch/4034323")) for further information about shinyapp for linear models.) or existing models.] to use the ShinyApp.](figure/20160928_021252.gif)
 
   Here I simply attached with a Fixed Odds to Asian Handicap's calculator which refer to my *ex-colleague William Chen's*^[My ex-colleague and best friend in sportsbook industry which known since join sportsbook industry year 2005 ------ Telebiz and later Caspo Inc.] spreadsheet version 1.1 in year 2006. You can simply input the home win, draw, away win (in decimal format) as well as the overround to get the conversion result from the simple an basic equation.^[Kindly refer to my previous research to know the vigorish / overround.]
 
@@ -389,11 +400,28 @@ stargazer(anova(lm14), type = 'html')
 compare <- ldply(lms, function(x) {
     y <- summary(x)$fstatistic
     df <- data.frame(AIC = AIC(x), BIC = BIC(x), t(summary(x)$df), 'p.value' = pf(y[1], y[2], y[3], lower.tail = FALSE))
-    names(df) <- c('AIC', 'BIC', 'df', 'residuals', 'df', 'p.value'); df}) %>% tbl_df
+    names(df) <- c('AIC', 'BIC', 'df', 'residuals', 'df', 'p.value'); df}) %>% data.frame(No = seq(nrow(.)), Cat = ifelse(str_detect(.$.id, 'pm'), 'pm', ifelse(str_detect(.$.id, 'ip'), 'ip', 'all')), .) %>% tbl_df
 
 compare %<>% mutate(delta.AIC = AIC - min(AIC), Loglik.AIC = exp(-0.5 * delta.AIC), weight.AIC = Loglik.AIC/sum(Loglik.AIC), delta.BIC = BIC - min(BIC), Loglik.BIC = exp(-0.5 * delta.BIC), weight.BIC = Loglik.BIC/sum(Loglik.BIC))
 
-compare %>% formattable(list(
+form <- ldply(lms, function(x) paste0(x$call[-1], collapse = ' , ')) %>% rename(.id = .id, formula = V1)
+
+## Skip below combination to avoid hard to read since long formula column will make data.frame looks weird.
+#'@ compare %<>% join(form, ., by = '.id') %>% select(No, Cat, .id, formula, AIC, BIC, df, residuals, p.value, delta.AIC, Loglik.AIC, weight.AIC, delta.BIC, Loglik.BIC, weight.BIC)
+
+## Refer to *figure 4.4.1* to compare the models, between "all" and "pm + ip".
+bestlm <- compare %>% filter(p.value < 0.05) %>% group_by(Cat) %>% slice(which.min(BIC)) #best model for every single category.
+
+compare %<>% split(., .$Cat) #split the category and list the ranking.
+
+form %>% formattable %>% as.htmlwidget
+```
+
+*table 4.2.1 : Application of linear regression models to test the effects on staking.*
+
+```{r compare-A, echo = FALSE, results = 'asis'}
+## all soccer matches
+compare[[1]] %>% formattable(list(
   AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
   
   BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
@@ -419,10 +447,101 @@ compare %>% formattable(list(
   )) %>% as.htmlwidget
 ```
 
-*table 4.2.1 : Best model to test the efficiency of staking.*
+*table 4.2.2A : Best model to test the effects of staking on all soccer matches (includes both pre-match and in-play).*
+
+```{r compare-B, echo = FALSE, results = 'asis'}
+## all soccer matches
+compare[[3]] %>% formattable(list(
+  AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  
+  BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  
+  df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+  
+  residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
+  
+  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
+  
+  delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
+
+  )) %>% as.htmlwidget
 ```
-  Base on above summary, we can decide that the model *`r filter(compare, BIC == min(BIC), AIC == min(AIC)) %>% .$.id`*^[BIC will be primary reference while AIC is the secondary reference. The smallest value is the best model.] is the best fit to determine the factors and effects to place stakes for all matches^[mixed InPlay + Pre-match, all observations or soccer matches placed betsare `r nrow(dat)`.]. The timing of InPlay and the stakes amount is the major effects to the return of investment.
+
+*table 4.2.2B : Best model to test the effects of staking on pre-match soccer matches.*
+
+```{r compare-C, echo = FALSE, results = 'asis'}
+## all soccer matches
+compare[[2]] %>% formattable(list(
+  AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  
+  BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  
+  df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+  
+  residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
+  
+  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
+  
+  delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
+
+  )) %>% as.htmlwidget
 ```
+
+*table 4.2.2C : Best model to test the effects of staking on in-play soccer matches.*
+
+```{r compare2, echo = FALSE, results = 'asis'}
+## summary of the best model
+
+bestlm %>% formattable(list(
+  AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  
+  BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  
+  df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(-x))),
+  
+  residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  
+  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  
+  weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
+
+  )) %>% as.htmlwidget
+```
+
+*table 4.2.3 : Best model to test the effects of staking soccer matches.*
+
+  Base on above few tables and also summarised *table 4.2.3*, we can compare both `r dplyr::filter(bestlm, Cat == 'all') %>% .$'.id'` and `r dplyr::filter(bestlm, Cat != 'all') %>% .$'.id' %>% paste0(., collapse = ' + ')` and decide that the model *`r bestm = ifelse(bestlm$BIC[1] > sum(bestlm$BIC[-1]), dplyr::filter(bestlm, Cat != 'all') %>% .$'.id' %>% paste0(., collapse = ' + '), ifelse(bestlm$AIC[1] > sum(bestlm$AIC[-1]), dplyr::filter(bestlm, Cat != 'all') %>% .$'.id' %>% paste0(., collapse = ' + '), dplyr::filter(bestlm, Cat == 'all') %>% .$'.id')); bestm`*^[BIC will be primary reference while AIC is the secondary reference. The smallest value is the best model. `r paste0('all = ', bestlm$BIC[1], ' and mixed = ', sum(bestlm$BIC[-1]))`] is the best fit to determine the factors and effects to place stakes for all matches^[mixed InPlay + Pre-match, all observations are `r nrow(dat)` soccer matches which has placed bets.]. The timing of InPlay and the stakes amount is the major effects to the return of investment.
+
   *John Fingleton & Patrick Waldron (1999)* apply Shin's model and finally conclude suggests that bookmakers in Ireland are infinitely risk-averse and balance their books. The authors cannot distinguish between inside information and operating costs, merely concluding that combined they account for up to 3.7% of turnover while normally Asian bookmakers made less than 1% and a anonymous company has made around 2%. However the revenue or the stakes are farly more than European bookmakers.^[You can refer to my another project [Analyse the Finance and Stocks Price of Bookmakers](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers) which analysis the financial report of public listed companies and also profitable products' revenue and profit & loss of anonymous company.]. 
   
   They compare different versions of our model, using data from races in Ireland in 1993. The authors' empirical results can be summarised as follows:
@@ -607,7 +726,7 @@ Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 
 ## 5.2 Market Basket
 
-  Here I apply the `arules` and `arulesViz` packages to analyse the market basket of the bets.
+  By refer to *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 28th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**], here I apply the `arules` and `arulesViz` packages to analyse the market basket of the bets.
 
 ```{r gvis-options, echo = FALSE, results = 'asis'}
 ## Set options back to original options
@@ -706,6 +825,9 @@ rm(sys1)
   - File pre-release version: 0.9.3.1 - *2016-06-22 13:36:33 JST*
     + Reviewed previous version, DT::datatable updated new version replaced *Button* extension from *TableTools*, removed sparkline and htmlwidget
     + Applied linear regression to test the efficiency of staking model by consultancy firm A
+  - File pre-release version 0.9.4 - *2016-09-28 00:15:24 JST*
+    + Add linear regression and shinyApp to test the effects on staking
+    + 
 
 ## 7.3 Speech and Blooper
 
@@ -768,6 +890,7 @@ rm(sys1)
   25. [**Modelling Association Football Scores and Inefficiencies in the Football Betting Market** *by Dixon & Coles (1996)*](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/reference/DixonColes1996.pdf)
   26. [**A New Interpretation of Information Rate** *by John Kelly (1956)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20New%20Interpretation%20of%20Information%20Rate.pdf)
   27. [**Dynamic Modelling and Prediction of English Football League Matches for Betting** *by Crowder, Dixon, Ledford and Robinson (2001)*](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/reference/DixonLedfordRobinson2001.pdf)
+  28. [**Pattern Discovery in Data Mining Programming Assignment: Frequent Itemset Mining Using Apriori** *by ®γσ, Eng Lian Hu (2016)*](http://rpubs.com/englianhu/pattern-discovery-in-data-mining-assignment1)
 
 ####  Reference for technical research on programming and coding portion for the paper.
 
