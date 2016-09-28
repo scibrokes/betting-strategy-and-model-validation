@@ -21,7 +21,7 @@ Betting Strategy and Model Validation, I analyse the staking model of a sportsbo
   - [Betting Strategy and Model Validation - Part II](http://rpubs.com/englianhu/208636), ([Alternative Link 1](http://englianhu.github.io/2016/09/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html), [Alternative Link 2](http://rpubs.com/englianhu/203719))
     + Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp
     
-![Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp](figure/20160918_163958.gif)
+![regressionApps](figure/20160928_021252.gif)
   
 ## Old File
 
