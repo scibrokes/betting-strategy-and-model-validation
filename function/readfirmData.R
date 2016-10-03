@@ -1,4 +1,4 @@
-readfirmData <- function(years = years, pth = pth, parallel = FALSE){
+readfirmData <- function(years = years, pth = './data/', parallel = FALSE){
   
   ## Setting to omit all warnings
   options(warn = -1)
@@ -34,7 +34,7 @@ readfirmData <- function(years = years, pth = pth, parallel = FALSE){
   }
   
   ## Default path
-  if(is.null(pth)) pth <- './data/'
+  #'@ if(is.null(pth)) pth <- './data/'
   
   ## Read the datasets
   ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
@@ -95,8 +95,7 @@ readfirmData <- function(years = years, pth = pth, parallel = FALSE){
   dfm %<>% mutate(Month = lubridate::month(lubridate::dmy(Date)), DateUK = dmy_hm(paste0(Date, Time), tz = 'Europe/London'), 
                   Date = format(DateUK, tz = 'Asia/Taipei', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S'),
                   Selection = factor(Selection), Stakes = as.numeric(gsub('[^0-9]', '', Stakes)), 
-                  PL = ifelse(Result == 'Loss', -as.numeric(gsub('[^0-9]', '', PL)), 
-                            as.numeric(gsub('[^0-9]', '', PL))), Return = Stakes + PL, HKPrice = EUPrice - 1)
+                  PL = as.numeric(gsub(',', '', gsub('[a-zA-Z]{1,}\\$', '', PL))), Return = Stakes + PL, HKPrice = EUPrice - 1)
   ## Date = as.Date(strptime(Date, format = '%d %b %Y', tz = 'Asia/Taipei')) since spbo follow GMT+8 timezone
   
   ## Clear all spaces at the first and last character inside avery single element, reorder the columns
@@ -108,7 +107,7 @@ readfirmData <- function(years = years, pth = pth, parallel = FALSE){
   
   dfm %<>% mutate(No = as.numeric(No), Sess = as.numeric(Sess), Month = month(Date), 
                  Day = factor(Day), DateUK = ymd_hms(DateUK), Date = ymd_hms(Date), Time = hm(Time), 
-                 Home = factor(Home), Away = factor(Home), Selection = factor(Selection), HCap = as.numeric(HCap), 
+                 Home = factor(Home), Away = factor(Away), Selection = factor(Selection), HCap = as.numeric(HCap), 
                  EUPrice = as.numeric(EUPrice), HKPrice = as.numeric(HKPrice), Stakes = as.numeric(Stakes), 
                  CurScore = factor(CurScore), Mins = factor(Mins), Result = factor(Result), PL = as.numeric(PL), 
                  Rebates = as.numeric(Rebates), Return = as.numeric(Return)) %>% purrr::map_if(is.numeric, round, 2) %>% 

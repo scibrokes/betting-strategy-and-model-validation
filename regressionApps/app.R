@@ -27,6 +27,13 @@ color: #D4AC0D;
 "
 
 ## ========= Read Data =================================
+## Setup Options, Loading Required Libraries and Preparing Environment
+## Loading the packages and setting adjustment
+#'@ suppressMessages(library('BBmisc'))
+#'@ suppressAll(library('utils'))
+#'@ suppressAll(source(paste0(dirname(getwd()), '/function/readfirmData.R')))
+#'@ suppressAll(source(paste0(dirname(getwd()), '/function/arrfirmData.R')))
+#'
 ## Read the data
 ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
 #'@ years <- seq(2011, 2015)
@@ -55,9 +62,15 @@ color: #D4AC0D;
 #'@ dat %<>% mutate(rEMProbB = round(unlist(sapply(split(m, m$Sess), function(x) rep(x$rRates, x$n))) * netProbB, 6), rEMProbL = round(1 - rEMProbB, 6))
 
 #'@ rm(m, lProfile, readfirmData, arrfirmData, mbase)
+#'@ save(dat, file = './shinyData.RData')
 
 ## Run above codes and save.images() and now directly load for shinyApp use.
 load('./shinyData.RData', envir = .GlobalEnv)
+
+## Filtered the cancelled or voided bets to avoid null observation and bias.
+if('Cancelled' %in% dat$Result){
+  dat <<- dat %>% filter(Result != 'Cancelled') %>% mutate(Result = factor(Result))
+} else dat <<- dat %>% mutate(Result = factor(Result))
 
 ## ========= Linear Regression ================================
 ## Choosing the variables of linear models

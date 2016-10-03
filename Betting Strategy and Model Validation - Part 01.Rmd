@@ -1,11 +1,10 @@
 ---
 title: "Betting Strategy and Ⓜodel Validation - Part I"
 subtitle: "Betting Model Analysis on Sportsbook Consultancy Firm A"
-author: "[®γσ, Eng Lian Hu](http://englianhu.wordpress.com) <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸則道®"
+author: "[®γσ, Eng Lian Hu](https://englianhu.github.io/) <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸則道®"
 date: "`r Sys.Date()`"
 output:
   tufte::tufte_html:
-    self_contained: no
     toc: yes
   tufte::tufte_handout:
     citation_package: natbib
@@ -192,6 +191,12 @@ rm(mbase) ## We need to scrap the livescore data based on the raw data mbase wit
   
   You are feel free to read [Asian Handicap](http://www.bettingarbitrage.eu/asian-handicap.html) and [Arbitrage of Synthetic Asian Handicap Bets](http://www.sportstradingnetwork.com/arbitrage-synthetic-asian-handicap-bets/) for some basic lession about Asian Handicap Bets.
 
+  The `rebates` value inside the dataset doesn't count in `Return` and `PL` since it is not includes in win/loss profit but only awarded upon hit a certain amount of stakes. `Rebates` is a marketing strategy for bankers and also agent to fight for revenue and occupy the market shares.
+  
+  - Normally `rebates` only offers by credit market sportsbook makers.
+  - The maximum stakes per bet of `cash market` normally only up to HKD10,000 while credit market can up to millions HKD1,000,000.
+  - Normally only high volume agents, small bookmakers and also high volume sportbook consultancy firms will able to get the `rebates`.
+  
 ## 2.2 Overrounds / Vigorish
 
   **Fair odds**: the odds that would be offered if the sum of the probabilities for all possible outcomes were exactly 1 (100%). For example, supposing we had a market with three possible outcomes {A, B, C} with probabilities of success $P(A) = 0.5, P(B) = 0.4$ and $P(C) = 0.1$, the fair odds would be `2.00`, `2.50`, and `10.00` respectively, which are just the inverse of the estimated probabilities.
@@ -544,15 +549,9 @@ m <- ddply(dat, ~ AHOU + pHKRange + pMYRange, .drop = TRUE, colwise(.fun = sum, 
 
 m %>% formattable(list(
     HCap = color_tile('white', 'darkgoldenrod'), 
-    PL = formatter('span', 
-                   style = x ~ style(color = ifelse(x > 0, 'green', 'red')),
-                   x ~ icontext(ifelse(x > 0, 'ok', 'remove'), ifelse(x > 0, m$PL, m$PL))),
-    R.percent = formatter('span',
-                          style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')),
-                          x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))),
-    PL.percent = formatter("span",
-                           style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')),
-                           x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))))) %>% as.htmlwidget
+    PL = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, 'ok', 'remove'), ifelse(x > 0, m$PL, m$PL))),
+    R.percent = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')), x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))),
+    PL.percent = formatter("span", style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'silver')), x ~ sprintf('%.2f%% (rank: %02d)', x, rank(-x))))) %>% as.htmlwidget
 
 #'@ m <- ddply(dat, ~ pHKRange + pMYRange, .drop = TRUE, colwise(.fun = sum, .cols = ~ Stakes + Return + PL)) %>% mutate(R.percent = Return / Stakes * 100, PL.percent = PL / Stakes * 100) %>% tbl_df
 

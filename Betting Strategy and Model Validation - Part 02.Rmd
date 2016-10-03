@@ -19,8 +19,9 @@ link-citations: yes
 ```{r libs, message = FALSE, warning = FALSE, cache = TRUE, include = FALSE}
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
-suppressMessages(library('utils'))
-suppressMessages(source('function/libs.R'))
+suppressMessages(library('BBmisc'))
+suppressAll(library('utils'))
+suppressAll(source('function/libs.R'))
 ```
 
 # Abstract
@@ -38,56 +39,10 @@ suppressMessages(source('function/libs.R'))
   - Section [2.1 Collect and Reprocess the Data](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#collect-and-reprocess-the-data) - Data from Firm A
   - Section [2.2 Overrounds / Vigorish](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#overrounds-vigorish) - Odds Price and Overrounds Changared by Bookmakers
 
-```{r read-data-summary-table, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
-## Load package again due to unable find function
-suppressMessages(require('magrittr', quietly = TRUE))
-
-## Read the data
-## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
-years <- seq(2011, 2015)
-
-## Here I take the majority leagues setting profile which are "league-10-12"
-## fMYPriceB = Back with vigorish price; fMYPriceL = Lay with vigorish price
-## Here we term as Fair Odds
-lProfile <- c(AH = 0.10, OU = 0.12)
-
-mbase <- readfirmData(years = years, pth = './data/') %>% arrfirmData(lProfile = lProfile)
-
-## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
-## the stakes amount display as $1 = $10,000
-#'@ mbase$datasets[!(mbase$datasets$Home %in% mbase$corners)|!(mbase$datasets$Away %in% mbase$corners),]
-dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$others)) %>% mutate(Stakes = Stakes/10000, Return = Return/10000, PL = PL/10000)
-```
-
-```{r scrap-data, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
-## Scrape the leagues and also overrounds which provides by a sportsbookmaker named Firm B
-#'@ lnk <- 'http://data.nowgoal.com/history/handicap.htm'
-## Above website provides odds price history but sendkeyElements cannot work in RSelenium, will follow-up
-## https://github.com/ropensci/RSelenium/issues/55
-## Therefore scrape spbo link to know the league of matches
-
-## Besides, need to scrap the final-scores / half-time scores / result of soccer matches
-#'@ dateID <- sort(unique(mbase$datasets$Date)); spboDate <- gsub('-','',dateID)
-#'@ lnk <- paste0('http://www8.spbo.com/history.plex?day=', spboDate, '&l=en')
-## kick-off time(GMT+8) - 12hrs since livescore website start count a day from 12pm(GMT+8)
-dateID <- as.Date(sort(unique(dat$Date) - hm('12:00'))); spboDate <- gsub('-', '', dateID)
-
-## Due to the scrapSPBO function scrapped unmatched data, example lnk[827],
-##  therefore I rewrite the function as scrapSPBO2
-#'@ suppressAll(source('function/scrapSPBO2.R'))
-#'@ scrapSPBO2(lnk = lnk, dateID = dateID, path = 'livescore', parallel = TRUE)
-
-## Read spbo livescore datasets.
-spboData <- suppressAll(readSPBO(dateID = dateID, parallel = FALSE)$data)
-
-## Apply stringdist() to 'exactly matching' and 'approximate matching' team names
-#'@ method <- c('osa', 'lv', 'dl', 'hamming', 'lcs', 'qgram', 'cosine', 'jaccard', 'jw', 'soundex')
-#'@ source(paste0(getwd(),'/function/arrTeamID.R'))
-#'@ tmID <- arrTeamID(mbase, spboData, parallel = FALSE)
-tmIDdata <- read.csv('./data/teamID.csv', header = TRUE, sep = ',') %>% mutate_each(funs(as.character)) %>% data.frame %>% tbl_df %>% filter(spbo != 'Kuban Krasnodar')
-spboData %<>% filter((Home %in% tmIDdata$spbo)|(Away %in% tmIDdata$spbo))
-
-rm(dateID, spboDate, readSPBO)
+```{r read-data1, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
+## Load saved dataset to save the loading time.
+## Run codes in app.R inside the folder `regressionApps` and save.images() and now directly load for shinyApp use.
+load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
 ```
 
 # [3. Summarise the Staking Model](http://rstudio-pubs-static.s3.amazonaws.com/208637_8bb1bbc4930a4a22bf579a9b205eaea5.html#summarise-the-staking-model)
@@ -103,6 +58,8 @@ rm(dateID, spboDate, readSPBO)
   - Section [4.1 Basic Equation] - Analyse the Odds Price and Probabilities
   - Section [4.2 Linear Ⓜodel] - Reversed Engineer to get the EMOdds derived from Stakes
   - Section [4.3 Kelly Ⓜodel] - Test the Kelly Model.
+    + Section [4.3.1 Basic Kelly Ⓜodel] - Basic Kelly model.
+    + Section [4.3.2 Weight Function] - Modified Kelly model to increase the effeciency of staking and profit.
   - Section [4.4 Poisson Ⓜodel] - Soccer Scores, Odds Price and Stakes modelling.
   - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - Simulate the staking model.
   - Section [4.6 Expectation Ⓜaximization and Staking Simulation] - Enhance by weighted function on Staking model and Simulation.
@@ -122,11 +79,9 @@ m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), Return = sum(Return), 
 
 m %>% formattable(list(
   Stakes = color_tile('white', 'darkgoldenrod'),
-  Return = formatter('span', 
-                     style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.2f (rank: %02d)', x, rank(-x))),
+  Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.2f (rank: %02d)', x, rank(-x))),
   n = color_tile('white', '#9B870C'),
-  rRates = formatter('span', 
-                     style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.2f (rank: %02d)', x, rank(-x)))
+  rRates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.4f (rank: %02d)', x, rank(-x)))
 )) %>% as.htmlwidget
 ```
 
@@ -134,7 +89,7 @@ m %>% formattable(list(
 
 $$\Re = \sum_{i=1}^{n}\rho_{i}^{EM}/\sum_{i=1}^{n}\rho_{i}^{BK} \cdots equation 4.1.1$$
 
-  $\Re$ is the return rates of investment. The $\rho_i^{EM}$ is the estimated probabilities which is the calculated by firm A from match 1,2... until $n$ matches while $\rho_{i}^{BK}$ is the net/pure probability (real odds) offer by bookmakers after we fit the *equation 4.1.2* into *equation 4.1.1*.
+  $\Re$ is the edge or so call advantage for an investment. The $\rho_i^{EM}$ is the estimated probabilities which is the calculated by firm A from match 1,2... until $n$ matches while $\rho_{i}^{BK}$ is the net/pure probability (real odds) offer by bookmakers after we fit the *equation 4.1.2* into *equation 4.1.1*.
 
 $$\rho_i = P_i^{Lay} / (P_i^{Back} + P_i^{Lay}) \cdots equation 4.1.2$$
 
@@ -142,16 +97,73 @@ $P_i^{Back}$ and $P_i^{Lay}$ is the backed and layed fair price offer by bookmak
 
   We can simply apply equation above to get the value $\Re$. From the table above we know that the EMPrice calculated by firm A **invested** at a threshold edge (price greater) `r m$rRates` than the prices offer by bookmakers. There are some description about $\Re$ on *Dixon and Coles (1996)*^[Kindly refer to 25th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**]. The optimal value of $\rho_{i}$ (`rEMProbB`) will be calculated based on bootstrapping/resampling method in section [4.3 Kelly Ⓜodel].
 
+  Now we look at the result of the soccer matches prior to filter out for further modelling from this section.
+
+```{r data-return-summary-table2, echo = FALSE, results = 'asis'}
+## http://www.statmethods.net/stats/frequencies.html
+## prop.table, margin.table
+## margin.table(table(dat$Result), 1)
+##
+## library('gmodels')
+## CrossTable(dat$HCap, dat$Result)
+##
+
+m1 <- ddply(dat, .(Result), summarise, Stakes = sum(Stakes), Return = sum(Return), Rates = Return / Stakes, n = length(Sess)) %>% tbl_df %>% mutate(S.prop = round(Stakes / sum(Stakes), 4), R.prop = round(Return / sum(Return), 4), prop = round(n / sum(n), 4))
+tv <- c('Total', colSums(m1[-1])); tv[4] <- as.numeric(tv[3]) / as.numeric(tv[2])
+m1 <- suppressWarnings(rbind(m1, tv))
+m1$Result <- factor(c(as.character(m1$Result)[-length(m1$Result)], 'Total')); rm(tv)
+m1 %<>% purrr::map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
+#'@ m %>% kable(caption = 'Table 4.1.3 : Summary of Betting Results')
+
+suppressMessages(library('formattable'))
+m1 %>% formattable(list(
+    caption = 'Table 4.1.3 : Summary of Betting Results',
+    
+    Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
+    
+    Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
+    
+    Rates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x))),
+    
+    n = color_tile('white', 'green'),
+    
+    S.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %2d)', x, rank(-x))),
+    
+    R.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x))),
+    
+    prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x)))
+)) %>% as.htmlwidget
+```
+
+*table 4.1.2* : `r paste0(dim(m1), collapse = ' x ')` : *Summary of betting results.*
+
+  The table above summarize the stakes and return on soccer matches result. Well, below table list the handicaps placed by firm A on agency A. Due to the **Cancelled** result is null observation in descrete data modelling and we cannot be count into our model. Here Ifilter out the particular observation from the data from here and now the total observation of the dataset became `r nrow(dat)`.
+
+```{r filtered-data, echo = FALSE, results = 'asis'}
+## Filtered the cancelled or voided bets to avoid null observation and bias.
+if('Cancelled' %in% dat$Result){
+  dat %<>% filter(Result != 'Cancelled') %>% mutate(Result = factor(Result))
+} else dat %<>% mutate(Result = factor(Result))
+```
+
 ```{r data-prob-table2, echo = FALSE, results = 'asis'}
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
 ## value R.rates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
 ## Please refer to function arrfirmDatasets()
-dat %<>% mutate(rEMProbB = round(unlist(sapply(split(m, m$Sess), function(x) rep(x$rRates, x$n))) * netProbB, 6), rEMProbL = round(1 - rEMProbB, 6))
+#'@ dat %<>% mutate(rEMProbB = round(unlist(lapply(split(dat, dat$Sess), function(x) rep(m$rRates, nrow(x)))) * netProbB, 6), rEMProbL = round(1 - rEMProbB, 6))
 
-dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL, rEMProbB, rEMProbL, favNetProb, undNetProb) %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
+# Kelly criterion
+# Advantages = (prob of win * decimal odds) + (prob of lose * -1)
+# Optimal Kelly wager % = Advantages / decimal odds
+
+dat$rRates <- rep(m$rRates, count(dat, Sess)$n)
+dat$rEMProbB = round(dat$rRates * dat$netProbB, 6)
+dat$rEMProbL = round(1- dat$rEMProbB, 6)
+
+dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL, rRates, rEMProbB, rEMProbL, favNetProb, undNetProb) %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
 ```
 
-*table 4.1.2* : `r paste0(dim(dat), collapse = ' x ')` : *Odds price and probabilities sample table.*
+*table 4.1.3* : `r paste0(dim(dat), collapse = ' x ')` : *Odds price and probabilities sample table.*
 
   Above table list a part of sample odds prices and probabilities of soccer match $i$ while $n$ indicates the number of soccer matches. We can know the values `rEMProbB`, `netProbB` and so forth.
 
@@ -192,47 +204,7 @@ hchart(dat[c('netProbB', 'rEMProbB', 'pMYRange')], 'scatter', x = netProbB, y = 
 
   Graph above shows the probabilities calculated by firm A to back against real probabilities offered by bookmakers over `r nrow(dat)` soccer matches.
 
-  Now we look at the result of the soccer matches.
-
-```{r data-return-summary-table2, echo = FALSE, results = 'asis'}
-## http://www.statmethods.net/stats/frequencies.html
-## prop.table, margin.table
-## margin.table(table(dat$Result), 1)
-##
-## library('gmodels')
-## CrossTable(dat$HCap, dat$Result)
-##
-
-m <- ddply(dat, .(Result), summarise, Stakes = sum(Stakes), Return = sum(Return), Rates = Return / Stakes, n = length(Sess)) %>% tbl_df %>% mutate(S.prop = round(Stakes / sum(Stakes), 4), R.prop = round(Return / sum(Return), 4), prop = round(n / sum(n), 4))
-tv <- c('Total', colSums(m[-1])); tv[4] <- as.numeric(tv[3]) / as.numeric(tv[2])
-m <- suppressWarnings(rbind(m, tv))
-m$Result <- factor(c(as.character(m$Result)[-length(m$Result)], 'Total')); rm(tv)
-m %<>% purrr::map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
-#'@ m %>% kable(caption = 'Table 4.1.3 : Summary of Betting Results')
-
-suppressMessages(library('formattable'))
-m %>% formattable(list(
-    caption = 'Table 4.1.3 : Summary of Betting Results',
-    
-    Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
-    
-    Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
-    
-    Rates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x))),
-    
-    n = color_tile('white', 'green'),
-    
-    S.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %2d)', x, rank(-x))),
-    
-    R.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x))),
-    
-    prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x)))
-)) %>% as.htmlwidget
-```
-
-*table 4.1.3* : `r paste0(dim(m), collapse = ' x ')` : *Summary of betting results.*
-
-  The table above summarize the stakes and return on soccer matches result. Well, below table list the handicaps placed by firm A on agency A. I list the handicap prior to test the coefficient according to the handicap in next section [4.2 Linear Ⓜodel].
+  I list the handicap below prior to test the coefficient according to the handicap in next section [4.2 Linear Ⓜodel].
 
 ```{r data-preMatch, echo = FALSE, results = 'asis'}
 ##
@@ -241,7 +213,7 @@ m %>% formattable(list(
 preData <- filter(dat, InPlay == 'No' & InPlay2 == 'No')
 hdp <- sort(unique(as.numeric(as.character(dat$HCap))))
 
-hdp %<>% matrix(., ncol = 8, dimnames = list(NULL, c('X350.225',	'X200.075',	'X050.075',	'X100.225',	'X250.375',	'X400.525',	'X550.675',	'X700.825'))) %>% data.frame
+hdp %<>% matrix(., nrow = 7) %>% data.frame %>% tbl_df
 
 hdp %>% formattable(list(
   X350.225 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
@@ -263,6 +235,8 @@ hdp %>% formattable(list(
   From our understanding of staking, the covariates we need to consider should be only odds price since the handicap's covariate has settled according to different handicap of EMOdds.
 
 ```{r plot4.2.1, echo = FALSE, eval = FALSE, results = 'asis'}
+## Due to rCharts unable print the graph on rmarkdown file but works independently, here I ommit the rPlot.
+
 n1 <- rPlot(Return ~ Stakes, data = dat, color = 'Stakes', type = 'point')
 n1$addControls('x', value = 'Stakes', values = names(dat))
 n1$addControls('y', value = 'Stakes', values = names(dat))
@@ -385,7 +359,7 @@ stargazer(anova(lm14), type = 'html')
   When I used to work in 188Bet and Singbet as well as AS3388, we know from the experience which is the odds price of favorite team win will be the standard reference and the draw odds will adjust a little bit while the underdog team will be ignore.
 
   *Steven Xu (2013)*^[Kindly refer to 16th paper in [Reference for industry knowdelege and academic research portion for the paper.]] has do a case study on the comparison of the efficiency of opening and closing price of NFL and College American Football Leagues and get to know the closing price is more efficient and accurate compare to opening price nowadays compare to years 1980~1990. It might be due to multi-million dollars of stakes from informed traders or smart punters to tune up the closing price to be likelihood.
-  
+
   In order to test the empirical clichés, I used to conduct a research thoroughly through *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 3rd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**, I completed the research on year 2010 but write the thesis in year 2016.] and concludes that the opening price of Asian Handicap and also Goal Lines of 29 bookmakers are efficient than mine. However in my later *®γσ, Eng Lian Hu (2014)*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] applied Kelly staking model where made a return of more than 30% per sesson. Meanwhile, the *Dixon and Coles (1996)* and *Crowder, Dixon, Ledford and Robinson (2001)*^[Kindly refer to 27th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has built two models which compare the accuracy of home win, draw and away win. From a normal Poison model reported the home win is more accurate and therefore an add-hoc inflated parameter required in order to increase the accuracy of prediction. You are feel free to learn about the *Dixon and Coles (1996)* in section [4.4 Poisson Ⓜodel].
 
   Based on *table 2.2.1* we know about the net bookies probabilities and EM probabilities, here I simply apply *linear regression model*^[You can learn from [Linear Regression in R (R Tutorial 5.1 to 5.11)](https://www.youtube.com/watch?v=66z_MRwtFJM). You can also refer to [Getting Started with Mixed Effect Models in R](http://www.r-bloggers.com/getting-started-with-mixed-effect-models-in-r/), [A very basic tutorial for performing linear mixed effects analyses](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20Very%20Basic%20Tutorial%20for%20Performing%20Linear%20Mixed%20Effects%20Analyses.pdf) and [Fitting Linear Mixed-Effects Models using lme4](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Fitting%20Linear%20Mixed-Effects%20Models%20Using%20lme4.pdf). Otherwise you can read [Linear Models with R](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Linear%20Models%20with%20R.pdf) and somemore details about regression models via [Extending the Linear Model with R : Generalized Linear, Mixed Effects and Nonparametric Regression Models](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Extending%20the%20Linear%20Model%20with%20R%20-%20Generalized%20Linear%2C%20Mixed%20Effects%20and%20Nonparametric%20Regression%20Models.pdf). Besides, [What statistical analysis should I use?](http://www.ats.ucla.edu/stat/mult_pkg/whatstat/) summarise a table for test analysis and data validation. [Fit models to data](https://www.zoology.ubc.ca/~schluter/R/fit-model/) provides examples for application of linear regression and model selection, the main model-fitting commands covered *lm (linear models for fixed effects)*, *lme (linear models for mixed effects)*, *glm (generalized linear models)*, *nls (nonlinear least squares)*, *gam (generalized additive models)* and also *visreg (to visualize model fits)*. The answer from [How to use R anova() results to select best model?](http://stats.stackexchange.com/questions/172782/how-to-use-r-anova-results-to-select-best-model) eleborates the use of ANOVA and [AIC criterion](https://en.wikipedia.org/wiki/Akaike_information_criterion) to choose the best fit model. [How to Choose the Best Regression Model](http://blog.minitab.com/blog/adventures-in-statistics/how-to-choose-the-best-regression-model) describes how to find the best regresion model to fit and applicable to the real world. [ANOVA - Model Selection](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/ANOVA%20-%20Model%20Selection.pdf) summarised a lecture notes in slideshow while [Model Selection in R](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Model%20Selection%20in%20R.pdf) conducts a research on model selection for non-nested linear and polynomial models.] and also anova to compare among the models.
@@ -551,17 +525,26 @@ bestlm %>% formattable(list(
   - They estimate gross margins to be up to 4 per cent of total oncourse turnover; and
   - They estimate that 3.1 to 3.7% (by value) of all bets are placed by punters with inside information.
 
+![*figure 4.2.1 : Chance of Winning.*](figure/chance-of-winning.jpg)
+
   Due to the Shin model inside the paper research for the sake of bookmakers and this sportsbook consultancy firm is indeed the informed trading (means smart punters or actuarial hedge fund but not ordinary gambler place bets with luck). Here I think of test our previous data in paper *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 3rd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References** which collect the dataset of opening and also closing odds price of 40 bookmakers and 29 among them with Asian Handicap and Goal Line. Meanwhile, there has another research on smart punters (*Punters Account Review (Agenda).xlsx*) which make million dollars profit from Ladbrokes. You are feel free to browse over the [dataset](https://www.dropbox.com/sh/ifwczokjptt6re0/AADv1VarJoQ6IgIitZBzG5c6a?dl=0) for the paper.] and also the anonymous companies's revenue and P&L to analyse the portion of smart punters among the customers in [Analyse the Finance and Stocks Price of Bookmakers](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers). However the betslip of every single bet require to analyse it. The sparkR amd RHadoop as well as noSQL require in order to analyse the multiple millions bets. It is interesting to analyse *the threaten of hedge fund*^[Kindly refer to [富传奇色彩的博彩狙击公司EM2](https://englianhu.wordpress.com/sportsbook/%E5%AF%8C%E4%BC%A0%E5%A5%87%E8%89%B2%E5%BD%A9%E7%9A%84%E5%8D%9A%E5%BD%A9%E7%8B%99%E5%87%BB%E5%85%AC%E5%8F%B8em2-expectation-maximization/) to know the history and the threaten of EM2 sportsbook consultancy company to World wide known bankers.] since there has a anonymous brand among the brands under Caspo Inc had closed due to a lot of smart punters' stakes and made loss. Well, here I leave it for future research^[Here I put in [6.2 Future Works].] if the dataset is available.
 
 ## 4.3 Kelly Ⓜodel
 
-  From the papers *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] and *Jeffrey Alan Logan Snyder (2013)*^[Kindly refer to 2nd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] both applying **Full-Kelly**,**Half-Kelly** and also **Quarter-Kelly** models which similar with my previous Kelly-Criterion model *®γσ, Eng Lian Hu 2014*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] but enhanced.
+### 4.3.1 Basic Kelly Ⓜodel
+
+  From the papers *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] and *Jeffrey Alan Logan Snyder (2013)*^[Kindly refer to 2nd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] both applying **Full-Kelly**,**Half-Kelly** and also **Quarter-Kelly** models which similar with my previous Kelly-Criterion model *®γσ, Eng Lian Hu 2014*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] but enhanced. *Niko Marttinen (2001)* has concludes that the basic Kelly criterion generates the highest returns compare to modified Kelly models.
 
   To achieve the level of profitable betting, one must develop a correct money management procedure. The aim for a punter is to maximize the winnings and minimize the losses. If the punter is capable of predicting accurate probabilities for each match, the *Edward O. Thorp (2006)*^[Kindly refer to 6th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] has proven to work effectively in betting. It was named after an American economist *John Kelly (1956)*^[Kindly refer to 26th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] and originally designed for information transmission. The Kelly criterion is described below:
 
-$$S=(\rho*\sigma-1)/(\sigma-1) \cdots equation 4.3.1$$
+$$S = \frac{(\rho_{win} \times BK_{Decimal\ odds} - \rho_{lose})} {(BK_{Decimal\ odds})} \cdots equation 4.3.1$$
 
-  Where S = the stake expressed as a fraction of one's total bankroll, $\rho$ = probability of an event to take place, $\sigma$ = odds for an event offered by the bookmaker. Three important properties, mentioned by *Hausch and Ziemba (1994)* ([Efficiency of Racetrack Betting Markets (2008Edition)](http://stocksfirst.com/books/trading-econ-investing/Efficiency%20of%20Racetrack%20Betting%20Mkts%20-%20Ziemba%202008.pdf)), arise when using this criterion to determine a proper stake for each bet:
+  - Where $S$ is the stake expressed as a fraction of one's total bankroll,
+  - $\rho_{win}$ is probability of an event to take place and 
+  - $\rho_{lose} is probability of lose$ 
+  - while $BK_{Decimal\ odds}$ is decimal odds (decimal Odds with capital stakes) for an event offered by the bookmaker.
+
+  Three important properties, mentioned by *Hausch and Ziemba (1994)*^[You can refer to [Efficiency of Racetrack Betting Markets (2008 Preface Edition)](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Efficiency%20of%20the%20Racetrack%20Betting%20Market%20(2008%20Edition).pdf) which is 29th paper in [Reference for industry knowdelege and academic research portion for the paper.] or [*Chapter 18 Efficiency of Sports and Lottery Betting Markets* in **FINANCE**](https://books.google.com.my/books?id=XC4fZPbT1SQC&printsec=frontcover&dq=Handbooks+in+Operations+Research+and+Management+Science+Finance&hl=en&sa=X&ved=0ahUKEwj7lIj5pLLPAhXGVZQKHf_LC-4Q6AEIPjAE#v=onepage&q&f=false) for further study about Hausch and Ziemba's researchs.), arise when using this criterion to determine a proper stake for each bet:
 
   - It maximizes the asymptotic growth rate of capital
   - Asymptotically, it minimizes the expected time to reach a specified goal
@@ -569,41 +552,158 @@ $$S=(\rho*\sigma-1)/(\sigma-1) \cdots equation 4.3.1$$
 
   The criterion is known to economists and financial theorists by names such as the geometric mean maximizing portfolio strategy, the growth-optimal strategy, the capital growth criterion, etc. We will now show that Kelly betting will maximize the expected log utility for sports-book betting.
 
+```{r data-return-summary-table3, echo = FALSE, results = 'asis'}
+## Load package again due to cannot find the function
+suppressMessages(require('formattable', quietly = TRUE))
+
+## Get the investment return rates per annun
+## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
+## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
+## due to subset doesn't work, here I add the subset function again.
+m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), Return = sum(Return), n = length(Sess), rRates = Return / Stakes)
+
+m %>% formattable(list(
+  Stakes = color_tile('white', 'darkgoldenrod'),
+  Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.2f (rank: %02d)', x, rank(-x))),
+  n = color_tile('white', '#9B870C'),
+  rRates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.4f (rank: %02d)', x, rank(-x)))
+)) %>% as.htmlwidget
+```
+
+*table 4.3.1* : `r paste0(dim(m), collapse=' x ')` : *Return of annually investment summary table without cancelled bets.*^[the `rRates` is the mean value of annual return rates which is the return divides by stakes but ommit the cancelled/voided bets to avoind the bias.]
+
+  The `rRates` value from table above excludes the `Cancelled` bets. By refer to *equation 4.3.1*, now we fit the adge value from *equation 4.1.1* into it to get the `rEMProbB2` and `rEMProbL2` with known staked value $S$^[Although the result will not be accurate due to the we mention at first, the firm A will not only place bets via only agent A. Let say edge of 0.10 and 0.20 also placed maximum bet HKD40000 but the firm A might placed different amount through other agency based on different edge. However based on the stakes we can reverse the optimal EM Odds.] to replace the existing EM value.
+
+$$\rho_{i}^{em} = \frac{S + 1} {BK_{Decimal\ odds} - 1} \cdots equation 4.3.2$$
+
 ```{r data-Kelly, echo = FALSE, results = 'asis'}
 ## Kelly Criterion model
 ##
+## Advantages = (prob of win * decimal odds) + (prob of lose * -1)
+## Optimal Kelly wager % = Advantages / decimal odds
+## From below data we can know the difference between the Kelly reversed rEMProbB
+##
+## 1. test the staking strategy 1
+dat %<>% mutate(KStakes = Stakes / HKPrice, KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA))))))
+##  A tibble: 5 × 8
+#      Result    KReturn     Return  EUPrice   HKPrice  KStakes   Stakes  Rebates
+#      <fctr>      <dbl>      <dbl>    <dbl>     <dbl>    <dbl>    <dbl>    <dbl>
+# 1 Half Loss   74025.56   68417.25 1.968293 0.9680931 148051.1 136834.5  -146.21
+# 2  Half Win  246836.14  215794.35 1.905279 0.9051838 172308.5 149055.2   142.41
+# 3      Loss       0.00       0.00 1.971603 0.9714477 748648.7 688224.8 -1466.46
+# 4      Push  237270.20  204866.50 1.935221 0.9351197 237270.2 204866.5     0.00
+# 5       Win 1698603.65 1534196.76 1.925482 0.9253417 898507.3 799959.3  1565.85
+
+colSums(dat[c('KReturn', 'Return', 'EUPrice', 'HKPrice', 'KStakes', 'Stakes', 'Rebates')])
+#    KReturn     Return    EUPrice    HKPrice    KStakes     Stakes    Rebates 
+# 2256735.55 2023274.85   94322.23   45797.30 2204785.82 1978940.43      95.59
+## 1346719.75/1317252.44 = 1.02237, 2023274.85/1978940.43 = 1.022403
+
+## 2. test the staking strategy 2
+dat %<>% mutate(KStakes = (Stakes * EUPrice + 1) / (EUPrice + 1), KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA))))))
+##  A tibble: 5 × 8
+#      Result    KReturn     Return  EUPrice   HKPrice   KStakes   Stakes  Rebates
+#      <fctr>      <dbl>      <dbl>    <dbl>     <dbl>     <dbl>    <dbl>    <dbl>
+# 1 Half Loss   45713.79   68417.25 1.968293 0.9680931  91427.57 136834.5  -146.21
+# 2  Half Win  143060.39  215794.35 1.905279 0.9051838  98662.19 149055.2   142.41
+# 3      Loss       0.00       0.00 1.971603 0.9714477 459698.15 688224.8 -1466.46
+# 4      Push  135554.77  204866.50 1.935221 0.9351197 135554.77 204866.5     0.00
+# 5       Win 1022390.80 1534196.76 1.925482 0.9253417 531909.77 799959.3  1565.85
+
+colSums(dat[c('KReturn', 'Return', 'EUPrice', 'HKPrice', 'KStakes', 'Stakes', 'Rebates')])
+#    KReturn     Return    EUPrice    HKPrice    KStakes     Stakes    Rebates 
+# 1346719.75 2023274.85   94322.23   45797.30 1317252.44 1978940.43      95.59
+## 2256735.55/2204785.82 = 1.023562, 2023274.85/1978940.43 = 1.022403
+
+## Random pick 2 observations among each stratified levels of Result.
+K <- llply(split(dat, dat$Result), function(x) x[sample(nrow(x), 2), c('Result', 'KReturn', 'Return', 'EUPrice', 'HKPrice', 'KStakes', 'Stakes', 'Rebates')]) %>% ldply(., .id = 'Result') %>% mutate(KReturn = accounting(KReturn), Return = accounting(Return), KStakes = accounting(KStakes), Stakes = accounting(Stakes), Rebates = accounting(Rebates), Change = percent(KStakes / Stakes - 1)) %>% .[sample(nrow(.), nrow(.)), ]
+
+## http://www.w3schools.com/colors/colors_picker.asp
+K %>% formattable(list(
+    Result = formatter('span', style = x ~ ifelse(x == 'Win', style(color = '#269900', font.weight = 'bold'), ifelse(x == 'Half Win', style(color = '#40FF00'), ifelse(x == 'Push', style(color = '#FFFF00'), ifelse(x == 'Half Loss', style(color = '#FF8C1A'), ifelse(x == 'Loss', style(color = '#FF0000', font.weight = 'bold'), NA)))))),
+    KReturn = formatter('span', style = ~ style(color = ifelse(KReturn >= KStakes, 'green', 'red')), ~ icontext(ifelse(KReturn >= KStakes, 'plus-sign', 'minus-sign'), KReturn)),
+    Return = formatter('span', style = ~ style(color = ifelse(Return >= Stakes, 'green', 'red')), ~ icontext(ifelse(Return >= Stakes, 'plus-sign', 'minus-sign'), Return)),
+    EUPrice = color_tile('white', '#003D99'),
+    HKPrice = color_tile('white', '#003D99'),
+    KStakes = color_tile('white', '#CC9900'),
+    Stakes = color_tile('white', '#CC9900'),
+    Change = formatter('span', style = ~ style(color = ifelse(Change < 0, 'red', 'green')), ~ icontext(ifelse(Change < 0, 'arrow-down', 'arrow-up'), Change))))
+```
+
+*table 4.3.2* : `r paste0(dim(m), collapse=' x ')` : *Kelly stakes and firm A's stakes of annually investment summary table without cancelled bets.*^[The annum return rates but not all data return rates since we need to use the return of that particular year to reverse. The weight parameter in later section will take last year performance to be weight controller. Due to the firm A does not only placed bets with one agent but couples of agencies. Let say placed one millions HKD on a soccer match with higher price simultaniously compare to placed bets on one agency with price decreasingly, therefore the Kelly stakes will definately defferent with firm A's stakes.]
+
+  Above Kelly stakes table 
+
+```{r}
+ddply(K, .(Result), summarise, KReturn = sum(KReturn), Return = sum(Return), EUPrice = mean(EUPrice), HKPrice = mean(HKPrice), KStakes = sum(KStakes), Stakes = sum(Stakes), Rebates = sum(Rebates), Change = mean(Change)) %>% tbl_df
+```
+
+```
+## Draft the further modelling
+- Summarise the return
+- measure the edge of odds price for staking
+  + ln(Edge) = ln(Stakes) - ln(HKPrice) , Stakes/HKPrice
+  + ln(Stakes) - ln(EUPrice) = (ln(Stakes) - ln(HKPrice)) - ((ln(Stakes) - ln(HKPrice)) + Stakes)
+- generalize Kelly model
+- Added the weight function
+- simulate with different result and score
+- Application of Maximum likelihood, Resampling and iteration to get the optimal weight value
+- Simulate to compare the result or investment
+```
+
+
+```{r}
 ## 1. Summarise the data which group by Date
-accBets <- ddply(dat, .(Date), summarise, Stakes = sum(Stakes), S.median = median(Stakes),
-                S.mean = mean(Stakes), S.sd = sd(Stakes), Count = length(PL), PL = sum(PL), PL.percent = PL / Stakes)
+accBets <- ddply(dat, .(Date), summarise, Stakes = sum(Stakes), S.median = median(Stakes), S.mean = mean(Stakes), S.sd = sd(Stakes), Count = length(PL), PL = sum(PL), PL.percent = PL / Stakes)
 
 ## 2. Set initial bankroll as 1,000,000
 dat$iniBR <- c(1000000, cumsum(dat$Return[-1]))
 dat$K <- ((dat$EUPrice + 1) * dat$rEMProbB - 1) / (dat$EUPrice)
 
 exp(mean(log(dat$Stakes)))
-
 ```
 
-$$K = \frac{(B + 1)p - 1} {B} \cdots equation 4.3.2$$
+  From the article [凯利模式资金管理](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)^[You might refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion) as well.] we know the application of generalization of Kelly criterion for uneven payoff games.
 
-$$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1/N}{\log}\left( {\frac{{{BR_N}}}{{{BR_0}}}} \right) \cdots equation 4.3.3$$
+$$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1}{N}\log\left( {\frac{{{S_N}}}{{{S_0}}}} \right) \cdots equation 4.3.2$$
 
-$$BR_N = (1 + K)^W(1 - K)^L BR_0 \cdots equation 4.3.4$$
+$$S_N = (1 + K)^W(1 - K)^L S_0 \cdots equation 4.3.3$$
 
-  Kelly K-value [凯利模式资金管理](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)
-
-```{r}
-## Bootstrapping to get the optimal value
-#'@ llply(rEMProbB)
-```
-
-*table 4.3.2*
-  
   In order to get the optimal value, I apply the bootrapping and resampling method.
   
-$$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation 4.3.5$$
+$$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation 4.3.4$$
   
   Now we look at abpve function from a different perspective by considering the observed values $x1, x2, …, xn$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
+
+  Part I inside *®γσ, Eng Lian Hu (2014)*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has applied it and generates an impressive return.
+
+### 4.3.2 Weight Function
+
+  Similar with my prevous Rmodel which applied on Poisson model. Due to the calculation of the settlement and result on the win and loss of Asian Handicap is different with Fixed odds, the probabilities of the outcome will be descrete and the measurement of the `likelihood` result required in order to maximize the profit. here we need to add an additional parameter controller to adjust the staking amount on every single match.
+
+  Now I try to will simulate an enhanced Kelly model on staking which take the effect of the outcome of the result into calculation.
+
+$$\phi(r) = exp(-rX) \cdots equation 4.3.5$$
+ Where $X = x_{i,2,3...n}$ is the original staking amount by Kelly model. Meanwhile, the $r$ value is the optimal parameter controller for staking.
+
+$$r\begin{Bmatrix}
+=& Win\\
+=& Half\ Win\\
+=& Push\\
+=& Half\ Loss\\
+=& Loss\end{Bmatrix} \cdots equation 4.3.6$$
+
+```{r }
+suppressMessages(library('tidyverse'))
+
+## weight function to get the likelihood staking amount, maximum likelihood methos will be applicable in section 4.5 and 4.6
+#'@ n <- length(levels(dat$Result)) * nrow(dat)
+#'@ mtx <- matrix(rep(0, n), nc = length(levels(dat$Result)), dimnames = list(NULL, levels(dat$Result))) %>% as.data.frame %>% tbl_df
+#'@ mtx %<>% mutate(`Win` = ifelse(dat$Result == 'Win', 1, 0), `Half Win` = ifelse(dat$Result == 'Half Win', 1, 0), Push = ifelse(dat$Result == 'Half Loss', 1, 0), `Half Loss` = ifelse(dat$Result == 'Half Loss', 1, 0))
+
+mtx <- dat %>% spread(Result, Stakes, fill= 0)
+weight <- lm(Return ~ Win + `Half Win` + Push + `Half Loss` + Loss, data = mtx[c('Return', 'KStakes', 'Win', 'Half Win', 'Push', 'Half Loss', 'Loss')])
+```
 
 
 ## 4.4 Poisson Ⓜodel
@@ -641,18 +741,21 @@ suppressMessages(require('DT', quietly = TRUE))
 ## http://stackoverflow.com/questions/19532651/benchmarking-logistic-regression-using-glm-fit-bigglm-speedglm-glmnet-libli
 ##
 ## Test if placed multiple bets on same match
-preData[duplicated(preData[c('Date', 'Home', 'Away')]), c('Date', 'Home', 'Away', 'HG', 'AG', 'InPlay', 'InPlay2', 'Mins', 'Mins2', 'Picked2')] %>% datatable
+preData[duplicated(preData[c('Date', 'Home', 'Away')]), c('Date', 'Home', 'Away', 'HG', 'AG', 'InPlay', 'InPlay2', 'Mins', 'Mins2', 'Picked2')] %>% %>% formattable %>% as.htmlwidget
 ```
 
-*table 4.4.1 : Filtered multiple bets placed on same matches.*
+*table 4.4.1 : Samples of filtered multiple bets placed on same matches.*
 
   Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I filter-up the sample data to be `r paste(dim(preData), collapse=' x ')`. I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation *Robert Johnson (2011)*^[Kindly refer to 23th paper in [7.4 References]] from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
 
   Here I cannot reverse computing from barely $\rho_i^{EM}$ without know the $\lambda_{ij}$ and $\gamma$ values. Therefore I try to using both Home and Away Scores to simulate and test to get the maximum likelihood $\rho_i^{EM}$.
 
 $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta_{ij}) \cdots equation 4.4.1$$
-  
-  sample...
+```{r }
+## model bivariate poison to retrieve the scores and resampling to get the likelihood value.
+source('./function/bvp.R')
+bvp
+```
 
   In order to minimzie the risk, I tried to validate the odds price range invested by firm A.^[As I used to work in **AS3388** which always take bets from **Starlizard** where they only placed bets within the odds price range from 0.70 ~ -0.70. They are not placed bets on all odds price in same edge]. The sportbook consulatancy firms will not place same amount of stakes on same edge, lets take example as below :-
   
@@ -833,8 +936,6 @@ rm(sys1)
 
   Firstly I do appreciate those who shade me a light on my research. Meanwhile I do happy and learn from the research.
 
-<iframe width="420" height="315" src="https://www.youtube.com/embed/Pv-KRj9XxXc" frameborder="0" allowfullscreen></iframe>
-
   Due to the rmarkdown file has quite some sections and titles, you might expand or collapse the codes by refer to [Code Folding and Sections](https://support.rstudio.com/hc/en-us/articles/200484568) for easier reading.
 
   There are quite some errors when I **knit HTML**:
@@ -891,6 +992,8 @@ rm(sys1)
   26. [**A New Interpretation of Information Rate** *by John Kelly (1956)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/A%20New%20Interpretation%20of%20Information%20Rate.pdf)
   27. [**Dynamic Modelling and Prediction of English Football League Matches for Betting** *by Crowder, Dixon, Ledford and Robinson (2001)*](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/blob/master/reference/DixonLedfordRobinson2001.pdf)
   28. [**Pattern Discovery in Data Mining Programming Assignment: Frequent Itemset Mining Using Apriori** *by ®γσ, Eng Lian Hu (2016)*](http://rpubs.com/englianhu/pattern-discovery-in-data-mining-assignment1)
+  29. [**Efficiency of the Racetrack Betting Market (2008 Preface Edition)** *by Donald Hausch, Victor Lo and William Ziemba (2008)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Efficiency%20of%20the%20Racetrack%20Betting%20Market%20(2008%20Edition).pdf)
+  30. [**Racetrack Betting and Consensus of Subjective Probabilities** *by Lawrence Brown and Yi Lin (2002)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Racetrack%20Betting%20and%20Consensus%20of%20Subjective%20Probabilities.pdf)
 
 ####  Reference for technical research on programming and coding portion for the paper.
 
