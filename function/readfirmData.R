@@ -97,6 +97,7 @@ readfirmData <- function(years = years, pth = './data/', parallel = FALSE){
                   Selection = factor(Selection), Stakes = as.numeric(gsub('[^0-9]', '', Stakes)), 
                   PL = as.numeric(gsub(',', '', gsub('[a-zA-Z]{1,}\\$', '', PL))), Return = Stakes + PL, HKPrice = EUPrice - 1)
   ## Date = as.Date(strptime(Date, format = '%d %b %Y', tz = 'Asia/Taipei')) since spbo follow GMT+8 timezone
+  dfm$Time <- dfm$Date %>% unlist %>% str_split_fixed(., ' ', 3) %>% .[, 2]
   
   ## Clear all spaces at the first and last character inside avery single element, reorder the columns
   ##  and re-class the columns
@@ -106,7 +107,7 @@ readfirmData <- function(years = years, pth = './data/', parallel = FALSE){
                                                Return, PL, Rebates)
   
   dfm %<>% mutate(No = as.numeric(No), Sess = as.numeric(Sess), Month = month(Date), 
-                 Day = factor(Day), DateUK = ymd_hms(DateUK), Date = ymd_hms(Date), Time = hm(Time), 
+                 Day = factor(Day), DateUK = ymd_hms(DateUK), Date = as.Date(Date), Time = hms(Time), 
                  Home = factor(Home), Away = factor(Away), Selection = factor(Selection), HCap = as.numeric(HCap), 
                  EUPrice = as.numeric(EUPrice), HKPrice = as.numeric(HKPrice), Stakes = as.numeric(Stakes), 
                  CurScore = factor(CurScore), Mins = factor(Mins), Result = factor(Result), PL = as.numeric(PL), 

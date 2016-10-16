@@ -41,7 +41,11 @@ suppressAll(source('function/libs.R'))
 
 ```{r read-data1, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
 ## Load saved dataset to save the loading time.
-## Run codes in app.R inside the folder `regressionApps` and save.images() and now directly load for shinyApp use.
+## directly load the dataset from running chunk `read-data-summary-table` and also chunk `scrap-data`. 
+## The spboData for filtering leagues and matches scores purpose. Kindly refer to file named 
+## `compacted data - shinyData.txt` inside folder `data`.
+
+## Run above codes and save.images() and now directly load for shinyApp use.
 load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
 ```
 
@@ -160,7 +164,7 @@ dat$rRates <- rep(m$rRates, count(dat, Sess)$n)
 dat$rEMProbB = round(dat$rRates * dat$netProbB, 6)
 dat$rEMProbL = round(1- dat$rEMProbB, 6)
 
-dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL, rRates, rEMProbB, rEMProbL, favNetProb, undNetProb) %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
+dat %>% select(No.x, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL, rRates, rEMProbB, rEMProbL, favNetProb, undNetProb) %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
 ```
 
 *table 4.1.3* : `r paste0(dim(dat), collapse = ' x ')` : *Odds price and probabilities sample table.*
@@ -254,59 +258,59 @@ n1
 ## lm0 indicate matches include prematch and inplay. lm0pm is subsetted with only prematch while lmip subsetted which only inplay matches.
 
 lm0 <- lm(Return ~ Stakes, data = dat)
-lm0pm <- lm(Return ~ Stakes, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm0ip <- lm(Return ~ Stakes, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm0pm <- lm(Return ~ Stakes, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm0ip <- lm(Return ~ Stakes, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm1 <- lm(Return ~ Stakes + HCap, data = dat)
-lm1pm <- lm(Return ~ Stakes + HCap, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm1ip <- lm(Return ~ Stakes + HCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm1pm <- lm(Return ~ Stakes + HCap, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm1ip <- lm(Return ~ Stakes + HCap, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm2 <- lm(Return ~ Stakes + netProbB, data = dat)
-lm2pm <- lm(Return ~ Stakes + netProbB, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm2ip <- lm(Return ~ Stakes + netProbB, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm2pm <- lm(Return ~ Stakes + netProbB, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm2ip <- lm(Return ~ Stakes + netProbB, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm3 <- lm(Return ~ Stakes + HCap + netProbB, data = dat)
-lm3pm <- lm(Return ~ Stakes + HCap + netProbB, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm3ip <- lm(Return ~ Stakes + HCap + netProbB, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm3pm <- lm(Return ~ Stakes + HCap + netProbB, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm3ip <- lm(Return ~ Stakes + HCap + netProbB, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm4 <- lm(Return ~ Stakes + ipRange, data = dat)
-lm4ip <- lm(Return ~ Stakes + ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm4ip <- lm(Return ~ Stakes + ipRange, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm5 <- lm(Return ~ Stakes + ipHCap, data = dat)
-lm5ip <- lm(Return ~ Stakes + ipHCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm5ip <- lm(Return ~ Stakes + ipHCap, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm6 <- lm(Return ~ Stakes + HCap + ipRange, data = dat)
-lm6ip <- lm(Return ~ Stakes + HCap + ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm6ip <- lm(Return ~ Stakes + HCap + ipRange, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm7 <- lm(Return ~ Stakes + CurScore + ipHCap, data = dat)
-lm7ip <- lm(Return ~ Stakes + CurScore + ipHCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm7ip <- lm(Return ~ Stakes + CurScore + ipHCap, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm8 <- lm(Return ~ Stakes + CurScore + ipRange, data = dat)
-lm8ip <- lm(Return ~ Stakes + CurScore + ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm8ip <- lm(Return ~ Stakes + CurScore + ipRange, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm9 <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap, data = dat)
-lm9ip <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm9ip <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 ## Linear Interative Effect Models
 lm10 <- lm(Return ~ HCap + netProbB + HCap:netProbB, data = dat)
-lm10pm <- lm(Return ~ HCap + netProbB + HCap:netProbB, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm10ip <- lm(Return ~ HCap + netProbB + HCap:netProbB, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm10pm <- lm(Return ~ HCap + netProbB + HCap:netProbB, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm10ip <- lm(Return ~ HCap + netProbB + HCap:netProbB, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm11 <- lm(Return ~ Stakes + ipHCap + ipRange + ipHCap:ipRange, data = dat)
-lm11ip <- lm(Return ~ Stakes + ipHCap + ipRange + ipHCap:ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm11ip <- lm(Return ~ Stakes + ipHCap + ipRange + ipHCap:ipRange, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm12 <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRange, data = dat)
-lm12ip <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm12ip <- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRange, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 ## Linear Mixed Effects Models
 ## Mixed effect categorised the parameters by group... similar with current score during living betting modelling, the scoring rate (intensity of scores) during 0-0 is different with scoring rates during 1-0 etc.
 lm13 <- lm(Return ~ Stakes + (1|HCap), data = dat)
-lm13pm <- lm(Return ~ Stakes + (1|HCap), data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm13ip <- lm(Return ~ Stakes + (1|HCap), data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm13pm <- lm(Return ~ Stakes + (1|HCap), data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm13ip <- lm(Return ~ Stakes + (1|HCap), data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm14 <- lm(Return ~ HCap + (1|Stakes), data = dat) # the stakes amount placed by firm A must be based on the degree of the edges to punter. Here I try to test the effect. (Although firm A might bet via several agents, here I can only took available sample from population to test the efficiency.)
-lm14pm <- lm(Return ~ HCap + (1|Stakes), data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm14ip <- lm(Return ~ HCap + (1|Stakes), data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm14pm <- lm(Return ~ HCap + (1|Stakes), data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm14ip <- lm(Return ~ HCap + (1|Stakes), data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lms <- list(lm0 = lm0, lm0pm = lm0pm, lm0ip = lm0ip, lm1 = lm1, lm1pm = lm1pm, lm1ip = lm1ip, lm2 = lm2, lm2pm = lm2pm, lm2ip = lm2ip, lm3 = lm3, lm3pm = lm3pm, lm3ip = lm3ip, lm4 = lm4, lm4ip = lm4ip, lm5 = lm5, lm5ip = lm5ip, lm6 = lm6, lm6ip = lm6ip, lm7 = lm7, lm7ip = lm7ip, lm8 = lm8, lm8ip = lm8ip, lm9 = lm9, lm9ip = lm9ip, lm10 = lm10, lm10pm = lm10pm, lm10ip = lm10ip, lm11 = lm11, lm11ip = lm11ip, lm12 = lm12, lm12ip = lm12ip, lm13 = lm13, lm13pm = lm13pm, lm13ip = lm13ip, lm14 = lm14, lm14pm = lm14pm, lm14ip = lm14ip)
 
@@ -535,20 +539,29 @@ bestlm %>% formattable(list(
 
   From the papers *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] and *Jeffrey Alan Logan Snyder (2013)*^[Kindly refer to 2nd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] both applying **Full-Kelly**,**Half-Kelly** and also **Quarter-Kelly** models which similar with my previous Kelly-Criterion model *®γσ, Eng Lian Hu 2014*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] but enhanced. *Niko Marttinen (2001)* has concludes that the basic Kelly criterion generates the highest returns compare to modified Kelly models.
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/kOvJGcxtIp4" frameborder="0" allowfullscreen></iframe>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/-ePZ9WuIrVQ" frameborder="0" allowfullscreen></iframe>
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/iykpeZtoNIk" frameborder="0" allowfullscreen></iframe>
+
   To achieve the level of profitable betting, one must develop a correct money management procedure. The aim for a punter is to maximize the winnings and minimize the losses. If the punter is capable of predicting accurate probabilities for each match, the *Edward O. Thorp (2006)*^[Kindly refer to 6th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] has proven to work effectively in betting. It was named after an American economist *John Kelly (1956)*^[Kindly refer to 26th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] and originally designed for information transmission. The Kelly criterion is described below:
 
-$$S = \frac{(\rho_{win} \times BK_{Decimal\ odds} - \rho_{lose})} {(BK_{Decimal\ odds})} \cdots equation 4.3.1$$
+![*figure 4.3.1.1 : Kelly criterion formula.*](figure/Kelly.png)
 
-  - Where $S$ is the stake expressed as a fraction of one's total bankroll,
-  - $\rho_{win}$ is probability of an event to take place and 
-  - $\rho_{lose} is probability of lose$ 
-  - while $BK_{Decimal\ odds}$ is decimal odds (decimal Odds with capital stakes) for an event offered by the bookmaker.
+$$S = \frac{\rho_{EM} \times BK_{Decimal\ odds} - 1} {BK_{HK\ odds}} \times BR \cdots equation 4.3.1$$
+
+  - Where $S$ is the stake expressed as a fraction of one's total bankroll, $BR$ is the total bankroll.
+  - $\rho_{EM}$ is probability of an event to take place and 
+  - while $BK_{Decimal\ odds}$ is decimal odds (decimal odds the return rates with capital stakes) and $BK_{HK\ Odds}$ (HK odds is the net profit rates without capital stakes) for an event offered by the bookmaker.
 
   Three important properties, mentioned by *Hausch and Ziemba (1994)*^[You can refer to [Efficiency of Racetrack Betting Markets (2008 Preface Edition)](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Efficiency%20of%20the%20Racetrack%20Betting%20Market%20(2008%20Edition).pdf) which is 29th paper in [Reference for industry knowdelege and academic research portion for the paper.] or [*Chapter 18 Efficiency of Sports and Lottery Betting Markets* in **FINANCE**](https://books.google.com.my/books?id=XC4fZPbT1SQC&printsec=frontcover&dq=Handbooks+in+Operations+Research+and+Management+Science+Finance&hl=en&sa=X&ved=0ahUKEwj7lIj5pLLPAhXGVZQKHf_LC-4Q6AEIPjAE#v=onepage&q&f=false) for further study about Hausch and Ziemba's researchs.), arise when using this criterion to determine a proper stake for each bet:
 
   - It maximizes the asymptotic growth rate of capital
   - Asymptotically, it minimizes the expected time to reach a specified goal
   - It outperforms in the long run any other essentially different strategy almost surely
+
+![*figure 4.3.1.2 : Example of application Kelly criterion.*](figure/Kelly.jpg)
 
   The criterion is known to economists and financial theorists by names such as the geometric mean maximizing portfolio strategy, the growth-optimal strategy, the capital growth criterion, etc. We will now show that Kelly betting will maximize the expected log utility for sports-book betting.
 
@@ -574,7 +587,10 @@ m %>% formattable(list(
 
   The `rRates` value from table above excludes the `Cancelled` bets. By refer to *equation 4.3.1*, now we fit the adge value from *equation 4.1.1* into it to get the `rEMProbB2` and `rEMProbL2` with known staked value $S$^[Although the result will not be accurate due to the we mention at first, the firm A will not only place bets via only agent A. Let say edge of 0.10 and 0.20 also placed maximum bet HKD40000 but the firm A might placed different amount through other agency based on different edge. However based on the stakes we can reverse the optimal EM Odds.] to replace the existing EM value.
 
-$$\rho_{i}^{em} = \frac{S + 1} {BK_{Decimal\ odds} - 1} \cdots equation 4.3.2$$
+$$\rho_{EM} = \frac {S \times BK_{HK\ odds} + 1} {BK_{Decimal\ odds}} \cdots equation4.3.2$$
+  Although the Kelly model is very simple, but we need to seperates the staking based on different leagues or time range to make it applicable to real world. I don't pretend to know the correct model again but guess the applicable model by testing few models and choose the best among them.
+
+  Due to there have few reference papers conducting few staking strategics and concludes full Kelly model is the best fit and most profitable along the long term investment, here I skip the proportional, half-Kelly and also quadruple-Kelly, as well as double-Kelly staking model.^[There has a reference paper in section 2 of [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion) has compare few models as well and also provides the pro-and-con of Kelly model in investment. However, Kelly model will be the best across the long term investment.] Besides, there have few papers doing research and also critic on the Kelly model in investment in financial market and also betting market (includes the rebates of the credit market as well), PIMCO's fund manager **Bill Gross** who manage more than one trillion USD funds applied Kelly model for portfolio, **George Soros** and **Warren Buffet** also applied similar theoty or method with Kelly although there has no evidence to proof it. You are feel free to know in later section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement]. For further details kindly refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion).
 
 ```{r data-Kelly, echo = FALSE, results = 'asis'}
 ## Kelly Criterion model
@@ -583,37 +599,15 @@ $$\rho_{i}^{em} = \frac{S + 1} {BK_{Decimal\ odds} - 1} \cdots equation 4.3.2$$
 ## Optimal Kelly wager % = Advantages / decimal odds
 ## From below data we can know the difference between the Kelly reversed rEMProbB
 ##
-## 1. test the staking strategy 1
-dat %<>% mutate(KStakes = Stakes / HKPrice, KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA))))))
-##  A tibble: 5 × 8
-#      Result    KReturn     Return  EUPrice   HKPrice  KStakes   Stakes  Rebates
-#      <fctr>      <dbl>      <dbl>    <dbl>     <dbl>    <dbl>    <dbl>    <dbl>
-# 1 Half Loss   74025.56   68417.25 1.968293 0.9680931 148051.1 136834.5  -146.21
-# 2  Half Win  246836.14  215794.35 1.905279 0.9051838 172308.5 149055.2   142.41
-# 3      Loss       0.00       0.00 1.971603 0.9714477 748648.7 688224.8 -1466.46
-# 4      Push  237270.20  204866.50 1.935221 0.9351197 237270.2 204866.5     0.00
-# 5       Win 1698603.65 1534196.76 1.925482 0.9253417 898507.3 799959.3  1565.85
 
-colSums(dat[c('KReturn', 'Return', 'EUPrice', 'HKPrice', 'KStakes', 'Stakes', 'Rebates')])
-#    KReturn     Return    EUPrice    HKPrice    KStakes     Stakes    Rebates 
-# 2256735.55 2023274.85   94322.23   45797.30 2204785.82 1978940.43      95.59
-## 1346719.75/1317252.44 = 1.02237, 2023274.85/1978940.43 = 1.022403
+## Kelly model
+dat %<>% mutate(KStakes = (sum(Stakes) * HKPrice + 1) / EUPrice, KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA))))))
 
-## 2. test the staking strategy 2
-dat %<>% mutate(KStakes = (Stakes * EUPrice + 1) / (EUPrice + 1), KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA))))))
-##  A tibble: 5 × 8
-#      Result    KReturn     Return  EUPrice   HKPrice   KStakes   Stakes  Rebates
-#      <fctr>      <dbl>      <dbl>    <dbl>     <dbl>     <dbl>    <dbl>    <dbl>
-# 1 Half Loss   45713.79   68417.25 1.968293 0.9680931  91427.57 136834.5  -146.21
-# 2  Half Win  143060.39  215794.35 1.905279 0.9051838  98662.19 149055.2   142.41
-# 3      Loss       0.00       0.00 1.971603 0.9714477 459698.15 688224.8 -1466.46
-# 4      Push  135554.77  204866.50 1.935221 0.9351197 135554.77 204866.5     0.00
-# 5       Win 1022390.80 1534196.76 1.925482 0.9253417 531909.77 799959.3  1565.85
+## Proportional staking model 1
+#'@ pp1 <- dat %>% mutate(PP1Stakes = Stakes * )
 
-colSums(dat[c('KReturn', 'Return', 'EUPrice', 'HKPrice', 'KStakes', 'Stakes', 'Rebates')])
-#    KReturn     Return    EUPrice    HKPrice    KStakes     Stakes    Rebates 
-# 1346719.75 2023274.85   94322.23   45797.30 1317252.44 1978940.43      95.59
-## 2256735.55/2204785.82 = 1.023562, 2023274.85/1978940.43 = 1.022403
+## Proportional staking model 2
+#'@ pp2 <- dat %>% mutate(PP2AStakes = Stakes / HKPrice, PP2ADiff = PP2AStakes - Stakes, PP2BStakes = Stakes / ) #payout for even price.
 
 ## Random pick 2 observations among each stratified levels of Result.
 K <- llply(split(dat, dat$Result), function(x) x[sample(nrow(x), 2), c('Result', 'KReturn', 'Return', 'EUPrice', 'HKPrice', 'KStakes', 'Stakes', 'Rebates')]) %>% ldply(., .id = 'Result') %>% mutate(KReturn = accounting(KReturn), Return = accounting(Return), KStakes = accounting(KStakes), Stakes = accounting(Stakes), Rebates = accounting(Rebates), Change = percent(KStakes / Stakes - 1)) %>% .[sample(nrow(.), nrow(.)), ]
@@ -635,7 +629,7 @@ K %>% formattable(list(
   Above Kelly stakes table 
 
 ```{r}
-ddply(K, .(Result), summarise, KReturn = sum(KReturn), Return = sum(Return), EUPrice = mean(EUPrice), HKPrice = mean(HKPrice), KStakes = sum(KStakes), Stakes = sum(Stakes), Rebates = sum(Rebates), Change = mean(Change)) %>% tbl_df
+ddply(K, .(Result), summarise, KReturn = sum(KReturn), Return = sum(Return), EUPrice = mean(EUPrice), HKPrice = mean(HKPrice), KStakes = sum(KStakes), Stakes = sum(Stakes), Rebates = sum(Rebates), Change = mean(Change)) %>% tbl_df %>% formattable %>% as.htmlwidget
 ```
 
 ```
@@ -678,6 +672,8 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation 4.3.4$$
   Part I inside *®γσ, Eng Lian Hu (2014)*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has applied it and generates an impressive return.
 
 ### 4.3.2 Weight Function
+
+  Fractional Kelly models are the weight function for Kelly criterion When we talk about weight function in Kelly model. [A Response to Professor Paul A Samuelson's Objections to Kelly Capital Growth Investing](https://github.com/scibrokes/kelly-criterion/blob/master/references/A%20Response%20to%20Professor%20Paul%20A%20Samuelson's%20Objections%20to%20Kelly%20Capital%20Growth%20Investing.pdf) has talk about the investment portfolio and compare the double-Kelly, full-Kelly, half-Kelly, quadruple-Kelly and also proportional betting across different stages of iterations and concludes that the full-Kelly will be the best fit and growth beyond the ages. Well, fractional-Kelly (means double-Kelly, half-Kelly and quadruple-Kelly but not full-Kelly model) models will be elastics and lesser will be more conservative and double-Kelly will be very risky and eventually going to bankcrupt due to the staking leverages ratio is twice of full-Kelly and over the sustainability of capital. and For further details kindly refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion). Therefore in last basic Kelly we use the full-Kelly within same leagues but due to there has different levels of risk setting across different soccer leagues. Therefore a weight function needed to make the staking strategy flexible, and it is term as Kelly portfolio to diversified the investment.
 
   Similar with my prevous Rmodel which applied on Poisson model. Due to the calculation of the settlement and result on the win and loss of Asian Handicap is different with Fixed odds, the probabilities of the outcome will be descrete and the measurement of the `likelihood` result required in order to maximize the profit. here we need to add an additional parameter controller to adjust the staking amount on every single match.
 
@@ -741,7 +737,7 @@ suppressMessages(require('DT', quietly = TRUE))
 ## http://stackoverflow.com/questions/19532651/benchmarking-logistic-regression-using-glm-fit-bigglm-speedglm-glmnet-libli
 ##
 ## Test if placed multiple bets on same match
-preData[duplicated(preData[c('Date', 'Home', 'Away')]), c('Date', 'Home', 'Away', 'HG', 'AG', 'InPlay', 'InPlay2', 'Mins', 'Mins2', 'Picked2')] %>% %>% formattable %>% as.htmlwidget
+preData[duplicated(preData[c('Date', 'Home', 'Away')]), c('Date', 'Home', 'Away', 'HG', 'AG', 'InPlay', 'InPlay2', 'Mins', 'Mins2', 'Picked2')] %>% tbl_df %>% formattable %>% as.htmlwidget
 ```
 
 *table 4.4.1 : Samples of filtered multiple bets placed on same matches.*
@@ -856,6 +852,8 @@ options(op)
 >  - Domain knowledge - truly understanding the sport you want to analyze professionally is critical to being successful. Knowing the rules of the game; studying how front offices operate; finding out how players are recruited, developed, and evaluated; and even just learning the jargon used within the industry will help you integrate into the organization. You'll come to understand what problems are important to the GM and other decisionmakers, as well as what information is available, how it's collected, what it means, and what its limitations are. Also, I recommend keeping up with the discussions in your sport's analytic community so you know about the latest developments and what's considered the state of the art in the public sphere. One of the great things about being a sports statistician is getting to follow your favorite websites and blogs as a legitimate part of your job!
 
 **source : [Preparing for a Career as a Sports Statistician: Two Interviews with People in the Field](http://stattrak.amstat.org/2012/08/01/sports-statistician/)**
+
+  In this Part II research paper I try to add a section which is filtered out only English soccer leagues and the revenue and profit & loss all sessional based but not annum based to make it applicable to my future staking in real world. The proportional staking and also money management on the staking pools. You are feel free to browse from the content page [Betting Strategy and Model Validation](https://github.com/scibrokes/betting-strategy-and-model-validation).
 
 ...
 ...

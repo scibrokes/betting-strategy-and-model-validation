@@ -138,7 +138,13 @@ suppressMessages(source('function/libs.R'))
   
   I tried to apply `RSelenium` on [**®Studio Server Centos7**](http://rstudio.scibrokes.com) to scrape the data from live-score website includes the odds price but the binary [phantomjs](https://github.com/ariya/phantomjs/issues/12948#issuecomment-131267076) is not available for Linux, and I also not familiar with the installation of `Java` as well as setting of the path for `rJava`. Kindly refer to [Natural Language Analysis](http://rpubs.com/englianhu/natural-language-analysis) for more information about the teams name matching.
 
-```{r read-data-summary-table, echo = FALSE, results = 'asis'}
+```{r load-data, echo = FALSE, results = 'asis'}
+## Load saved dataset to save the loading time.
+## directly load the dataset from running chunk `read-data-summary-table` and also chunk `scrap-data`. The spboData for filtering leagues and matches scores purpose.
+load('./regressionApps/shinyData.RData')
+```
+
+```{r read-data-summary-table, eval = FALSE, echo = FALSE, results = 'asis'}
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment again due to unable find the functions
 suppressMessages(library('utils'))
@@ -161,8 +167,15 @@ mbase <- readfirmData(years = years, pth = './data/') %>% arrfirmData(lProfile =
 #'@ mbase$datasets[!(mbase$datasets$Home %in% mbase$corners)|!(mbase$datasets$Away %in% mbase$corners),]
 dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$others)) %>% mutate(Stakes = Stakes/10000, Return = Return/10000, PL = PL/10000)
 
+rm(years, readfirmData, arrfirmData)
+rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.
+```
+
+```{r print-table, echo = FALSE, results = 'asis'}
 #'@ pander(head(dat)) # exactly same layout with kable(x)
 #'@ kable(head(dat)) ## example of the dataset in the research paper
+suppressMessages(require('dplyr', quietly = TRUE))
+suppressMessages(require('DT', quietly = TRUE))
 
 dat %>% datatable(
   caption = "Table 2.1.1 : Firm A Staking Data", 
@@ -176,9 +189,6 @@ dat %>% datatable(
                                 list(extend = 'collection', 
                                      buttons = c('csv', 'excel', 'pdf'), 
                                      text = 'Download'), I('colvis'))))
-
-rm(years, readfirmData, arrfirmData)
-rm(mbase) ## We need to scrap the livescore data based on the raw data mbase without filter, but this is not the point in this research paper.
 ```
 
 *table 2.1.1* : `r paste0(dim(dat), collapse = ' x ')` : *Sample data collected for the research.*
@@ -206,7 +216,7 @@ probabilities exceeds `100%` and it is the bookmaker’s profit margin.
 
   For example, if we had a market with two possible outcomes {A, B}, where $P(A) = P(B) = 0.5$, the fair odds on each selection would be `2.00`. However, the bookmaker may offer payouts of `1.85` on each selection. The corresponding probabilities for each selection are now 1/1.85 = `r 1/1.85`, and the sum of the probabilities for all outcomes is `r 1/1.85` x 2 = `r 1/1.85*2`. The over-round is `8.1%`, and for every `$100` paid out by gamblers the bookmaker expects to make a profit of `8.1` dollars, assuming that there are balanced bets on both A and B.
 
-```{r scrap-data, echo = FALSE, results = 'asis'}
+```{r scrap-data, eval = FALSE, echo = FALSE, results = 'asis'}
 ## Scrape the leagues and also overrounds which provides by a sportsbookmaker named Firm B
 #'@ lnk <- 'http://data.nowgoal.com/history/handicap.htm'
 ## Above website provides odds price history but sendkeyElements cannot work in RSelenium, will follow-up
@@ -234,7 +244,36 @@ spboData <- readSPBO(dateID = dateID, parallel = FALSE)$data
 tmIDdata <- read.csv('./data/teamID.csv', header = TRUE, sep = ',') %>% mutate_each(funs(as.character)) %>% data.frame %>% tbl_df %>% filter(spbo != 'Kuban Krasnodar')
 spboData %<>% filter((Home %in% tmIDdata$spbo)|(Away %in% tmIDdata$spbo))
 
-rm(dateID, spboDate, readSPBO)
+## filter the bet slips with spbo live scores matches.
+#'@ dat %<>% filter(as.Date(DateUK) %in% as.Date(spboData$DateUK), Home %in% tmIDdata$teamID, Away %in% tmIDdata$teamID)
+
+#'@ spboData %<>% filter(as.Date(DateUK) %in% as.Date(dat$DateUK), Home %in% tmIDdata$teamID, Away %in% tmIDdata$teamID)
+
+tmIDdata %<>% mutate(Home = factor(teamID), Away = factor(teamID), spboHome = factor(spbo), spboAway = factor(spbo)) %>% .[-c(1:3)]
+
+dat <- join_all(list(dat, tmIDdata[c(1, 3)]), by = c('Home'), type = 'inner') %>% tbl_df
+dat <- join_all(list(dat, tmIDdata[c(2, 4)]), by = c('Away'), type = 'inner') %>% tbl_df
+
+names(spboData)[names(spboData) == 'Home'] <- 'spboHome'
+names(spboData)[names(spboData) == 'Away'] <- 'spboAway'
+names(spboData)[names(spboData) == 'DateUK'] <- 'spboDateUK'
+names(spboData)[names(spboData) == 'Time'] <- 'spboTime'
+dat <- dat[order(dat$Date, dat$Time, decreasing = FALSE), ]
+#'@ names(dat)
+#   [1] c("No", "Sess", "Month", "Day", "DateUK", "Date", "Time", "Home", "Away", "Selection", "HCap", "EUPrice", "HKPrice", "Stakes", "CurScore", "Mins", "Result", "Return", "PL", "Rebates", "Picked", "AHOU", "fMYPriceB", "fMYPriceL", "pHKRange", "fHKPriceL", "pMYRange", "pHKRange2", "pMYRange2", "InPlay", "Mins2", "InPlay2", "ipRange", "HG", "AG", "FHFTET", "Picked2", "ipHCap", "CurScore2", "netProbB", "netProbL", "favNetProb", "undNetProb", "spboHome", "spboAway")
+
+## join data to get a completed data with leagues, final scores in order to run the simulation in staking and Poisson section.
+#'@ dat1 <- join_all(list(dat, spboData), by = c('Date', 'spboHome', 'spboAway'), type = 'full') %>% tbl_df %>% na.omit ## Due to join_all() will cause the Time variable became '0' numeric value. Therefore use merge instead.
+dat <- merge(dat, spboData, by = c('Date', 'spboHome', 'spboAway')) %>% tbl_df
+
+#'@ names(dat)
+#   [1] c("Date", "spboHome", "spboAway", "No.x", "Sess", "Month", "Day", "DateUK", "Time", "Home", "Away", "Selection", "HCap", "EUPrice", "HKPrice", "Stakes", "CurScore", "Mins", "Result", "Return", "PL", "Rebates", "Picked", "AHOU", "fMYPriceB", "fMYPriceL", "pHKRange", "fHKPriceL", "pMYRange", "pHKRange2", "pMYRange2", "InPlay", "Mins2", "InPlay2", "ipRange", "HG", "AG", "FHFTET", "Picked2", "ipHCap", "CurScore2", "netProbB", "netProbL", "favNetProb", "undNetProb", "No.y", "X", "matchID", "LeagueColor", "League", "spboDateUK", "spboTime", "Finished", "FTHG", "FTAG", "HTHG", "HTAG", "H.Card", "A.Card", "HT.matchID", "HT.graph1", "HT.graph2")
+## Due to the daily financial settlement of Asian bookmakers based on 12.00PM (GMT + 8), therefore I just leave the merged data name alignment above to ease for refer the time and score.
+
+## saveImage after filter to ease the whole research and efficiency of read data.
+#'@ save.image("./regressionApps/shinyData.RData")
+
+rm(dateID, spboDate, scrapSPBO, readSPBO, tmIDdata, spboData, nms)
 ```
   
   I just simply get the lay price by applying below equation.
@@ -250,8 +289,9 @@ $$P_i^{HK_{Lay}} = 1/P_i^{HK_{Back}}-\nu_{j}$$   *equation 2.2.1*
 ## fMYPriceB = Back without vigorish net price; netProbL = Lay without vigorish net price
 ## fMYPriceB adn fMYPriceL are MYPrice, here we term as Real Odds
 ## Please refer to function arrfirmDatasets()
+suppressMessages(require('formattable', quietly = TRUE))
 
-dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL) %>% head %>% formattable %>% as.htmlwidget # kable(caption = 'Table 2.2.1 : Sample Data of Virogish/Overrounds and Odds Price')
+dat %>% select(No.x, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL) %>% head %>% formattable %>% as.htmlwidget # kable(caption = 'Table 2.2.1 : Sample Data of Virogish/Overrounds and Odds Price')
 ```
 
 *table 2.2.1* : `r paste0(dim(dat), collapse = ' x ')` : *Vigorish, price and probabilities sample table.*
@@ -273,6 +313,7 @@ dat %>% select(No, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, 
 ```{r data-annum-summary-plot, echo = FALSE, results = 'asis'}
 ## Load googleVis again due to unable find the function.
 suppressMessages(require('googleVis', quietly = TRUE))
+suppressMessages(require('plyr', quietly = TRUE))
 
 ## Annual summry graph.
 m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL)) %>% data.frame %>% tbl_df
@@ -289,6 +330,8 @@ rm(m)
   From the graph above showing that the investment of firm A through agency A generates a positive return (profit). Please refer to *table 4.1.1* for more details about investment analysis.
   
 ```{r data-month-summary-table, echo = FALSE, results = 'asis'}
+suppressMessages(require('magrittr', quietly = TRUE))
+
 ## Monthly summary table.
 dt1 <- dat %>% group_by(Sess, Month) %>% summarise(S.total = sum(Stakes), S.median = median(Stakes), S.mean = round(mean(Stakes), 4), S.sd = round(sd(Stakes), 4), Count = length(PL), minHKPrcB = min(HKPrice), maxHKPrcB = max(HKPrice), minProbB = min(netProbB), maxProbB = max(netProbB), Return = sum(PL, Stakes), PL = sum(PL), PL.percent = sprintf(sum(PL) / sum(Stakes), fmt = '%1.4f%%'), Samples = paste(Stakes, collapse = ',')) %>% mutate(Series = Samples)
 #'@ names(dt1)[1] <- 'Sess'

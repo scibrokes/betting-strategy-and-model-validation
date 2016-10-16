@@ -27,50 +27,19 @@ color: #D4AC0D;
 "
 
 ## ========= Read Data =================================
-## Setup Options, Loading Required Libraries and Preparing Environment
-## Loading the packages and setting adjustment
-#'@ suppressMessages(library('BBmisc'))
-#'@ suppressAll(library('utils'))
-#'@ suppressAll(source(paste0(dirname(getwd()), '/function/readfirmData.R')))
-#'@ suppressAll(source(paste0(dirname(getwd()), '/function/arrfirmData.R')))
-#'
-## Read the data
-## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
-#'@ years <- seq(2011, 2015)
-
-## Here I take the majority leagues setting profile which are "league-10-12"
-## fMYPriceB = Back with vigorish price; fMYPriceL = Lay with vigorish price
-## Here we term as Fair Odds
-#'@ lProfile <- c(AH = 0.10, OU = 0.12)
-#'@ pth <- paste0(dirname(getwd()), '/data/')
-
-#'@ mbase <- readfirmData(years = years, pth = pth) %>% arrfirmData(lProfile = lProfile)
-
-## In order to analyse the AHOU, here I need to filter out all soccer matches other than AHOU. (For example : Corners, Total League Goals etc.)
-## the stakes amount display as $1 = $10,000
-#'@ mbase$datasets[!(mbase$datasets$Home %in% mbase$corners)|!(mbase$datasets$Away %in% mbase$corners),]
-#'@ dat <- mbase$datasets %>% filter((!Home %in% mbase$others)|(!Away %in% mbase$others)) %>% mutate(Stakes = Stakes/10000, Return = Return/10000, PL = PL/10000)
-
-## Get the investment return rates per annun
-## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
-## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
-#'@ m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), Return = sum(Return), n = length(Sess), rRates = Return / Stakes)
-
-## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
-## value R.rates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
-## Please refer to function arrfirmDatasets()
-#'@ dat %<>% mutate(rEMProbB = round(unlist(sapply(split(m, m$Sess), function(x) rep(x$rRates, x$n))) * netProbB, 6), rEMProbL = round(1 - rEMProbB, 6))
-
-#'@ rm(m, lProfile, readfirmData, arrfirmData, mbase)
-#'@ save(dat, file = './shinyData.RData')
+## Load saved dataset to save the loading time.
+## directly load the dataset from running chunk `read-data-summary-table` and also chunk `scrap-data`. 
+## The spboData for filtering leagues and matches scores purpose. Kindly refer to file named 
+## `compacted data - shinyData.txt` inside folder `data`.
 
 ## Run above codes and save.images() and now directly load for shinyApp use.
 load('./shinyData.RData', envir = .GlobalEnv)
 
 ## Filtered the cancelled or voided bets to avoid null observation and bias.
 if('Cancelled' %in% dat$Result){
-  dat <<- dat %>% filter(Result != 'Cancelled') %>% mutate(Result = factor(Result))
-} else dat <<- dat %>% mutate(Result = factor(Result))
+    dat <<- dat %>% filter(Result != 'Cancelled') %>% mutate(Result = factor(Result))
+} else {
+    dat <<- dat %>% mutate(Result = factor(Result)) }
 
 ## ========= Linear Regression ================================
 ## Choosing the variables of linear models
@@ -78,59 +47,59 @@ if('Cancelled' %in% dat$Result){
 ## lm0 indicate matches include prematch and inplay. lm0pm is subsetted with only prematch while lmip subsetted which only inplay matches.
 
 lm0 <<- lm(Return ~ Stakes, data = dat)
-lm0pm <<- lm(Return ~ Stakes, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm0ip <<- lm(Return ~ Stakes, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm0pm <<- lm(Return ~ Stakes, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm0ip <<- lm(Return ~ Stakes, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm1 <<- lm(Return ~ Stakes + HCap, data = dat)
-lm1pm <<- lm(Return ~ Stakes + HCap, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm1ip <<- lm(Return ~ Stakes + HCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm1pm <<- lm(Return ~ Stakes + HCap, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm1ip <<- lm(Return ~ Stakes + HCap, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm2 <<- lm(Return ~ Stakes + netProbB, data = dat)
-lm2pm <<- lm(Return ~ Stakes + netProbB, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm2ip <<- lm(Return ~ Stakes + netProbB, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm2pm <<- lm(Return ~ Stakes + netProbB, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm2ip <<- lm(Return ~ Stakes + netProbB, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm3 <<- lm(Return ~ Stakes + HCap + netProbB, data = dat)
-lm3pm <<- lm(Return ~ Stakes + HCap + netProbB, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm3ip <<- lm(Return ~ Stakes + HCap + netProbB, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm3pm <<- lm(Return ~ Stakes + HCap + netProbB, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm3ip <<- lm(Return ~ Stakes + HCap + netProbB, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm4 <<- lm(Return ~ Stakes + ipRange, data = dat)
-lm4ip <<- lm(Return ~ Stakes + ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm4ip <<- lm(Return ~ Stakes + ipRange, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm5 <<- lm(Return ~ Stakes + ipHCap, data = dat)
-lm5ip <<- lm(Return ~ Stakes + ipHCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm5ip <<- lm(Return ~ Stakes + ipHCap, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm6 <<- lm(Return ~ Stakes + HCap + ipRange, data = dat)
-lm6ip <<- lm(Return ~ Stakes + HCap + ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm6ip <<- lm(Return ~ Stakes + HCap + ipRange, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm7 <<- lm(Return ~ Stakes + CurScore + ipHCap, data = dat)
-lm7ip <<- lm(Return ~ Stakes + CurScore + ipHCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm7ip <<- lm(Return ~ Stakes + CurScore + ipHCap, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm8 <<- lm(Return ~ Stakes + CurScore + ipRange, data = dat)
-lm8ip <<- lm(Return ~ Stakes + CurScore + ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm8ip <<- lm(Return ~ Stakes + CurScore + ipRange, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm9 <<- lm(Return ~ Stakes + CurScore + ipRange + ipHCap, data = dat)
-lm9ip <<- lm(Return ~ Stakes + CurScore + ipRange + ipHCap, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm9ip <<- lm(Return ~ Stakes + CurScore + ipRange + ipHCap, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 ## Linear Interative Effect Models
 lm10 <<- lm(Return ~ HCap + netProbB + HCap:netProbB, data = dat)
-lm10pm <<- lm(Return ~ HCap + netProbB + HCap:netProbB, data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm10ip <<- lm(Return ~ HCap + netProbB + HCap:netProbB, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm10pm <<- lm(Return ~ HCap + netProbB + HCap:netProbB, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm10ip <<- lm(Return ~ HCap + netProbB + HCap:netProbB, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm11 <<- lm(Return ~ Stakes + ipHCap + ipRange + ipHCap:ipRange, data = dat)
-lm11ip <<- lm(Return ~ Stakes + ipHCap + ipRange + ipHCap:ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm11ip <<- lm(Return ~ Stakes + ipHCap + ipRange + ipHCap:ipRange, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm12 <<- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRange, data = dat)
-lm12ip <<- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRange, data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm12ip <<- lm(Return ~ Stakes + CurScore + ipRange + ipHCap + CurScore:ipHCap:ipRange, data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 ## Linear Mixed Effects Models
 ## Mixed effect categorised the parameters by group... similar with current score during living betting modelling, the scoring rate (intensity of scores) during 0-0 is different with scoring rates during 1-0 etc.
 lm13 <<- lm(Return ~ Stakes + (1|HCap), data = dat)
-lm13pm <<- lm(Return ~ Stakes + (1|HCap), data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm13ip <<- lm(Return ~ Stakes + (1|HCap), data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm13pm <<- lm(Return ~ Stakes + (1|HCap), data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm13ip <<- lm(Return ~ Stakes + (1|HCap), data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lm14 <<- lm(Return ~ HCap + (1|Stakes), data = dat) # the stakes amount placed by firm A must be based on the degree of the edges to punter. Here I try to test the effect. (Although firm A might bet via several agents, here I can only took available sample from population to test the efficiency.)
-lm14pm <<- lm(Return ~ HCap + (1|Stakes), data = subset(dat, InPlay == 'No' & InPlay2 == 'No'))
-lm14ip <<- lm(Return ~ HCap + (1|Stakes), data = subset(dat, InPlay != 'No' & InPlay2 != 'No'))
+lm14pm <<- lm(Return ~ HCap + (1|Stakes), data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
+lm14ip <<- lm(Return ~ HCap + (1|Stakes), data = dat, subset = c(InPlay != 'No' & InPlay2 != 'No'))
 
 lms <<- list(lm0 = lm0, lm0pm = lm0pm, lm0ip = lm0ip, lm1 = lm1, lm1pm = lm1pm, lm1ip = lm1ip, 
              lm2 = lm2, lm2pm = lm2pm, lm2ip = lm2ip, lm3 = lm3, lm3pm = lm3pm, lm3ip = lm3ip, 

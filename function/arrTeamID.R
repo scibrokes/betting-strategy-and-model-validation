@@ -1,5 +1,5 @@
-arrTeamID <- function(mbase, spboData, method=c('osa', 'lv', 'dl', 'hamming',
-                      'lcs', 'qgram', 'cosine', 'jaccard', 'jw', 'soundex'), levDist=0.1, parallel=FALSE){
+arrTeamID <- function(mbase, spboData, method = c('osa', 'lv', 'dl', 'hamming',
+                      'lcs', 'qgram', 'cosine', 'jaccard', 'jw', 'soundex'), levDist = 0.1, parallel = FALSE){
   ## I just simply apply the `split` function to categorize the teams' name inside `makeList`.
   ## 
   ## STEP 1) Filter the exactly match (or different Capital letter teams' name) teams' name with spboTeamID,

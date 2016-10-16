@@ -31,6 +31,8 @@
 
 ![regressionApps](figure/20160928_021252.gif)
 
+    + Kindly refer to [English Soccer League]() for analysis on only English soccer which is pretest on my personal research.
+
 ## 3. Old File
 
   I splited below file to be **two part** as list above since there are a lot of gragh and high volume dataset. The `Return` and `PL` columns suddenly noticed wrong figure and cause the profit of below files are not accurate. Secondly, the old files are not completed as it only stop at section 3 which just a breakdown display and summary of staking data but section 4 and so fort analyse the dataset.
