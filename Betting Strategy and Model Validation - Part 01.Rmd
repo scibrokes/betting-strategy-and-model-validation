@@ -148,8 +148,8 @@ load('./regressionApps/shinyData.RData')
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment again due to unable find the functions
 suppressMessages(library('utils'))
+suppressMessages(library('DT'))
 suppressMessages(source('function/libs.R'))
-suppressMessages(require('DT', quietly = TRUE))
 
 ## Read the data
 ## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
@@ -178,7 +178,7 @@ suppressMessages(require('dplyr', quietly = TRUE))
 suppressMessages(require('DT', quietly = TRUE))
 
 dat %>% datatable(
-  caption = "Table 2.1.1 : Firm A Staking Data", 
+  caption = "Table 2.1.1 : Firm A Staking Data (in $0,000)", 
   escape = FALSE, filter = "top", rownames = FALSE, 
   extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
                     "Buttons" = NULL, "Responsive" = NULL), 
@@ -394,12 +394,15 @@ rm(m)
 *graph 3.1.2* : *Investment monthly trend graph.*
 
 ```{r data-daily-summary, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
-dt2 <- dat %>% group_by(Sess, Month, Day) %>% summarise(S.total = sum(Stakes), S.median = median(Stakes), S.mean = round(mean(Stakes), 4), S.sd = round(sd(Stakes), 4), Count = length(PL), minHKPrcB = min(HKPrice), maxHKPrcB = max(HKPrice), minProbB = min(netProbB), maxProbB = max(netProbB), Return = sum(PL, Stakes), PL = sum(PL), PL.percent = sprintf(sum(PL)/sum(Stakes), fmt = "%1.4f%%"), Samples = paste(Stakes, collapse = ",")) %>% mutate(Series = Samples)
+suppressMessages(library('tidyr'))
+
+dt2 <- dat %>% group_by(Sess, Month, Day) %>% summarise(S.total = sum(Stakes), S.median = median(Stakes), S.mean = round(mean(Stakes), 4), S.sd = round(sd(Stakes), 4), Count = length(PL), minHKPrcB = min(HKPrice), maxHKPrcB = max(HKPrice), minProbB = min(netProbB), maxProbB = max(netProbB), Return = sum(PL, Stakes), PL = sum(PL), PL.percent = sprintf(sum(PL)/sum(Stakes), fmt = "%1.4f%%"))#, Samples = paste(Stakes, collapse = ",")) %>% mutate(Series = Samples)
 #'@ names(dt2)[1] <- 'Sess'
 ddim <- dim(dt2)
 
 ## Copy for plot graph
-m <- dt2 %>% mutate(Day = paste(Day, Month, Sess)) %>% select(Day, Stakes = S.total, Return, PL)
+m <- dt2 %>% tbl_df %>% mutate(Day = paste(Day, Month, Sess)) %>% select(Day, Stakes = S.total, Return, PL)
+#'@ m <- dt2 %>% tbl_df %>% unite(Day, Day, Month, Sess) %>% select(Day, Stakes = S.total, Return, PL)
 
 #'@ r <- dt2 %>% group_by(Sess, Month, Day) %>% .$S.total %>% range
 

@@ -2,14 +2,14 @@
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
 suppressMessages(library('utils'))
-suppressMessages(require('shiny', quietly = TRUE))
-suppressMessages(require('shinyjs', quietly = TRUE))
-suppressMessages(require('plyr', quietly = TRUE))
-suppressMessages(require('dplyr', quietly = TRUE))
-suppressMessages(require('magrittr', quietly = TRUE))
-suppressMessages(require('broom', quietly = TRUE))
-suppressMessages(require('formattable', quietly = TRUE))
-suppressMessages(require('stringr', quietly = TRUE))
+suppressMessages(library('shiny'))
+suppressMessages(library('shinyjs'))
+suppressMessages(library('plyr'))
+suppressMessages(library('dplyr'))
+suppressMessages(library('magrittr'))
+suppressMessages(library('broom'))
+suppressMessages(library('formattable'))
+suppressMessages(library('stringr'))
 
 appCSS <- "
 #loading-content {
@@ -35,16 +35,20 @@ color: #D4AC0D;
 ## Run above codes and save.images() and now directly load for shinyApp use.
 load('./shinyData.RData', envir = .GlobalEnv)
 
+## **CORRECTION :** need to keep the cancelled matches as the "push" to count in the probability of the cancellation betslip as well which is occurred in real life.
+## 
 ## Filtered the cancelled or voided bets to avoid null observation and bias.
-if('Cancelled' %in% dat$Result){
-    dat <<- dat %>% filter(Result != 'Cancelled') %>% mutate(Result = factor(Result))
-} else {
-    dat <<- dat %>% mutate(Result = factor(Result)) }
+#'@ if('Cancelled' %in% dat$Result){
+#'@   dat <<- dat %>% filter(Result != 'Cancelled') %>% mutate(Result = factor(Result))
+#'@ } else {
+#'@   dat <<- dat %>% mutate(Result = factor(Result)) }
 
 ## ========= Linear Regression ================================
 ## Choosing the variables of linear models
 ## The net probabilities might open diversified handicap, therefore the HCap parameter need to be insert as one of parameter since the return of draw-no-bet, win-half, win-full, loss-half, loss-full (example : 0, 0/0.5, 0.5, 0.5/1, 1) affect the return of investment.
 ## lm0 indicate matches include prematch and inplay. lm0pm is subsetted with only prematch while lmip subsetted which only inplay matches.
+
+suppressMessages(library('magrittr'))
 
 lm0 <<- lm(Return ~ Stakes, data = dat)
 lm0pm <<- lm(Return ~ Stakes, data = dat, subset = c(InPlay == 'No' & InPlay2 == 'No'))
@@ -160,7 +164,7 @@ ui <- shinyUI(fluidPage(
                 a(id = 'toggleAdvanced', 'Show/hide advanced info', href = '#'),
                 hidden(
                   div(id = "advanced",
-                      p('- Author Profile:', HTML("<a href='https://beta.rstudioconnect.com/englianhu/ryo-eng/'>®γσ, Eng Lian Hu</a>")),
+                      p('- Author Profile:', HTML("<a href='https://beta.rstudioconnect.com/englianhu/ryo-eng/'>RYO, ENG Lian Hu</a>")),
                       p('- GitHub:', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation'>Source Code</a>")))),
                 br(),
                 p('Timestamp: ',
@@ -240,13 +244,9 @@ ui <- shinyUI(fluidPage(
             p("Powered by - Copyright® Intellectual Property Rights of ",
               tags$a(href='http://www.scibrokes.com', target='_blank',
                      tags$img(height = '20px', alt='hot', #align='right',
-                              src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/regressionApps/oda-army.jpg')), HTML("<a href='http://www.scibrokes.com'>Scibrokes®</a>"), "個人の経営企業")
-          )
-        )
-      )
+                              src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/regressionApps/oda-army.jpg')), HTML("<a href='http://www.scibrokes.com'>Scibrokes®</a>"))))))
     )
-  )
-)
+    )
 
 ## ========= ShinyServer ================================
 # Define server logic required to draw a histogram
@@ -363,6 +363,7 @@ server <- shinyServer(function(input, output) {
                                      Anova.ip = anova(lm6ip, lm8ip, lm10ip, lm13ip, lm14ip)))
   
   output$table1A <- renderFormattable({
+    suppressMessages(library('magrittr'))
     compare[[1]] %>% formattable(list(
       AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
       
@@ -388,7 +389,7 @@ server <- shinyServer(function(input, output) {
       
     ))
   })
-
+  
   output$table1B <- renderFormattable({
     compare[[3]] %>% formattable(list(
       AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
