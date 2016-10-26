@@ -67,7 +67,8 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
   - Section [4.2 Linear Ⓜodel] - Reversed Engineer to get the EMOdds derived from Stakes
   - Section [4.3 Kelly Ⓜodel] - Test the Kelly Model.
     + Section [4.3.1 Basic Kelly Ⓜodel] - Basic Kelly model.
-    + Section [4.3.2 Weight Function] - Modified Kelly model to increase the effeciency of staking and profit.
+    + Section [4.3.2 Weight Function] - Fractional Kelly model.
+    + Section [4.3.3 Dynamic Kelly Ⓜodel] - Dynamic Kelly model.
   - Section [4.4 Poisson Ⓜodel] - Soccer Scores, Odds Price and Stakes modelling.
   - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - Simulate the staking model.
   - Section [4.6 Expectation Ⓜaximization and Staking Simulation] - Enhance by weighted function on Staking model and Simulation.
@@ -79,32 +80,42 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
 ```{r data-return-summary-table1, message = FALSE, warning = FALSE, echo = FALSE, results = 'asis'}
 ## Load package again due to cannot find the function
 suppressMessages(library('lubridate'))
+suppressMessages(library('tidyverse'))
 suppressMessages(library('plyr'))
+suppressMessages(library('dplyr'))
 suppressMessages(library('magrittr'))
 suppressMessages(library('formattable'))
+suppressMessages(library('htmltools'))
 
 ## Get the investment return rates per annun
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
 ## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
-m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), PL = sum(PL), n = length(Sess), rRates = PL / Stakes) %>% mutate(Stakes = accounting(Stakes), PL = accounting(PL), rRates = percent(rRates))
+m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), PL = sum(PL), n = length(Sess), rRates = PL / Stakes) %>% mutate(Stakes = currency(Stakes), PL = currency(PL), n = accounting(n, format = 'd'), rRates = percent(rRates)) %>% tbl_df
 
-m %>% formattable(list(
-  caption = 'Table 4.1.1 : Annual Return of Investment (HKD$1 = HKD$10,000)',
-  
-  Stakes = color_tile('white', 'darkgoldenrod'),
-  Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.2f (rank: %02d)', x, rank(-x))),
-  n = color_tile('white', '#9B870C'),
-  rRates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.4f (rank: %02d)', x, rank(-x)))
-)) %>% as.htmlwidget
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "Profit and Loss of Investment"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Annual Stakes and Profit and Loss of Firm A at Agency A (2011-2015) ($0,000)")), 
+  as.htmlwidget(m %>% formattable(list(
+    
+    Stakes = color_tile('white', 'darkgoldenrod'), 
+    
+    PL = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ paste0(round(x, 2), ' (rank: ', sprintf('%02d', rank(-x)), ')')), 
+    
+    n = color_tile('white', '#9B870C'), 
+    
+    rRates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))))))
 ```
 
-*table 4.1.1* : `r paste0(dim(m), collapse=' x ')` : *Return of annually investment summary table. (HKD$1 indicates HKD$10,000)*^[Kindly refer to the list of colors via [Dark yellow with hexadecimal color code #9B870C](http://encycolorpedia.com/9b870c) for plot the stylist table.]
+*table 4.1.1* : `r paste0(dim(m), collapse = ' x ')` : *Return of annually investment summary table. (HKD$1 indicates HKD$10,000)*^[Kindly refer to the list of colors via [Dark yellow with hexadecimal color code #9B870C](http://encycolorpedia.com/9b870c) for plot the stylist table.]
 
-$$\Re = \sum_{i=1}^{n}\rho_{i}^{EM}/\sum_{i=1}^{n}\rho_{i}^{BK} \cdots equation 4.1.1$$
+$$\Re = \sum_{i=1}^{n}\rho_{i}^{EM}/\sum_{i=1}^{n}\rho_{i}^{BK} \cdots equation\ 4.1.1$$
 
   $\Re$ is the edge or so call advantage for an investment. The $\rho_i^{EM}$ is the estimated probabilities which is the calculated by firm A from match 1,2... until $n$ matches while $\rho_{i}^{BK}$ is the net/pure probability (real odds) offer by bookmakers after we fit the *equation 4.1.2* into *equation 4.1.1*.
 
-$$\rho_i = P_i^{Lay} / (P_i^{Back} + P_i^{Lay}) \cdots equation 4.1.2$$
+$$\rho_i = P_i^{Lay} / (P_i^{Back} + P_i^{Lay}) \cdots equation\ 4.1.2$$
 
 $P_i^{Back}$ and $P_i^{Lay}$ is the backed and layed fair price offer by bookmakers.
 
@@ -122,31 +133,39 @@ $P_i^{Back}$ and $P_i^{Lay}$ is the backed and layed fair price offer by bookmak
 ##
 suppressMessages(library('dplyr'))
 suppressMessages(library('formattable'))
+suppressMessages(library('htmltools'))
 
 m1 <- ddply(dat, .(Result), summarise, Stakes = sum(Stakes), Return = sum(Return), Rates = Return / Stakes, n = length(Sess)) %>% tbl_df %>% mutate(S.prop = round(Stakes / sum(Stakes), 4), R.prop = round(Return / sum(Return), 4), prop = round(n / sum(n), 4))
 tv <- c('Total', colSums(m1[-1])); tv[4] <- as.numeric(tv[3]) / as.numeric(tv[2])
 m1 <- suppressWarnings(rbind(m1, tv))
 m1$Result <- factor(c(as.character(m1$Result)[-length(m1$Result)], 'Total')); rm(tv)
-m1 %<>% purrr::map_if(is.character, as.numeric) %>% data.frame %>% tbl_df
+m1 %<>% purrr::map_if(is.character, as.numeric) %>% data.frame %>% tbl_df %>% mutate(Stakes = currency(Stakes), Return = currency(Return), Rates = percent(Rates), n = accounting(n, format = 'd'), S.prop = percent(S.prop), R.prop = percent(R.prop), prop = percent(prop))
 #'@ m %>% kable(caption = 'Table 4.1.3 : Summary of Betting Results')
 
-m1 %>% formattable(list(
-    caption = 'Table 4.1.2 : Summary of Betting Results (HKD$1 = HKD$10,000)',
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "Profit and Loss of Investment"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Stakes and Profit and Loss of Firm A at Agency A (2011~2015) ($0,000)")), 
+  as.htmlwidget(m1 %>% formattable(list(
     
-    Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
+    #'@ Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
+    Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ paste0(round(x, 2), ' (rank: ', sprintf('%02d', rank(-x)), ')')), 
     
-    Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
+    #'@ Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
+    Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ paste0(round(x, 2), ' (rank: ', sprintf('%02d', rank(-x)), ')')), 
     
-    Rates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x))),
+    Rates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %.0f)', 100 * x, rank(-x))),
     
     n = color_tile('white', 'green'),
     
-    S.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %2d)', x, rank(-x))),
+    S.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %2d)', 100 * x, rank(-x))),
     
-    R.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x))),
+    R.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %.0f)', 100 * x, rank(-x))),
     
-    prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(-x)))
-)) %>% as.htmlwidget
+    prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %.0f)', 100 * x, rank(-x)))
+))))
 ```
 
 *table 4.1.2* : `r paste0(dim(m1), collapse = ' x ')` : *Summary of betting results. (HKD$1 = HKD$10,000)*
@@ -176,9 +195,10 @@ if('Cancelled' %in% dat$Result){
 # Advantages = (prob of win * decimal odds) + (prob of lose * -1)
 # Optimal Kelly wager % = Advantages / decimal odds
 
-dat$rRates <- rep(m$rRates, count(dat, Sess)$n)
+#'@ dat$rRates <- rep(m$rRates, count(dat, Sess)$n) #unable found 'Sess' when knit but workable when run chunk-by-chunk.
+dat$rRates <- rep(m$rRates, ddply(dat, .(Sess), summarise, n = length(Sess))$n)
 dat$rEMProbB = round(dat$rRates * dat$netProbB, 6)
-dat$rEMProbL = round(1- dat$rEMProbB, 6)
+dat$rEMProbL = round(1 - dat$rEMProbB, 6)
 
 dat %>% select(No.x, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL, rRates, rEMProbB, rEMProbL, favNetProb, undNetProb) %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
 ```
@@ -236,14 +256,12 @@ hdp <- sort(unique(as.numeric(as.character(dat$HCap))))
 hdp %<>% matrix(., nrow = 8) %>% data.frame %>% tbl_df
 
 hdp %>% formattable(list(
-  X350.225 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X200.075 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X050.075 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X100.225 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X250.375 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X400.525 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X550.675 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X700.825 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x)))
+  X1 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X2 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X3 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X4 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X5 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X6 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))) 
   )
 ) %>% as.htmlwidget
 ```
@@ -335,6 +353,9 @@ rm(lm0, lm0pm, lm0ip, lm1, lm1pm, lm1ip, lm2, lm2pm, lm2ip, lm3, lm3pm, lm3ip, l
 
 <s>
 ```{r lm-summary, echo = FALSE, eval = FALSE, results = 'asis'}
+## There has a package htmlTable as well, you can compare among xtable, stargazer, htmlTable, formattable and knit::kable().
+## https://cran.r-project.org/web/packages/htmlTable/vignettes/tables.html
+
 ## Kindly refer to below *shinyapp 4.2.1* as I wrote as an shiny app.
 
 #'@ anova to compare the models
@@ -400,15 +421,16 @@ compare <- ldply(lms, function(x) {
 
 compare %<>% mutate(delta.AIC = AIC - min(AIC), Loglik.AIC = exp(-0.5 * delta.AIC), weight.AIC = Loglik.AIC/sum(Loglik.AIC), delta.BIC = BIC - min(BIC), Loglik.BIC = exp(-0.5 * delta.BIC), weight.BIC = Loglik.BIC/sum(Loglik.BIC))
 
-form <- ldply(lms, function(x) paste0(x$call[-1], collapse = ' , ')) %>% rename(.id = .id, formula = V1)
+form <- ldply(lms, function(x) paste0(x$call[-1], collapse = ' , '))# %>% rename(.id = .id, formula = V1)
+names(form) <- c('.id', 'formula')
 
 ## Skip below combination to avoid hard to read since long formula column will make data.frame looks weird.
 #'@ compare %<>% join(form, ., by = '.id') %>% select(No, Cat, .id, formula, AIC, BIC, df, residuals, p.value, delta.AIC, Loglik.AIC, weight.AIC, delta.BIC, Loglik.BIC, weight.BIC)
 
 ## Refer to *figure 4.4.1* to compare the models, between "all" and "pm + ip".
-bestlm <- compare %>% filter(p.value < 0.05) %>% group_by(Cat) %>% slice(which.min(BIC)) #best model for every single category.
+bestlm <- compare %>% filter(p.value < 0.05) %>% group_by(Cat) %>% slice(which.min(BIC)) %>% mutate(AIC = accounting(AIC), BIC = accounting(BIC), df = accounting(df, format = 'd'), residuals = accounting(residuals, format = 'd'), p.value = percent(p.value), delta.AIC = accounting(delta.AIC), delta.BIC = accounting(delta.BIC)) #best model for every single category.
 
-compare %<>% split(., .$Cat) #split the category and list the ranking.
+compare %<>% mutate(AIC = accounting(AIC), BIC = accounting(BIC), df = accounting(df, format = 'd'), residuals = accounting(residuals, format = 'd'), p.value = percent(p.value), delta.AIC = accounting(delta.AIC), delta.BIC = accounting(delta.BIC)) %>% split(., .$Cat) #split the category and list the ranking.
 
 form %>% formattable %>% as.htmlwidget
 ```
@@ -419,14 +441,14 @@ form %>% formattable %>% as.htmlwidget
 ## all soccer matches
 compare[[1]] %>% formattable(list(
   AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
-  
+
   BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
   
   df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
   
   residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
   
-  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
+  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(x))),
   
   delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
   
@@ -456,7 +478,7 @@ compare[[3]] %>% formattable(list(
   
   residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
   
-  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
+  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(x))),
   
   delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
   
@@ -486,7 +508,7 @@ compare[[2]] %>% formattable(list(
   
   residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
   
-  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
+  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(x))),
   
   delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
   
@@ -517,7 +539,7 @@ bestlm %>% formattable(list(
   
   residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
   
-  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(x))),
   
   delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
   
@@ -555,9 +577,11 @@ bestlm %>% formattable(list(
 
 ### 4.3.1 Basic Kelly Ⓜodel
 
-  From the papers *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] and *Jeffrey Alan Logan Snyder (2013)*^[Kindly refer to 2nd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] both applying **Full-Kelly**,**Half-Kelly** and also **Quarter-Kelly** models which similar with my previous Kelly-Criterion model *®γσ, Eng Lian Hu 2014*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References**] but enhanced. *Niko Marttinen (2001)* has concludes that the basic Kelly criterion generates the highest returns compare to modified Kelly models.
+  From the papers *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] and *Jeffrey Alan Logan Snyder (2013)*^[Kindly refer to 2nd paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] both applying **Full-Kelly**,**Half-Kelly** and also **Quarter-Kelly** models which similar with my previous Kelly-Criterion model *®γσ, Eng Lian Hu 2014*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References** which had applied it and generates an impressive return.] but enhanced. *Niko Marttinen (2001)* has concludes that the basic Kelly criterion generates the highest returns in long run compare to fractional Kelly models.
 
 <iframe src="https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/8adcccbde5140a4321bf064ef2e065551bc195ed/references/Creating%20a%20Profitable%20Betting%20Strategy%20for%20Football%20by%20Using%20Statistical%20Modelling.pdf" style="width:560px; height:500px;" frameborder="0"></iframe>
+
+<br>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/kOvJGcxtIp4" frameborder="0" allowfullscreen></iframe>
 
@@ -569,11 +593,15 @@ bestlm %>% formattable(list(
 
 ![*figure 4.3.1.1 : Kelly criterion formula.*](figure/Kelly.png)
 
-$$S = \frac{\rho_{EM} \times BK_{Decimal\ odds} - 1} {BK_{HK\ odds}} \times BR \cdots equation 4.3.1$$
+$$S = \frac{\rho_{EM} \times BK_{Decimal\ odds} - 1} {BK_{HK\ odds}} \cdots equation\ 4.3.1.1$$
 
-  - Where $S$ is the stake expressed as a fraction of one's total bankroll, $BR$ is the total bankroll.
+  - Where $S$ is the stake expressed as a fraction of one's total bankroll.
   - $\rho_{EM}$ is probability of an event to take place and 
   - while $BK_{Decimal\ odds}$ is decimal odds (decimal odds the return rates with capital stakes) and $BK_{HK\ Odds}$ (HK odds is the net profit rates without capital stakes) for an event offered by the bookmaker.
+
+  Due to HK odds or decimal odds start from range $(0,\infty]$ and return will be $[0,\infty]$, therefore logarithmic function required. For Malay odds $[-1,1]$ no need logarithm. Here I switch from *equation 4.3.1.1* to *equation 4.3.1.2* as below.
+
+$$log(S) = log(\rho_{EM}) + log(BK_{Decimal\ odds} - 1) - log(BK_{HK\ odds}) \cdots equation\ 4.3.1.2$$
 
   Three important properties, mentioned by *Hausch and Ziemba (1994)*^[You can refer to [Efficiency of Racetrack Betting Markets (2008 Preface Edition)](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Efficiency%20of%20the%20Racetrack%20Betting%20Market%20(2008%20Edition).pdf) which is 29th paper in [Reference for industry knowdelege and academic research portion for the paper.] or [*Chapter 18 Efficiency of Sports and Lottery Betting Markets* in **FINANCE**](https://books.google.com.my/books?id=XC4fZPbT1SQC&printsec=frontcover&dq=Handbooks+in+Operations+Research+and+Management+Science+Finance&hl=en&sa=X&ved=0ahUKEwj7lIj5pLLPAhXGVZQKHf_LC-4Q6AEIPjAE#v=onepage&q&f=false) for further study about Hausch and Ziemba's researchs.] arise when using this criterion to determine a proper stake for each bet:
 
@@ -594,11 +622,10 @@ suppressMessages(library('formattable'))
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
 ## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
 ## due to subset doesn't work, here I add the subset function again.
-m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), PL = sum(PL), n = length(Sess), rRates = PL / Stakes) %>% mutate(Stakes = accounting(Stakes), PL = accounting(PL), rRates = percent(rRates))
+m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), PL = sum(PL), n = length(Sess), rRates = PL / Stakes) %>% mutate(Stakes = currency(Stakes), PL = currency(PL), rRates = percent(rRates)) %>% tbl_df
 
 m %>% formattable(list(
-  caption = 'Table 4.3.1 : Annual Return of Investment without Cancelled Bets (HKD$1 = HKD$10,000)',
-  
+
   Stakes = color_tile('white', 'darkgoldenrod'),
   Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.2f (rank: %02d)', x, rank(-x))),
   n = color_tile('white', '#9B870C'),
@@ -606,53 +633,75 @@ m %>% formattable(list(
 )) %>% as.htmlwidget
 ```
 
-*table 4.3.1* : `r paste0(dim(m), collapse=' x ')` : *Return of annually investment summary table without cancelled bets. (HKD$1 = HKD$10,000)*^[the `rRates` is the mean value of annual return rates which is the return divides by stakes but ommit the cancelled/voided bets to avoind the bias.]
+*table 4.3.1.1* : `r paste0(dim(m), collapse = ' x ')` : *Return of annually investment summary table without cancelled bets.*^[the `rRates` is the mean value of annual return rates which is the return divides by stakes but ommit the cancelled/voided bets to avoind the bias.]
 
-  The `rRates` value from table above excludes the `Cancelled` bets. By refer to *equation 4.3.1*, now we fit the adge value from *equation 4.1.1* into it to get the `rEMProbB2` and `rEMProbL2` with known staked value $S$^[Although the result will not be accurate due to the we mention at first, the firm A will not only place bets via only agent A. Let say edge of 0.10 and 0.20 also placed maximum bet HKD40000 but the firm A might placed different amount through other agency based on different edge. However based on the stakes we can reverse the optimal EM Odds.] to replace the existing EM value.
-</s>
+  The `rRates` value from table above excludes the `Cancelled` bets. By refer to *equation 4.3.1.2*, now we fit the adge value from *equation 4.1.1* into it to get the `rEMProbB2` and `rEMProbL2` with known staked value $S$^[Although the result will not be accurate due to the we mention at first, the firm A will not only place bets via only agent A. Let say edge of 0.10 and 0.20 also placed maximum bet HKD40000 but the firm A might placed different amount through other agency based on different edge. However based on the stakes we can reverse the optimal EM Odds.] to replace the existing EM value.
+</s>^[Initially think of linear modelling and get the mean value, the positive standard deviation value will be counted as edge range and the residuals value will be the different within the stakes across the leagues. It will similar with proportional staking model as states in paper **Good and bad properties of the Kelly criterion** *by MacLean, Thorp and Ziemba (2010)* and concludes that the Full-Kelly model is the best model for long run, you can refer to the reference in [Kelly Criterion - Part II](https://github.com/scibrokes/kelly-criterion) for further understanding.]
 
-$$\rho_{EM} = \frac {S \times BK_{HK\ odds} + 1} {BK_{Decimal\ odds}} \cdots equation4.3.2$$
+$$log(\rho_{EM}) = log(S) + log(BK_{HK\ odds} + 1) - log(BK_{Decimal\ odds}) \cdots equation\ 4.3.1.3$$
+
   Although the Kelly model is very simple, but we need to seperates the staking based on different leagues or time range to make it applicable to real world. I don't pretend to know the correct model again but guess the applicable model by testing few models and choose the best among them.
-
-**Bank Roll**
-
-  There has few points we need to consider, there the we need to retrieve the initial investment capital $BR$:
   
-  - risk averse from ruin^[The daily lost cannot over the investment fund, otherwise will be bankrupt before growth, Kelly model is sort of risky at the beginning period but bacame stable as time goes by.]
-  - Initial invested capital
-  - The differences of time zone (British based sports consultancy firm A)
-  - The financial settlement time of Asian operators (daily financial settlement time 12:00PM Hong Kongnese GMT+8 Credit market with rebates)^[Here I follow the kick-off time from GMT+8 1200 until next morning 1159 (or the American Timezone which is GMT - 4) considered as a soccer betting date. Re-categorise the soccer financial settlement date. Due to I have no the history matches dataset from bookmakers. The scrapped spbo time is not stable (always change, moreover there just an information website) where firm A is the firm who placed bets with millions HKD (although the kick-off time might also changed after placed that particular bet), therefore I follow the kick-off time of the firm A.]
-
-```{r bank-roll, echo = FALSE, results = 'asis'}
-suppressMessages(library('knitr'))
-
-## Re-categorise the soccer financial settlement date. Due to I have no the history matches dataset from bookmakers. The scrapped spbo time is not stable (always change, moreover there just an information website) where firm A is the firm who placed bets with millions HKD (although the kick-off time might also changed after placed that particular bet), therefore I follow the kick-off time of the firm A.
-dat <- dat[order(dat$DateUK),] %>% mutate(DateUS = as.Date(format(DateUK, tz = 'EST', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S'))) #daily settlement will base on variable `DateUS`.
-
-BR <- ddply(dat, .(DateUS), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL), n = length(Sess), rRates = Return / Stakes) %>% mutate(CumStakes = cumsum(Stakes), SPL = cumsum(PL), BR = ifelse(4600 + SPL > 0, 4600 + SPL, -9999), gRates = c(1, exp(diff(log(BR$BR), lag = 1))), gRates2 = BR/BR[1])
-
-#'@ write.csv(BR, file = './data/BankRoll.csv')
-
-## Due to our bank roll cannot be less than 0, otherwie will be ruined. Therefore I added the initial balance of the account from the min value of variable `SPL` which is the balance before place bets must be more than 0. Otherwise unable to place bets.
-kable(summary(BR), caption = "Table 4.3.2 : Summary data of daily bank roll (HKD$0'000)")
-```
-
-*table 4.3.2* : `r paste0(dim(BR), collapse=' x ')` : *Sample data of daily bank roll. (HKD$1 = HKD$10,000)*
-
-  Due to our bank roll cannot be less than 0, otherwie will be ruined. Therefore I added the initial balance of the account from the min value of variable `SPL` which is the balance before place bets must be more than 0. Otherwise unable to place bets.
-  
-  From above table summary, we know that the gap of **daily growth rate** (variable *gRates* is geometric growth rates while *gRates2* is initial fund baseline growth rates) is very big which is from `r min(BR$gRates)` to `r max(BR$gRates)` although the median value is `r median(BR$gRates)`. From initial `paste0('HKD\$', r BR$BR[1] * 10000)` lost to `paste0('HKD\$', r min(BR$BR) * 10000)` while the maximum bankroll hit `paste0('HKD\$', r max(BR$BR) * 10000)` which was `r max(BR$BR)/ BR$BR[1]` and the final bankroll is `r tail(BR$BR)[1]/ BR$BR[1]` times initial invested fund.^[As I mentioned at the begining of the research paper, the stakes only reflects the profit and loss of agency A but not firm A. Firm A might have deal with 10~50 or even more agencies and the data from year 2011 is not the initial investment year. You are feel free to download the [BankRoll.csv](). We will discuss the inventory management to reduce the risk.] From [BankRoll.csv]() we observe the end of soccer sesson in May 2011 `dat %>% filter(DateUS >= '2011-05-14' & DateUS <= '2011-05-21')` has a seriourly crash. We can investigate more details about the loss matches from the data (or filter the range of the bets in the data table inside [Part I](http://rpubs.com/englianhu/208637)).
-
-**Kelly Criteria**
-
-  After we got the initial fund pool, now we try to apply the *equation 4.3.2* to get the Kelly stakes.
-
-  Many great investors use full Kelly $Elog(w)$ and fractional Kelly αwα, α<0 successfully;
-some examples are discussed in the paper.
+  We try to apply the *equation 4.3.1.3* to get the Kelly stakes for every single soccer match.
 
   Due to there have few reference papers conducting few staking strategics and concludes full Kelly model is the best fit and most profitable along the long term investment, here I try to simuulate the half-Kelly and also quadruple-Kelly, as well as double-Kelly staking model etc and get the optimal weighted control parameter.^[There has a reference paper in section 2 of [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion) has compare few models as well and also provides the pro-and-con of Kelly model in investment. However, Kelly model will be the best across the long term investment.] Besides, there have few papers doing research and also critic on the Kelly model in investment in financial market and also betting market (includes the rebates of the credit market as well), PIMCO's fund manager **Bill Gross** who manage more than one trillion USD funds applied Kelly model for portfolio, **George Soros** and **Warren Buffet** also applied similar theoty or method with Kelly although there has no evidence to proof it. You are feel free to know in later section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement]. For further details kindly refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion).
 
+  Fractional Kelly models are the weight function for Kelly criterion When we talk about weight function in Kelly model. [A Response to Professor Paul A Samuelson's Objections to Kelly Capital Growth Investing](https://github.com/scibrokes/kelly-criterion/blob/master/references/A%20Response%20to%20Professor%20Paul%20A%20Samuelson's%20Objections%20to%20Kelly%20Capital%20Growth%20Investing.pdf) has talk about the investment portfolio and compare the double-Kelly, full-Kelly, half-Kelly, quadruple-Kelly and also proportional betting across different stages of iterations and concludes that the full-Kelly will be the best fit and growth beyond the ages. Well, fractional-Kelly (means double-Kelly, half-Kelly and quadruple-Kelly but not full-Kelly model) models will be elastics and lesser will be more conservative and double-Kelly will be very risky and eventually going to bankcrupt due to the staking leverages ratio is twice of full-Kelly and over the sustainability of capital. and For further details kindly refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion). Therefore in last basic Kelly we use the full-Kelly within same leagues but due to there has different levels of risk setting across different soccer leagues. Therefore a weight function needed to make the staking strategy flexible, and it is term as Kelly portfolio to diversified the investment.
+
+### 4.3.2 Fractional Kelly Ⓜodel
+
+  Now we try to fit a weight function into basic Kelly model to be fractional Kelly model. I try to use log to test the maximum value of weight parameter. You can just simply use $w = \frac{1}{4}$ or $log(w) = \frac{1}{2}$ while $w$ is a vector. Please be mind that the value greater than 1 will be risky since involve leverage and lesser will be more conservative.
+
+$$log(w_{i}) + log(\rho_{i}) \cdots equation\ 4.3.2.1$$
+
+  From *Niko Marttinen (2001)*, we can know the full-Kelly generates couple times profit compare to fractional Kelly-models. However there has two points need to be enhanced.
+  
+  - The high risk at the beginning period of investment.
+  - Test on different level of edge and concludes that the 145% generates the highest return.
+
+  Below *Fabián Enrique Moya (2012)* also test the fractional Kelly models with diversify money management methods.
+
+<iframe src="https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/c2da2e5ca09aaf218616045031c9ee4ce3537b18/references/Statistical%20Methodology%20for%20Profitable%20Sports%20Gambling.pdf" style="width:560px; height:500px;" frameborder="0"></iframe>
+
+### 4.3.3 Dynamic Kelly Ⓜodels
+
+  Due to fractional Kelly model is independent models (for example : half-Kelly will be half-Kelly staking model, and full-Kelly will be only full-Kelly model across the years as we made comparison in *table 4.3.3.3*.), now we need to make it dynamic fractional model. Similar with my prevous Rmodel which applied on Poisson model. Due to the calculation of the settlement and result on the win and loss of Asian Handicap is different with Fixed odds, the probabilities of the outcome will be descrete and the measurement of the `likelihood` result required in order to maximize the profit. here we need to add an additional parameter controller to adjust the staking amount on every single match.
+
+  Now I try to will simulate an enhanced Kelly model on staking which take the effect of the outcome of the result into calculation below controller parameter $\phi(r)$ fit into $equation\ 4.3.3.1$ to control the leverage ratio.^[similar theory apply on investment portfolio while it might turn to be nested controller parameters across different soccer leagues.]
+
+$$\phi(r) = exp(w_{i}\rho_{i}) \cdots equation\ 4.3.3.1$$
+ Where $X = x_{i,2,3...n}$ is the original staking amount by Kelly model. Meanwhile, the $r$ value is the optimal parameter controller for staking.
+
+$$r\begin{Bmatrix}
+=& Win\\
+=& Half\ Win\\
+=& Push\\
+=& Half\ Loss\\
+=& Loss\end{Bmatrix} \cdots equation 4.3.3.2$$
+
+```{r lprofile, echo = FALSE, results = 'asis'}
+
+#'@ lRiskProf <- dat[c('League', 'Stakes', 'HCap', 'Result', 'PL')] %>% tbl_df %>% .[sort(.$League), ] %>% unique %>% na.omit %>% mutate(Stakes = currency(Stakes), PL = currency(PL))
+lRiskProf <- dat[c('League', 'Stakes', 'HCap', 'Result', 'PL')] %>% tbl_df %>% .[sort(.$League), ] %>% unique %>% na.omit %>% mutate(Stakes = currency(Stakes), PL = ifelse(PL < 0, paste0('-$', substring(PL, 2)), paste0('$', PL)))
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "League Stakes Profiling"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Stakes of Firm A at Agency A (2011~2015) ($0,000)")), 
+  as.htmlwidget(lRiskProf %>% .[sample(1:nrow(.), 6), ] %>% formattable(list(
+    Stakes = color_tile('white', 'darkgoldenrod')
+    ))))
+```
+
+*table 4.3.3.1* : `r paste0(dim(lRiskProf), collapse = ' x ')` : *League stakes profiling of firm A from 2011~2015.*
+
+  Above league risk profile suppose to stores the maximum bet for every single league but I only randomly select 6 leagues as sample. However due to I've not yet write a function for real time API^[There are a lot of real time XML odds price and staking softwares similar with **4lowin2** which was states at the begining section in Part I] with operators and test the maximum stakes per bet therefore here I skip the section as future improvement.
+
 ```{r data-Kelly, echo = FALSE, results = 'asis'}
+suppressMessages(library('knitr'))
+
 ## Kelly Criterion model
 ##
 ## Advantages = (prob of win * decimal odds) + (prob of lose * -1)
@@ -664,7 +713,62 @@ some examples are discussed in the paper.
 ## Kelly model
 ##
 ## KStakes = exp((log(1000) * HKPrice + 1) / EUPrice) #testing... need to group by leagues due to difference of risk setting.
-dat %<>% mutate(KStakes = (sum(Stakes) * HKPrice + 1) / EUPrice, KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA))))))
+dat %<>% mutate(
+  KProb = ((Stakes / 10000) * HKPrice + 1) / EUPrice, 
+                
+  KProbFixed = exp((log(Stakes / 10000) * HKPrice + 1) / EUPrice), 
+                
+  KEMProb = (rEMProbB * HKPrice + 1) / EUPrice, 
+                
+  KProbHalf = ((0.5 * Stakes / 10000) * HKPrice + 1) / EUPrice, 
+                
+  KProbQuarter = ((0.25 * Stakes / 10000) * HKPrice + 1) / EUPrice, 
+                
+  KProbAdj = exp((log(Stakes / 10000) * HKPrice + 1) / EUPrice), 
+                
+  KHalfAdj = exp((log(0.5 * Stakes / 10000) * HKPrice + 1) / EUPrice), 
+                
+  KEMQuarterAdj = exp((log(0.25 * Stakes / 10000) * HKPrice + 1) / EUPrice), 
+  
+  KStakes = (Stakes * HKPrice + 1) / EUPrice, 
+                
+  KStakesFixed = exp((log(Stakes) * HKPrice + 1) / EUPrice), 
+                
+  KStakesEMProb = (as.numeric(rEMProbB * 100) * HKPrice + 1) / EUPrice, 
+                
+  KStakesHalf = (0.5 * Stakes * HKPrice + 1) / EUPrice, 
+                
+  KStakesQuarter = (0.25 * Stakes * HKPrice + 1) / EUPrice, 
+                
+  KStakesAdj = exp((log(Stakes) * HKPrice + 1) / EUPrice), 
+                
+  KStakesHalfAdj = exp((log(0.5 * Stakes) * HKPrice + 1) / EUPrice), 
+                
+  KStakesQuarterAdj = exp((log(0.25 * Stakes) * HKPrice + 1) / EUPrice), 
+                
+  KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA))))),  
+  
+  KReturnFixed = ifelse(Result == 'Win', KStakesFixed * EUPrice, ifelse(Result == 'Half Win', KStakesFixed * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesFixed, ifelse(Result == 'Half Loss', KStakesFixed * 0.5, ifelse(Result == 'Loss', 0, NA))))), 
+                
+  KReturnEMProb = ifelse(Result == 'Win', KStakesEMProb * EUPrice, ifelse(Result == 'Half Win', KStakesEMProb * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesEMProb, ifelse(Result == 'Half Loss', KStakesEMProb * 0.5, ifelse(Result == 'Loss', 0, NA))))),
+                
+  KReturnHalf = ifelse(Result == 'Win', KStakesHalf * EUPrice, ifelse(Result == 'Half Win', KStakesHalf * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesHalf, ifelse(Result == 'Half Loss', KStakesHalf * 0.5, ifelse(Result == 'Loss', 0, NA))))),
+                
+  KReturnQuarter = ifelse(Result == 'Win', KStakesQuarter * EUPrice, ifelse(Result == 'Half Win', KStakesQuarter * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesQuarter, ifelse(Result == 'Half Loss', KStakesQuarter * 0.5, ifelse(Result == 'Loss', 0, NA))))), 
+                
+  KReturnAdj = ifelse(Result == 'Win', KStakesAdj * EUPrice, ifelse(Result == 'Half Win', KStakesAdj * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesAdj, ifelse(Result == 'Half Loss', KStakesAdj * 0.5, ifelse(Result == 'Loss', 0, NA))))), 
+                
+  KReturnHalfAdj = ifelse(Result == 'Win', KStakesHalfAdj * EUPrice, ifelse(Result == 'Half Win', KStakesHalfAdj * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesHalfAdj, ifelse(Result == 'Half Loss', KStakesHalfAdj * 0.5, ifelse(Result == 'Loss', 0, NA))))), 
+                
+  KReturnQuarterAdj = ifelse(Result == 'Win', KStakesQuarterAdj * EUPrice, ifelse(Result == 'Half Win', KStakesQuarterAdj * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesQuarterAdj, ifelse(Result == 'Half Loss', KStakesQuarterAdj * 0.5, ifelse(Result == 'Loss', 0, NA)))))) %>% tbl_df
+
+## ----------------------
+## comparison among the Kelly models and the existing staking model by firm A.
+# > dat %>% mutate(KStakes = round((Stakes * HKPrice + 1) / EUPrice, 2), KStakes2 = exp((log(1000) * HKPrice + 1) / EUPrice), KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA))))), KReturn2 = ifelse(Result == 'Win', KStakes2 * EUPrice, ifelse(Result == 'Half Win', KStakes2 * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakes2, ifelse(Result == 'Half Loss', KStakes2 * 0.5, ifelse(Result == 'Loss', 0, NA)))))) %>% select(Stakes, KStakes, KStakes2, Return, KReturn, KReturn2) %>% data.frame %>% colSums %>% t %>% tbl_df %>% mutate(Rates = Return / Stakes, KRates = KReturn / KStakes, KRates2 = KReturn2 / KStakes2)
+# # A tibble: 1 × 9
+#    Stakes  KStakes KStakes2  Return  KReturn KReturn2    Rates   KRates  KRates2
+#     <dbl>    <dbl>    <dbl>   <dbl>    <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
+# 1 1663757 816210.6  2001767 1699530 833733.8  2066365 1.021501 1.021469 1.032271## ----------------------
 
 ## Omit both proportional betting strategics below due to full-Kelly model is proved as the best betting models.
 ##
@@ -674,8 +778,36 @@ dat %<>% mutate(KStakes = (sum(Stakes) * HKPrice + 1) / EUPrice, KReturn = ifels
 ## Proportional staking model 2
 #'@ pp2 <- dat %>% mutate(PP2AStakes = Stakes / HKPrice, PP2ADiff = PP2AStakes - Stakes, PP2BStakes = Stakes / ) #payout for even price.
 
+Kprof <- dat %>% select(HCap, rEMProbB, KProb, KProbFixed, KEMProb, KProbHalf, KProbQuarter, KProbAdj, KHalfAdj, KEMQuarterAdj, Stakes, KStakes, KStakesFixed, KStakesEMProb, KStakesHalf, KStakesQuarter, KStakesAdj, KStakesHalfAdj, KStakesQuarterAdj, Result, Return, KReturn, KReturnFixed, KReturnEMProb, KReturnHalf, KReturnQuarter, KReturnAdj, KReturnHalfAdj, KReturnQuarterAdj)
+
+kable(summary(Kprof), caption = 'Table 4.3.3.2 : Summary Table of Various Kelly Models')
+```
+
+*table 4.3.3.2* : `r paste0(dim(Kprof), collapse = ' x ')` : *League stakes profiling of firm A from 2011~2015.*
+
+```{r}
+Edge <- Kprof %>% select(-HCap, -Result) %>% .[c(1:9)] %>% colMeans %>% percent
+Edge[c('KProb', 'KEMProb', 'KProbHalf', 'KProbQuarter')] <- Edge[c('KProb', 'KEMProb', 'KProbHalf', 'KProbQuarter')]/(1 - Edge[c('KProb', 'KEMProb', 'KProbHalf', 'KProbQuarter')]) - 1
+Edge['rEMProbB'] <- Edge['rEMProbB'] * 100 - 1
+
+KK <- Kprof %>% select(-HCap, -Result) %>% .[-c(1:9)] %>% colSums %>% matrix(nrow = 9, dimnames = list(names(.)[1:9], c('Stakes', 'Return'))) %>% tbl_df %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = Return - Stakes, PL.R = percent(PL / Stakes))
+sumd <- data.frame(Edge, KK) %>% tbl_df
+rm(Edge, KK)
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "Profit and Loss of Diversified Investment"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Various Kelly Staking Models and Profit and Loss (2011-2015) ($0,000)")), 
+  as.htmlwidget(sumd %>% formattable))
+```
+
+*table 4.3.3.3* : `r paste0(dim(sumd), collapse = ' x ')` : *P&L of multiple Kelly models from 2011~2015.*
+
+```{r}
 ## Random pick 2 observations among each stratified levels of Result.
-K <- llply(split(dat, dat$Result), function(x) x[sample(nrow(x), 2), c('Result', 'KReturn', 'Return', 'EUPrice', 'HKPrice', 'KStakes', 'Stakes', 'Rebates')]) %>% ldply(., .id = 'Result') %>% mutate(KReturn = accounting(KReturn), Return = accounting(Return), KStakes = accounting(KStakes), Stakes = accounting(Stakes), Rebates = accounting(Rebates), Change = percent(KStakes / Stakes - 1)) %>% .[sample(nrow(.), nrow(.)), ]
+K <- llply(split(dat, dat$Result), function(x) x[sample(nrow(x), 2), c('Result', 'KReturn', 'Return', 'EUPrice', 'HKPrice', 'KStakes', 'Stakes', 'Rebates')]) %>% ldply(., .id = 'Result') %>% mutate(KReturn = currency(KReturn), Return = currency(Return), KStakes = currency(KStakes), Stakes = currency(Stakes), Rebates = percent(Rebates), Change = percent(KStakes / Stakes - 1)) %>% .[sample(nrow(.), nrow(.)), ]
 
 ## http://www.w3schools.com/colors/colors_picker.asp
 K %>% formattable(list(
@@ -686,26 +818,30 @@ K %>% formattable(list(
     HKPrice = color_tile('white', '#003D99'),
     KStakes = color_tile('white', '#CC9900'),
     Stakes = color_tile('white', '#CC9900'),
+    
     Change = formatter('span', style = ~ style(color = ifelse(Change < 0, 'red', 'green')), ~ icontext(ifelse(Change < 0, 'arrow-down', 'arrow-up'), Change))))
 ```
 
-*table 4.3.3* : `r paste0(dim(K), collapse=' x ')` : *Kelly stakes and firm A's stakes of annually investment summary table without cancelled bets.*^[The annum return rates but not all data return rates since we need to use the return of that particular year to reverse. The weight parameter in later section will take last year performance to be weight controller. Due to the firm A does not only placed bets with one agent but couples of agencies. Let say placed one millions HKD on a soccer match with higher price simultaniously compare to placed bets on one agency with price decreasingly, therefore the Kelly stakes will definately defferent with firm A's stakes.]
+*table 4.3.3.1* : `r paste0(dim(K), collapse = ' x ')` : *Kelly stakes and firm A's stakes of annually investment summary table without cancelled bets.*^[The annum return rates but not all data return rates since we need to use the return of that particular year to reverse. The weight parameter in later section will take last year performance to be weight controller. Due to the firm A does not only placed bets with one agent but couples of agencies. Let say placed one millions HKD on a soccer match with higher price simultaniously compare to placed bets on one agency with price decreasingly, therefore the Kelly stakes will definately defferent with firm A's stakes.]
 
-  Above Kelly stakes table 
+```{r }
+suppressMessages(library('tidyverse'))
+
+## weight function to get the likelihood staking amount, maximum likelihood methos will be applicable in section 4.5 and 4.6
+#'@ n <- length(levels(dat$Result)) * nrow(dat)
+#'@ mtx <- matrix(rep(0, n), nc = length(levels(dat$Result)), dimnames = list(NULL, levels(dat$Result))) %>% as.data.frame %>% tbl_df
+#'@ mtx %<>% mutate(`Win` = ifelse(dat$Result == 'Win', 1, 0), `Half Win` = ifelse(dat$Result == 'Half Win', 1, 0), Push = ifelse(dat$Result == 'Half Loss', 1, 0), `Half Loss` = ifelse(dat$Result == 'Half Loss', 1, 0))
+
+mtx <- dat %>% spread(Result, Stakes, fill= 0)
+weight <- lm(Return ~ Win + `Half Win` + Push + `Half Loss` + Loss, data = mtx[c('Return', 'KStakes', 'Win', 'Half Win', 'Push', 'Half Loss', 'Loss')])
+```
+
+**Bank Roll**
 
 ```{r}
-ddply(K, .(Result), summarise, 'KReturn (in 0,000)' = sum(KReturn), 'Return (in 0,000)' = sum(Return), EUPrice = mean(EUPrice), HKPrice = mean(HKPrice), 'KStakes (in 0,000)' = sum(KStakes), 'Stakes (in 0,000)' = sum(Stakes), Rebates = sum(Rebates), Change = mean(Change)) %>% tbl_df %>% formattable %>% as.htmlwidget
-```
+suppressMessages(library('htmltools'))
 
-```
-## comparison among the Kelly models and the existing staking model by firm A.
-> dat %>% mutate(KStakes = exp((log(1000) * HKPrice + 1) / EUPrice), KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA)))))) %>% select(HKPrice, EUPrice, Stakes, Result, KStakes, Return, KReturn) %>% .[-4] %>% colSums
-   HKPrice    EUPrice     Stakes    KStakes     Return    KReturn 
-  38740.58   79773.69 1662571.23 2000310.10 1698343.56 2064908.17 
-> 2064908.17/2000310.10
-[1] 1.032294
-> 1698343.56/1662571.23
-[1] 1.021516
+ddply(K, .(Result), summarise, KReturn = sum(KReturn), Return = sum(Return), EUPrice = mean(EUPrice), HKPrice = mean(HKPrice), KStakes = sum(KStakes), Stakes = sum(Stakes), Rebates = sum(Rebates), Change = mean(Change)) %>% mutate(Stakes = currency(Stakes)) %>% tbl_df %>% formattable %>% as.htmlwidget
 ```
 
 ```
@@ -733,52 +869,73 @@ dat$K <- ((dat$EUPrice + 1) * dat$rEMProbB - 1) / (dat$EUPrice)
 exp(mean(log(dat$Stakes)))
 ```
 
-  From the article [凯利模式资金管理](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)^[You might refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion) as well.] we know the application of generalization of Kelly criterion for uneven payoff games.
-
-$$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1}{N}\log\left( {\frac{{{S_N}}}{{{S_0}}}} \right) \cdots equation 4.3.2$$
-
-$$S_N = (1 + K)^W(1 - K)^L S_0 \cdots equation 4.3.3$$
-
-  In order to get the optimal value, I apply the bootrapping and resampling method.
+  There has few points we need to consider, there the we need to retrieve the initial investment capital $BR$:
   
-$$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation 4.3.4$$
+  - risk averse from ruin^[The daily lost cannot over the investment fund, otherwise will be bankrupt before growth, Kelly model is sort of risky at the beginning period but bacame stable as time goes by.]
+  - Initial invested capital
+  - The differences of time zone (British based sports consultancy firm A)
+  - The financial settlement time of Asian operators (daily financial settlement time 12:00PM Hong Kongnese GMT+8 Credit market with rebates)^[Here I follow the kick-off time from GMT+8 1200 until next morning 1159 (or the American Timezone which is GMT - 4) considered as a soccer betting date. Re-categorise the soccer financial settlement date. Due to I have no the history matches dataset from bookmakers. The scrapped spbo time is not stable (always change, moreover there just an information website) where firm A is the firm who placed bets with millions HKD (although the kick-off time might also changed after placed that particular bet), therefore I follow the kick-off time of the firm A.]
+
+```{r bank-roll, echo = FALSE, results = 'asis'}
+suppressMessages(library('knitr'))
+
+## Re-categorise the soccer financial settlement date. Due to I have no the history matches dataset from bookmakers. The scrapped spbo time is not stable (always change, moreover there just an information website) where firm A is the firm who placed bets with millions HKD (although the kick-off time might also changed after placed that particular bet), therefore I follow the kick-off time of the firm A.
+dat <- dat[order(dat$DateUK),] %>% mutate(DateUS = as.Date(format(DateUK, tz = 'EST', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S'))) #daily settlement will base on variable `DateUS`.
+
+BR <- ddply(dat, .(DateUS), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL), n = length(Sess), rRates = Return / Stakes) %>% mutate(CumStakes = cumsum(Stakes), SPL = cumsum(PL), BR = ifelse(4600 + SPL > 0, 4600 + SPL, -9999), gRates = c(1, exp(diff(log(BR), lag = 1))), gRates2 = BR/BR[1]) %>% tbl_df
+
+#'@ write.csv(BR, file = './data/BankRoll.csv')
+
+## Due to our bank roll cannot be less than 0, otherwie will be ruined. Therefore I added the initial balance of the account from the min value of variable `SPL` which is the balance before place bets must be more than 0. Otherwise unable to place bets.
+kable(summary(BR), caption = "Table 4.3.2 : Summary data of daily bank roll (HKD$0'000)")
+```
+
+*table 4.3.1.2* : `r paste0(dim(BR), collapse = ' x ')` : *Sample data of daily bank roll. (HKD$1 = HKD$10,000)*
+
+  Due to our bank roll cannot be less than 0, otherwie will be ruined. Therefore I added the initial balance of the account from the min value of variable `SPL` which is the balance before place bets must be more than 0. Otherwise unable to place bets.
   
-  Now we look at abpve function from a different perspective by considering the observed values $x1, x2, …, xn$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
+  From above table summary, we know that the gap of **daily growth rate** (variable *gRates* is geometric growth rates while *gRates2* is initial fund baseline growth rates) is very big which is from `r min(BR$gRates)` to `r max(BR$gRates)` although the median value is `r median(BR$gRates)`. From initial `paste0('HKD\$', r BR$BR[1] * 10000)` lost to `paste0('HKD\$', r min(BR$BR) * 10000)` while the maximum bankroll hit `paste0('HKD\$', r max(BR$BR) * 10000)` which was `r max(BR$BR)/ BR$BR[1]` and the final bankroll is `r tail(BR$BR)[1]/ BR$BR[1]` times initial invested fund. The ^[As I mentioned at the begining of the research paper, the stakes only reflects the profit and loss of agency A but not firm A. Firm A might have deal with 10~50 or even more agencies and the data from year 2011 is not the initial investment year. You are feel free to download the [BankRoll.csv](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BankRoll.csv). We will discuss the inventory management to reduce the risk.] From [BankRoll.csv](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BankRoll.csv) we observe the end of soccer sesson in May 2011 `dat %>% filter(DateUS >= '2011-05-14' & DateUS <= '2011-05-21')` has a seriourly crash. We can investigate more details about the loss matches from the data (or filter the range of the bets in the data table inside [Part I](http://rpubs.com/englianhu/208637)).
 
-  Part I inside *®γσ, Eng Lian Hu (2014)*^[Kindly refer to 4th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] has applied it and generates an impressive return.
+```{r br-summary01, eval = FALSE, echo = FALSE, results = 'asis'}
+## eval = FALSE to save the file size heavily loading, will summarise after Kelly model and doing comparison at the conclusion section.
+## Will need to split the annual and monthly return and set a new initial fund for every month. The profit can 
+## 
+## monthly summary data table
+ddply(BR, .(month(DateUS)), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL), n = sum(n), rRates = Return / Stakes, CumStakes = cumsum(Stakes), SPL = cumsum(PL), BR = sum(BR)) %>% mutate(gRates = c(1, exp(diff(log(BR), lag = 1))), gRates2 = BR/BR[1]) %>% tbl_df
+#    month(DateUS)    Stakes    Return        PL    n    rRates CumStakes       SPL      BR    gRates   gRates2
+# 1              1 132529.90 137572.65  5042.751 2723 1.0380499 132529.90  5042.751 2870710 1.0000000 1.0000000
+# 2              2 178758.00 184542.81  5784.814 3741 1.0323611 178758.00  5784.814 2803937 0.9767398 0.9767398
+# 3              3 197311.00 200753.10  3442.100 4624 1.0174450 197311.00  3442.100 3333502 1.1888650 1.1612118
+# 4              4 190797.00 192263.64  1466.644 4737 1.0076869 190797.00  1466.644 3324891 0.9974167 1.1582120
+# 5              5 151884.60 153810.24  1925.639 4288 1.0126783 151884.60  1925.639 3464326 1.0419369 1.2067838
+# 6              6  76511.00  70926.86 -5584.136 1679 0.9270153  76511.00 -5584.136 2921503 0.8433105 1.0176934
+# 7              7  57176.34  53989.17 -3187.167 1991 0.9442572  57176.34 -3187.167 2699121 0.9238810 0.9402277
+# 8              8 147524.50 152946.75  5422.250 4183 1.0367549 147524.50  5422.250 2115689 0.7838436 0.7369914
+# 9              9 170805.95 176020.25  5214.300 4205 1.0305276 170805.95  5214.300 2240139 1.0588225 0.7803431
+# 10            10 115338.94 118597.68  3258.739 2907 1.0282536 115338.94  3258.739 2053623 0.9167391 0.7153710
+# 11            11 115978.00 124308.67  8330.670 3105 1.0718297 115978.00  8330.670 2015532 0.9814519 0.7021022
+# 12            12 129142.00 133797.72  4655.721 2872 1.0360512 129142.00  4655.721 2397673 1.1895982 0.8352195
 
-### 4.3.2 Weight Function
-
-  Fractional Kelly models are the weight function for Kelly criterion When we talk about weight function in Kelly model. [A Response to Professor Paul A Samuelson's Objections to Kelly Capital Growth Investing](https://github.com/scibrokes/kelly-criterion/blob/master/references/A%20Response%20to%20Professor%20Paul%20A%20Samuelson's%20Objections%20to%20Kelly%20Capital%20Growth%20Investing.pdf) has talk about the investment portfolio and compare the double-Kelly, full-Kelly, half-Kelly, quadruple-Kelly and also proportional betting across different stages of iterations and concludes that the full-Kelly will be the best fit and growth beyond the ages. Well, fractional-Kelly (means double-Kelly, half-Kelly and quadruple-Kelly but not full-Kelly model) models will be elastics and lesser will be more conservative and double-Kelly will be very risky and eventually going to bankcrupt due to the staking leverages ratio is twice of full-Kelly and over the sustainability of capital. and For further details kindly refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion). Therefore in last basic Kelly we use the full-Kelly within same leagues but due to there has different levels of risk setting across different soccer leagues. Therefore a weight function needed to make the staking strategy flexible, and it is term as Kelly portfolio to diversified the investment.
-
-  Similar with my prevous Rmodel which applied on Poisson model. Due to the calculation of the settlement and result on the win and loss of Asian Handicap is different with Fixed odds, the probabilities of the outcome will be descrete and the measurement of the `likelihood` result required in order to maximize the profit. here we need to add an additional parameter controller to adjust the staking amount on every single match.
-
-  Now I try to will simulate an enhanced Kelly model on staking which take the effect of the outcome of the result into calculation.
-
-$$\phi(r) = exp(-rX) \cdots equation 4.3.5$$
- Where $X = x_{i,2,3...n}$ is the original staking amount by Kelly model. Meanwhile, the $r$ value is the optimal parameter controller for staking.
-
-$$r\begin{Bmatrix}
-=& Win\\
-=& Half\ Win\\
-=& Push\\
-=& Half\ Loss\\
-=& Loss\end{Bmatrix} \cdots equation 4.3.6$$
-
-```{r }
-suppressMessages(library('tidyverse'))
-
-## weight function to get the likelihood staking amount, maximum likelihood methos will be applicable in section 4.5 and 4.6
-#'@ n <- length(levels(dat$Result)) * nrow(dat)
-#'@ mtx <- matrix(rep(0, n), nc = length(levels(dat$Result)), dimnames = list(NULL, levels(dat$Result))) %>% as.data.frame %>% tbl_df
-#'@ mtx %<>% mutate(`Win` = ifelse(dat$Result == 'Win', 1, 0), `Half Win` = ifelse(dat$Result == 'Half Win', 1, 0), Push = ifelse(dat$Result == 'Half Loss', 1, 0), `Half Loss` = ifelse(dat$Result == 'Half Loss', 1, 0))
-
-mtx <- dat %>% spread(Result, Stakes, fill= 0)
-weight <- lm(Return ~ Win + `Half Win` + Push + `Half Loss` + Loss, data = mtx[c('Return', 'KStakes', 'Win', 'Half Win', 'Push', 'Half Loss', 'Loss')])
+## annual summary data table
+ddply(BR, .(year(DateUS)), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL), n = sum(n), rRates = Return / Stakes, CumStakes = cumsum(Stakes), SPL = cumsum(PL), BR = sum(BR)) %>% mutate(gRates = c(1, exp(diff(log(BR), lag = 1))), gRates2 = BR/BR[1]) %>% tbl_df %>% formattable %>% as.htmlwidget
+#   year(DateUS)   Stakes   Return        PL     n   rRates CumStakes       SPL       BR    gRates  gRates2
+# 1         2011 305958.2 312683.6  6725.327  5554 1.021981  305958.2  6725.327  1286022 1.0000000 1.000000
+# 2         2012 309850.0 319747.3  9897.320  7392 1.031942  309850.0  9897.320  4931039 3.8343361 3.834336
+# 3         2013 436285.5 439093.9  2808.445 10957 1.006437  436285.5  2808.445  8069533 1.6364773 6.274804
+# 4         2014 391430.5 406585.2 15154.719 11041 1.038716  391430.5 15154.719 10394713 1.2881430 8.082845
+# 5         2015 220233.0 221419.5  1186.515  6111 1.005388  220233.0  1186.515  7559340 0.7272293 5.878081
 ```
 
 
 ## 4.4 Poisson Ⓜodel
+
+> Data has been collected over the last four seasons in the English Premier League.
+These include 1997-1998, 1998-1999, 1999-2000 and 2000-2001 seasons. We
+have also collected the season 2000-2001 data from the main European football
+betting leagues, such as English Division 1, Division 2 Division 3, Italian Serie A,
+German Bundesliga and Spanish Primera Liga...
+
+*quote 4.4.1 : the dataset for the studies (source : Niko Marttinen (2001)).*
 
   *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] has enhanced the *Dixon and Coles (1996)* which are :
   
@@ -789,18 +946,31 @@ weight <- lm(Return ~ Win + `Half Win` + Push + `Half Loss` + Loss, data = mtx[c
 
   From above models, the author has compare the efficiency and the best fit model for scores prediction as below.
 
-![*figure 4.4.1 : Comparison of various Poison models.*](figure/NikoMarttinen2001-01.jpg)
+![*figure 4.4.1 : Comparison of various Poison models (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-01.jpg)
 
-  From *figure 4.4.1* above, the author compare the deviance of the models^[Kindly refer to [Generalized Linear Models in R, Part 2: Understanding Model Fit in Logistic Regression Output](http://www.theanalysisfactor.com/r-glm-model-fit/), [devianceTest](http://www.mathworks.com/help/stats/generalizedlinearmodel.deviancetest.html?s_tid=gn_loc_drop) and [Use of Deviance Statistics for Comparing Models](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Use%20of%20Deviance%20Statistics%20for%20Comparing%20Models.pdf) to learn baout the method of comparison.]
+  From *figure 4.4.1* above, the author compare the deviance of the models^[Kindly refer to [Generalized Linear Models in R, Part 2: Understanding Model Fit in Logistic Regression Output](http://www.theanalysisfactor.com/r-glm-model-fit/), [devianceTest](http://www.mathworks.com/help/stats/generalizedlinearmodel.deviancetest.html?s_tid=gn_loc_drop) and [Use of Deviance Statistics for Comparing Models](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Use%20of%20Deviance%20Statistics%20for%20Comparing%20Models.pdf) to learn about the method of comparison.]
 
-  - Weighted model : 
+![*figure 4.4.2 : Comparison of various mixed Poison models II (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-02.jpg)
+
+![*figure 4.4.3 : Comparison of various mixed Poison models III (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-03.jpg)
+
+  From above models, the author list the models and states even pick the worse model among the models even highly accurate than bookmaker while *E(Score)&Dep&Weighted* is the best.
+
+![*figure 4.4.4 : Comparison of various odds modelling models (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-04.jpg)
+
+  Besides, *Niko Marttinen (2001)* not only choose Poison model throughly as the odds modelling model but also compare to below models :-
   
+  - ELO ratings.
+  - multinomial ordered probit model.
+  
+  He concludes that the multinomial ordered probit model is the best fit model but the software for fitting is not generally available. Meanwhile, the Poisson model is more versatile than probit logit model based on the dataset accross the European soccer leagues.^[There has a lot of papers with regard to application of logit probit models on soccer betting, might read through and made comparison with my **®Model** *®γσ, Eng Lian Hu (2016)*. I used to read though the logit probit and there has a complicated parameters setting for various effects like : wheather, players' condition, couch, pitch condition and even though the distance travel and the players' stamina modelling.]
+
   Here we introduce the *Dixon and Coles (1996)* model and its codes. You are freely learning from below links if interest.
 
-- [Dixon and Cole's Poisson regression R Packages](http://lastplanetranking.blogspot.com/2013/11/code.html)
-- [Dixon and Coles Poisson model](http://opisthokonta.net/?p=890)
-- [Dixon Coles model - Python](http://www.sportshacker.net/posts/simple_dixon_coles.html)
-- [Predicting Football Using R](http://pena.lt/y/2014/11/02/predicting-football-using-r/)
+  - [Dixon and Cole's Poisson regression R Packages](http://lastplanetranking.blogspot.com/2013/11/code.html)
+  - [Dixon and Coles Poisson model](http://opisthokonta.net/?p=890)
+  - [Dixon Coles model - Python](http://www.sportshacker.net/posts/simple_dixon_coles.html)
+  - [Predicting Football Using R](http://pena.lt/y/2014/11/02/predicting-football-using-r/)
 
 ```{r data-Poisson, echo = FALSE, results = 'asis'}
 ## Load package again due to cannot find the function
@@ -818,7 +988,7 @@ suppressMessages(library('DT'))
 
 *table 4.4.1 : Samples of filtered multiple bets placed on same matches.*
 
-  Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I filter-up the sample data to be `r paste(dim(preData), collapse=' x ')`. I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation *Robert Johnson (2011)*^[Kindly refer to 23th paper in [7.4 References]] from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
+  Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I filter-up the sample data to be `r paste(dim(preData), collapse = ' x ')`. I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation *Robert Johnson (2011)*^[Kindly refer to 23th paper in [7.4 References]] from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
 
   Below is my previous research paper which was more sophiscated than Dixon-Coles model. You can refer it and I will just omit the section as mentioned at the beginning section of this staking validation research paper.
   
@@ -826,7 +996,7 @@ suppressMessages(library('DT'))
 
   Here I cannot reverse computing from barely $\rho_i^{EM}$ without know the $\lambda_{ij}$ and $\gamma$ values. Therefore I try to using both Home and Away Scores to simulate and test to get the maximum likelihood $\rho_i^{EM}$.
 
-$$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta_{ij}) \cdots equation 4.4.1$$
+$$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta_{ij}) \cdots equation\ 4.4.1$$
 ```{r }
 ## model bivariate poison to retrieve the scores and resampling to get the likelihood value.
 #'@ bvp()
@@ -846,6 +1016,18 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 ## Full-Kelly, Half-Kelly, Quarter-Kelly
 
 ```
+
+  From the article [凯利模式资金管理](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)^[You might refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion) as well.] we know the application of generalization of Kelly criterion for uneven payoff games.
+
+$$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1}{N}\log\left( {\frac{{{S_N}}}{{{S_0}}}} \right) \cdots equation\ 4.3.2$$
+
+  In order to get the optimal value, I apply the bootrapping and resampling method.
+  
+$$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
+  
+  Now we look at abpve function from a different perspective by considering the observed values $x_{1}, x_{2}, x_{3}… x_{n}$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
+
+  Below top-up and refill the fund into the pool is another method for risk management on money management while there is very dangerous if that leverage is higher. Similar with high leverage with contra in option market, endless pupm-in the fund will be very dangerous. Therefore we need to simulate what if the initial fund is smaller than the .
 
 ![*equation 4.3.3 : Economic Order Quantity (EOQ)*](./figure/EOQ.jpg)
 
@@ -891,6 +1073,11 @@ draft :
 [**Parimutuel Betting**](https://en.wikipedia.org/wiki/Parimutuel_betting)
 
 <iframe src="https://raw.githubusercontent.com/scibrokes/kelly-criterion/d12b9b565b49f4b987470ca2cd853619f050594d/references/Kelly%20vs%20Markowitz%20Portfolio%20Optimization.pdf" style="width:560px; height:500px;" frameborder="0"></iframe>
+
+**Investment Portfolio**
+
+*张丹 (2016)*^[Kindly refer to 7th paper inside [Reference for technical research on programming and coding portion for the paper.] in **7.4 References** for further details] provides couple of r package for investment and analysis in financial market.
+
 
 ## 4.6 Expectation Ⓜaximization and Staking Simulation
 
@@ -970,6 +1157,10 @@ options(op)
   
   I will also write as a package to easier load and log.
 
+  If you get interest to be a punter, you are feel free to read over below presentation paper from a British consultancy firm to know the requirement to be a professional gambler.
+
+<iframe src="https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/c2da2e5ca09aaf218616045031c9ee4ce3537b18/references/An%20Introduction%20to%20Football%20Modelling%20at%20SmartOdds%20(v1).pdf" style="width:560px; height:500px;" frameborder="0"></iframe>
+
 # 7. Appendices
 
   - Section [7.1 Documenting File Creation ] - Information of the Paper.
@@ -1001,7 +1192,7 @@ sys1 <- devtools::session_info()$platform %>% unlist %>% data.frame(Category = n
 rownames(sys1) <- NULL
 sys1 %>% formattable %>% as.htmlwidget
 
-data.frame(Sys.info()) %>% mutate(Category = rownames(.)) %>% .[2:1] %>% rename(Category = Category, Sys.info =  Sys.info..) %>% formattable %>% as.htmlwidget
+data.frame(Sys.info = Sys.info()) %>% formattable %>% as.htmlwidget
 
 rm(sys1)
 ```
@@ -1107,5 +1298,6 @@ rm(sys1)
   4. [**Programming Assignment 2 Submission : Data Visualization by University of Illinois at Urbana-Champaign** *by ®γσ, Eng Lian Hu (2016)*](https://beta.rstudioconnect.com/englianhu/Programming-Assignment-2-Submission/#read-data)
   5. [Using Roles via googleVis](https://cran.r-project.org/web/packages/googleVis/vignettes/Using_Roles_via_googleVis.html)
   6. [**Welcome to the Highcharter homepage** *by Joshua Kunst (2016)*](http://jkunst.com/highcharter/index.html)
+  7. [**R语言量化投资常用包总结** *by 张丹(2016)*](http://mp.weixin.qq.com/s?__biz=MzA3MTM3NTA5Ng==&mid=2651054987&idx=1&sn=11c6bb68dbb0d77598a1d2459cff6dcf&chksm=84d9c21cb3ae4b0ade8f398760e6414be06c4e9cb69d1389df46e326fd481e3320c9ffb92319&scene=0#wechat_redirect)
 
 **Powered by - Copyright® Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)個人の経営企業**
