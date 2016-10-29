@@ -109,7 +109,7 @@ tagList(
     rRates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))))))
 ```
 
-*table 4.1.1* : `r paste0(dim(m), collapse = ' x ')` : *Return of annually investment summary table. (HKD$1 indicates HKD$10,000)*^[Kindly refer to the list of colors via [Dark yellow with hexadecimal color code #9B870C](http://encycolorpedia.com/9b870c) for plot the stylist table.]
+*table 4.1.1* : `r paste0(dim(m), collapse = ' x ')` : *Return of annually investment summary table.*^[Kindly refer to the list of colors via [Dark yellow with hexadecimal color code #9B870C](http://encycolorpedia.com/9b870c) for plot the stylist table.]
 
 $$\Re = \sum_{i=1}^{n}\rho_{i}^{EM}/\sum_{i=1}^{n}\rho_{i}^{BK} \cdots equation\ 4.1.1$$
 
@@ -168,7 +168,7 @@ tagList(
 ))))
 ```
 
-*table 4.1.2* : `r paste0(dim(m1), collapse = ' x ')` : *Summary of betting results. (HKD$1 = HKD$10,000)*
+*table 4.1.2* : `r paste0(dim(m1), collapse = ' x ')` : *Summary of betting results.*
 
   The table above summarize the stakes and return on soccer matches result. <s> Well, below table list the handicaps placed by firm A on agency A. Due to the **Cancelled** result is null observation in descrete data modelling and we cannot be count into our model. Here Ifilter out the particular observation from the data from here and now the total observation of the dataset became `r nrow(dat)`.
 </s>
@@ -196,14 +196,15 @@ if('Cancelled' %in% dat$Result){
 # Optimal Kelly wager % = Advantages / decimal odds
 
 #'@ dat$rRates <- rep(m$rRates, count(dat, Sess)$n) #unable found 'Sess' when knit but workable when run chunk-by-chunk.
-dat$rRates <- rep(m$rRates, ddply(dat, .(Sess), summarise, n = length(Sess))$n)
-dat$rEMProbB = round(dat$rRates * dat$netProbB, 6)
-dat$rEMProbL = round(1 - dat$rEMProbB, 6)
+dat$rRates <- rep(as.numeric(m$rRates + 1), ddply(dat, .(Sess), summarise, n = length(Sess))$n)
+dat$rEMProbB <- round(dat$rRates * dat$netProbB, 6)
+dat$rEMProbL <- round(1 - dat$rEMProbB, 6)
+dat$netEMEdge <- round(dat$rEMProbB / dat$netProbB, 6)
 
-dat %>% select(No.x, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL, rRates, rEMProbB, rEMProbL, favNetProb, undNetProb) %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
+dat %>% select(No.x, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL, rRates, rEMProbB, rEMProbL, netEMEdge, favNetProb, undNetProb) %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
 ```
 
-*table 4.1.3* : `r paste0(dim(dat), collapse = ' x ')` : *Odds price and probabilities sample table. (HKD$1 = HKD$10,000)*
+*table 4.1.3* : `r paste0(dim(dat), collapse = ' x ')` : *Odds price and probabilities sample table.*
 
   Above table list a part of sample odds prices and probabilities of soccer match $i$ while $n$ indicates the number of soccer matches. We can know the values `rEMProbB`, `netProbB` and so forth.
 
@@ -663,26 +664,10 @@ $$log(w_{i}) + log(\rho_{i}) \cdots equation\ 4.3.2.1$$
 
 <iframe src="https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/c2da2e5ca09aaf218616045031c9ee4ce3537b18/references/Statistical%20Methodology%20for%20Profitable%20Sports%20Gambling.pdf" style="width:560px; height:500px;" frameborder="0"></iframe>
 
-### 4.3.3 Dynamic Kelly Ⓜodels
-
-  Due to fractional Kelly model is independent models (for example : half-Kelly will be half-Kelly staking model, and full-Kelly will be only full-Kelly model across the years as we made comparison in *table 4.3.3.3*.), now we need to make it dynamic fractional model. Similar with my prevous Rmodel which applied on Poisson model. Due to the calculation of the settlement and result on the win and loss of Asian Handicap is different with Fixed odds, the probabilities of the outcome will be descrete and the measurement of the `likelihood` result required in order to maximize the profit. here we need to add an additional parameter controller to adjust the staking amount on every single match.
-
-  Now I try to will simulate an enhanced Kelly model on staking which take the effect of the outcome of the result into calculation below controller parameter $\phi(r)$ fit into $equation\ 4.3.3.1$ to control the leverage ratio.^[similar theory apply on investment portfolio while it might turn to be nested controller parameters across different soccer leagues.]
-
-$$\phi(r) = exp(w_{i}\rho_{i}) \cdots equation\ 4.3.3.1$$
- Where $X = x_{i,2,3...n}$ is the original staking amount by Kelly model. Meanwhile, the $r$ value is the optimal parameter controller for staking.
-
-$$r\begin{Bmatrix}
-=& Win\\
-=& Half\ Win\\
-=& Push\\
-=& Half\ Loss\\
-=& Loss\end{Bmatrix} \cdots equation 4.3.3.2$$
-
 ```{r lprofile, echo = FALSE, results = 'asis'}
 
 #'@ lRiskProf <- dat[c('League', 'Stakes', 'HCap', 'Result', 'PL')] %>% tbl_df %>% .[sort(.$League), ] %>% unique %>% na.omit %>% mutate(Stakes = currency(Stakes), PL = currency(PL))
-lRiskProf <- dat[c('League', 'Stakes', 'HCap', 'Result', 'PL')] %>% tbl_df %>% .[sort(.$League), ] %>% unique %>% na.omit %>% mutate(Stakes = currency(Stakes), PL = ifelse(PL < 0, paste0('-$', substring(PL, 2)), paste0('$', PL)))
+lRiskProf <- ddply(dat[c('League', 'Stakes')], .(League), summarise, min = currency(min(Stakes)), mean = currency(mean(Stakes)), median = currency(median(Stakes)), sd = currency(sd(Stakes)), max = currency(max(Stakes))) %>% tbl_df %>% .[sort(.$League), ] %>% unique %>% na.omit
 
 tagList(
   tags$div(align = "center", 
@@ -695,11 +680,11 @@ tagList(
     ))))
 ```
 
-*table 4.3.3.1* : `r paste0(dim(lRiskProf), collapse = ' x ')` : *League stakes profiling of firm A from 2011~2015.*
+*table 4.3.2.1* : `r paste0(dim(lRiskProf), collapse = ' x ')` : *League stakes profiling of firm A from 2011~2015.*
 
-  Above league risk profile suppose to stores the maximum bet for every single league but I only randomly select 6 leagues as sample. However due to I've not yet write a function for real time API^[There are a lot of real time XML odds price and staking softwares similar with **4lowin2** which was states at the begining section in Part I] with operators and test the maximum stakes per bet therefore here I skip the section as future improvement.
+  Above league risk profile suppose to stores the maximum bet for every single league but I only randomly select 6 leagues as sample. However due to I've not yet write a function for real time API^[There are a lot of real time XML odds price and staking softwares similar with **4lowin2** which was states at the begining section in Part I] with operators and test the maximum stakes per bet therefore here I reverse the both mean and median value as the baseline stakes for every single league with a certain range of standard deviation for monte carlo simulation in later section.
 
-```{r data-Kelly, echo = FALSE, results = 'asis'}
+```{r data-Kelly, eval = FASLE, echo = FALSE, results = 'asis'}
 suppressMessages(library('knitr'))
 
 ## Kelly Criterion model
@@ -714,21 +699,41 @@ suppressMessages(library('knitr'))
 ##
 ## KStakes = exp((log(1000) * HKPrice + 1) / EUPrice) #testing... need to group by leagues due to difference of risk setting.
 dat %<>% mutate(
-  KProb = ((Stakes / 10000) * HKPrice + 1) / EUPrice, 
+  PropHKPriceEdge = ((Stakes / 10000 * netEMEdge) * HKPrice + 1) / EUPrice,
+  
+  PropnetProbBEdge = ((Stakes / 10000 * netEMEdge) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB),
+  
+  KProbHKPrice = ((Stakes / 10000) * HKPrice + 1) / EUPrice, 
+  
+  KProbnetProbB = ((Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB),
                 
   KProbFixed = exp((log(Stakes / 10000) * HKPrice + 1) / EUPrice), 
-                
+  
+  KProbFixednetProbB = exp(((log(Stakes / 10000)) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB)),
+  
   KEMProb = (rEMProbB * HKPrice + 1) / EUPrice, 
-                
+  
+  KEMProbnetProbB = (rEMProbB *  (1 / rEMProbB - 1) + 1) / (1 / rEMProbB),
+  
   KProbHalf = ((0.5 * Stakes / 10000) * HKPrice + 1) / EUPrice, 
-                
+  
+  KProbHalfnetProbB = ((0.5 * Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB), 
+  
   KProbQuarter = ((0.25 * Stakes / 10000) * HKPrice + 1) / EUPrice, 
-                
+  
+  KProbQuarternetProbB = ((0.25 * Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB), 
+  
   KProbAdj = exp((log(Stakes / 10000) * HKPrice + 1) / EUPrice), 
-                
+  
+  KProbAdjnetProbB = exp((log(Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB)), 
+  
   KHalfAdj = exp((log(0.5 * Stakes / 10000) * HKPrice + 1) / EUPrice), 
-                
+  
+  KHalfAdjnetProbB = exp((log(0.5 * Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB)), 
+  
   KEMQuarterAdj = exp((log(0.25 * Stakes / 10000) * HKPrice + 1) / EUPrice), 
+  
+  KEMQuarterAdjnetProbB = exp((log(0.25 * Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB)), 
   
   KStakes = (Stakes * HKPrice + 1) / EUPrice, 
                 
@@ -780,10 +785,10 @@ dat %<>% mutate(
 
 Kprof <- dat %>% select(HCap, rEMProbB, KProb, KProbFixed, KEMProb, KProbHalf, KProbQuarter, KProbAdj, KHalfAdj, KEMQuarterAdj, Stakes, KStakes, KStakesFixed, KStakesEMProb, KStakesHalf, KStakesQuarter, KStakesAdj, KStakesHalfAdj, KStakesQuarterAdj, Result, Return, KReturn, KReturnFixed, KReturnEMProb, KReturnHalf, KReturnQuarter, KReturnAdj, KReturnHalfAdj, KReturnQuarterAdj)
 
-kable(summary(Kprof), caption = 'Table 4.3.3.2 : Summary Table of Various Kelly Models')
+kable(summary(Kprof), caption = 'Table 4.3.2.2 : Summary Table of Various Kelly Models')
 ```
 
-*table 4.3.3.2* : `r paste0(dim(Kprof), collapse = ' x ')` : *League stakes profiling of firm A from 2011~2015.*
+*table 4.3.2.2* : `r paste0(dim(Kprof), collapse = ' x ')` : *League stakes profiling of firm A from 2011~2015.*
 
 ```{r}
 Edge <- Kprof %>% select(-HCap, -Result) %>% .[c(1:9)] %>% colMeans %>% percent
@@ -803,7 +808,25 @@ tagList(
   as.htmlwidget(sumd %>% formattable))
 ```
 
-*table 4.3.3.3* : `r paste0(dim(sumd), collapse = ' x ')` : *P&L of multiple Kelly models from 2011~2015.*
+*table 4.3.2.3* : `r paste0(dim(sumd), collapse = ' x ')` : *P&L of multiple Kelly models from 2011~2015.*
+
+### 4.3.3 Dynamic Kelly Ⓜodels
+
+  Due to fractional Kelly model is independent models (for example : half-Kelly will be half-Kelly staking model, and full-Kelly will be only full-Kelly model across the years as we made comparison in *table 4.3.3.3*.), now we need to make it dynamic fractional model. Similar with my prevous Rmodel which applied on Poisson model. Due to the calculation of the settlement and result on the win and loss of Asian Handicap is different with Fixed odds, the probabilities of the outcome will be descrete and the measurement of the `likelihood` result required in order to maximize the profit. here we need to add an additional parameter controller to adjust the staking amount on every single match.
+
+  Now I try to will simulate an enhanced Kelly model on staking which take the effect of the outcome of the result into calculation below controller parameter $\phi(r)$ fit into $equation\ 4.3.3.1$ to control the leverage ratio.^[similar theory apply on investment portfolio while it might turn to be nested controller parameters across different soccer leagues.]
+
+$$\phi(r) = exp(w_{i}\rho_{i}) \cdots equation\ 4.3.3.1$$
+ Where $X = x_{i,2,3...n}$ is the original staking amount by Kelly model. Meanwhile, the $r$ value is the optimal parameter controller for staking.
+
+$$r\begin{Bmatrix}
+=& Win\\
+=& Half\ Win\\
+=& Push\\
+=& Half\ Loss\\
+=& Loss\end{Bmatrix} \cdots equation\ 4.3.3.2$$
+
+
 
 ```{r}
 ## Random pick 2 observations among each stratified levels of Result.
@@ -822,7 +845,7 @@ K %>% formattable(list(
     Change = formatter('span', style = ~ style(color = ifelse(Change < 0, 'red', 'green')), ~ icontext(ifelse(Change < 0, 'arrow-down', 'arrow-up'), Change))))
 ```
 
-*table 4.3.3.1* : `r paste0(dim(K), collapse = ' x ')` : *Kelly stakes and firm A's stakes of annually investment summary table without cancelled bets.*^[The annum return rates but not all data return rates since we need to use the return of that particular year to reverse. The weight parameter in later section will take last year performance to be weight controller. Due to the firm A does not only placed bets with one agent but couples of agencies. Let say placed one millions HKD on a soccer match with higher price simultaniously compare to placed bets on one agency with price decreasingly, therefore the Kelly stakes will definately defferent with firm A's stakes.]
+*table 4.3.3.1* : `r paste0(dim(K), collapse = ' x ')` : *Kelly stakes and firm A's stakes of annually investment summary table.*^[The annum return rates but not all data return rates since we need to use the return of that particular year to reverse. The weight parameter in later section will take last year performance to be weight controller. Due to the firm A does not only placed bets with one agent but couples of agencies. Let say placed one millions HKD on a soccer match with higher price simultaniously compare to placed bets on one agency with price decreasingly, therefore the Kelly stakes will definately defferent with firm A's stakes.]
 
 ```{r }
 suppressMessages(library('tidyverse'))
@@ -832,7 +855,7 @@ suppressMessages(library('tidyverse'))
 #'@ mtx <- matrix(rep(0, n), nc = length(levels(dat$Result)), dimnames = list(NULL, levels(dat$Result))) %>% as.data.frame %>% tbl_df
 #'@ mtx %<>% mutate(`Win` = ifelse(dat$Result == 'Win', 1, 0), `Half Win` = ifelse(dat$Result == 'Half Win', 1, 0), Push = ifelse(dat$Result == 'Half Loss', 1, 0), `Half Loss` = ifelse(dat$Result == 'Half Loss', 1, 0))
 
-mtx <- dat %>% spread(Result, Stakes, fill= 0)
+mtx <- dat %>% spread(Result, Stakes, fill = 0)
 weight <- lm(Return ~ Win + `Half Win` + Push + `Half Loss` + Loss, data = mtx[c('Return', 'KStakes', 'Win', 'Half Win', 'Push', 'Half Loss', 'Loss')])
 ```
 
@@ -890,7 +913,7 @@ BR <- ddply(dat, .(DateUS), summarise, Stakes = sum(Stakes), Return = sum(Return
 kable(summary(BR), caption = "Table 4.3.2 : Summary data of daily bank roll (HKD$0'000)")
 ```
 
-*table 4.3.1.2* : `r paste0(dim(BR), collapse = ' x ')` : *Sample data of daily bank roll. (HKD$1 = HKD$10,000)*
+*table 4.3.1.2* : `r paste0(dim(BR), collapse = ' x ')` : *Sample data of daily bank roll.*
 
   Due to our bank roll cannot be less than 0, otherwie will be ruined. Therefore I added the initial balance of the account from the min value of variable `SPL` which is the balance before place bets must be more than 0. Otherwise unable to place bets.
   
@@ -1089,7 +1112,14 @@ draft :
 
 ```
 
-  sample...
+  Application of Monte Carlo simulation.
+  
+```
+- simulate the resampling the stakes by mean and median value 100 times.
+- simulate the poisson models for soccer matches result 100 times.
+- simulate the dynamic fractional Kelly model with weight parameter, yearly base.
+- simulate whole process until get the optimal value...
+```
 
 # 5. ®esult
 
@@ -1244,8 +1274,6 @@ rm(sys1)
   
   - [Using formattable and plotly simultaneously](http://stackoverflow.com/questions/39319427/using-formattable-and-plotly-simultaneously) and [Possible namespace issue with plotly::last_plot() #41](https://github.com/renkun-ken/formattable/issues/41#issuecomment-171590677) solved the formattable issue.
 
-  - **The variable `Sess` and `Month` SUDDENTLY auto added when I select `Day` inside chunk `data-daily-summary` in Part I. solved by changed the class `groups_df` to be `tbl_df` by `%>% tbl_df`. The Viewer panel inside RStudio forced to open diagonal (similar with Selangor flag) with source codes otherwise will suto shutdown apps. Now I know that is wizard control it. Again, I am not politician. Wonder why the wizard (HuaCai being Kuala Selangor No32 Tmn RHU) known he will be end with death but keep alive to killing human and casue endless sorrow (He used to say all companies are same company solely because of he one person don't want to die to make millions human died innocently). There was two flights in Shanghai almost crash by accident and more than 400 passengers will die just due to the wizard control the human besides me to be dummies. I went to Selangor Majlis Petaling Jaya Library yesterday and reading but the people inside library all became zombies and the AirAsia cancelled 27~40 flights.**
-  
   - The analysis in Part I might slightly different with Part II due to the timezone issue.
   
     + The daily financial settlement time is EST 0000 or HKT 1200.

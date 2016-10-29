@@ -120,7 +120,10 @@ arrfirmData <- function(dfmList, lProfile = c(AH = 0.10, OU = 0.12), parallel = 
     lP <- ifelse(dfm$fMYPriceL < 0, round(-1 / dfm$fMYPriceL, 3), round(dfm$fMYPriceL, 3))
     
     ## Real Price / Net Price Back convert to net probabilities as applied in Dixon&Coles1996.
-    dfm %<>% mutate(netProbB = round(bP / (bP + lP), 4), netProbL = round(lP / (bP + lP), 4))
+    ## For probability, the odds price need to base on the portion. eg: 0.83 / (0.83 + 1.05) = 0.4414894, 
+    ##   the 0.4414894 is the probability of the opponent selection due to the portion of 0.83 is 
+    ##   favorite odds compare to 1.05. Higher odds price means lower probilities of the team to win the match.
+    dfm %<>% mutate(netProbB = round(lP / (bP + lP), 4), netProbL = round(bP / (bP + lP), 4))
     rm(bP, lP)
     
     ## To know the true value price of favorite/over or underdog/under 
