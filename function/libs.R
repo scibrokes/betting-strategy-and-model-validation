@@ -34,8 +34,8 @@ suppressMessages(plyr::l_ply(pkgs, require, character.only = TRUE))
 rm(pkgs)
 
 ## Load the functions
-funs <- c('scrapSPBO.R', 'readfirmData.R', 'arrfirmData.R', 'readSPBO.R', 'vKelly.R', 'Kprof.R', 
-          'simulateKelly.R', 'bvp.R')
+funs <- c('scrapSPBO.R', 'readfirmData.R', 'arrfirmData.R', 'readSPBO.R', 'vKelly.R', 'vKelly2.R', 
+          'Kprof.R', 'simulateKelly.R', 'bvp.R')
 plyr::l_ply(funs, function(x) source(paste0('function/', x))); rm(funs)
 
 ## Creating a parallel computing Cluster and support functions.

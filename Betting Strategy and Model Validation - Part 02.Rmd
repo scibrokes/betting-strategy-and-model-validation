@@ -676,139 +676,101 @@ tagList(
            tags$h5(align = "center", class = "text-muted", 
                    "Stakes of Firm A at Agency A (2011~2015) ($0,000)")), 
   as.htmlwidget(lRiskProf %>% .[sample(1:nrow(.), 6), ] %>% formattable(list(
-    Stakes = color_tile('white', 'darkgoldenrod')
+    mean = color_tile('white', 'darkgoldenrod'), 
+    median = color_tile('white', 'darkgoldenrod')
     ))))
 ```
 
-*table 4.3.2.1* : `r paste0(dim(lRiskProf), collapse = ' x ')` : *League stakes profiling of firm A from 2011~2015.*
+*table 4.3.2.1* : `r paste0(dim(lRiskProf), collapse = ' x ')` : *League stakes profiling of firm A year 2011~2015.*
 
   Above league risk profile suppose to stores the maximum bet for every single league but I only randomly select 6 leagues as sample. However due to I've not yet write a function for real time API^[There are a lot of real time XML odds price and staking softwares similar with **4lowin2** which was states at the begining section in Part I] with operators and test the maximum stakes per bet therefore here I reverse the both mean and median value as the baseline stakes for every single league with a certain range of standard deviation for monte carlo simulation in later section.
 
-```{r data-Kelly, eval = FASLE, echo = FALSE, results = 'asis'}
+#### Stakes based reversed Kelly models
+
+  Stakes based reversed Kelly models are the application of the parameter from reversion of the stakes where add-on some modified version Kelly models.
+  
+```{r data-Kelly1A, echo = FALSE, results = 'asis'}
 suppressMessages(library('knitr'))
+suppressMessages(source('./function/vKelly.R'))
 
 ## Kelly Criterion model
 ##
 ## Advantages = (prob of win * decimal odds) + (prob of lose * -1)
 ## Optimal Kelly wager % = Advantages / decimal odds
 ## From below data we can know the difference between the Kelly reversed rEMProbB
-##
 
-##
-## Kelly model
-##
-## KStakes = exp((log(1000) * HKPrice + 1) / EUPrice) #testing... need to group by leagues due to difference of risk setting.
-dat %<>% mutate(
-  PropHKPriceEdge = ((Stakes / 10000 * netEMEdge) * HKPrice + 1) / EUPrice,
-  
-  PropnetProbBEdge = ((Stakes / 10000 * netEMEdge) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB),
-  
-  KProbHKPrice = ((Stakes / 10000) * HKPrice + 1) / EUPrice, 
-  
-  KProbnetProbB = ((Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB),
-                
-  KProbFixed = exp((log(Stakes / 10000) * HKPrice + 1) / EUPrice), 
-  
-  KProbFixednetProbB = exp(((log(Stakes / 10000)) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB)),
-  
-  KEMProb = (rEMProbB * HKPrice + 1) / EUPrice, 
-  
-  KEMProbnetProbB = (rEMProbB *  (1 / rEMProbB - 1) + 1) / (1 / rEMProbB),
-  
-  KProbHalf = ((0.5 * Stakes / 10000) * HKPrice + 1) / EUPrice, 
-  
-  KProbHalfnetProbB = ((0.5 * Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB), 
-  
-  KProbQuarter = ((0.25 * Stakes / 10000) * HKPrice + 1) / EUPrice, 
-  
-  KProbQuarternetProbB = ((0.25 * Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB), 
-  
-  KProbAdj = exp((log(Stakes / 10000) * HKPrice + 1) / EUPrice), 
-  
-  KProbAdjnetProbB = exp((log(Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB)), 
-  
-  KHalfAdj = exp((log(0.5 * Stakes / 10000) * HKPrice + 1) / EUPrice), 
-  
-  KHalfAdjnetProbB = exp((log(0.5 * Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB)), 
-  
-  KEMQuarterAdj = exp((log(0.25 * Stakes / 10000) * HKPrice + 1) / EUPrice), 
-  
-  KEMQuarterAdjnetProbB = exp((log(0.25 * Stakes / 10000) * (1 / rEMProbB - 1) + 1) / (1 / rEMProbB)), 
-  
-  KStakes = (Stakes * HKPrice + 1) / EUPrice, 
-                
-  KStakesFixed = exp((log(Stakes) * HKPrice + 1) / EUPrice), 
-                
-  KStakesEMProb = (as.numeric(rEMProbB * 100) * HKPrice + 1) / EUPrice, 
-                
-  KStakesHalf = (0.5 * Stakes * HKPrice + 1) / EUPrice, 
-                
-  KStakesQuarter = (0.25 * Stakes * HKPrice + 1) / EUPrice, 
-                
-  KStakesAdj = exp((log(Stakes) * HKPrice + 1) / EUPrice), 
-                
-  KStakesHalfAdj = exp((log(0.5 * Stakes) * HKPrice + 1) / EUPrice), 
-                
-  KStakesQuarterAdj = exp((log(0.25 * Stakes) * HKPrice + 1) / EUPrice), 
-                
-  KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA))))),  
-  
-  KReturnFixed = ifelse(Result == 'Win', KStakesFixed * EUPrice, ifelse(Result == 'Half Win', KStakesFixed * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesFixed, ifelse(Result == 'Half Loss', KStakesFixed * 0.5, ifelse(Result == 'Loss', 0, NA))))), 
-                
-  KReturnEMProb = ifelse(Result == 'Win', KStakesEMProb * EUPrice, ifelse(Result == 'Half Win', KStakesEMProb * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesEMProb, ifelse(Result == 'Half Loss', KStakesEMProb * 0.5, ifelse(Result == 'Loss', 0, NA))))),
-                
-  KReturnHalf = ifelse(Result == 'Win', KStakesHalf * EUPrice, ifelse(Result == 'Half Win', KStakesHalf * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesHalf, ifelse(Result == 'Half Loss', KStakesHalf * 0.5, ifelse(Result == 'Loss', 0, NA))))),
-                
-  KReturnQuarter = ifelse(Result == 'Win', KStakesQuarter * EUPrice, ifelse(Result == 'Half Win', KStakesQuarter * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesQuarter, ifelse(Result == 'Half Loss', KStakesQuarter * 0.5, ifelse(Result == 'Loss', 0, NA))))), 
-                
-  KReturnAdj = ifelse(Result == 'Win', KStakesAdj * EUPrice, ifelse(Result == 'Half Win', KStakesAdj * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesAdj, ifelse(Result == 'Half Loss', KStakesAdj * 0.5, ifelse(Result == 'Loss', 0, NA))))), 
-                
-  KReturnHalfAdj = ifelse(Result == 'Win', KStakesHalfAdj * EUPrice, ifelse(Result == 'Half Win', KStakesHalfAdj * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesHalfAdj, ifelse(Result == 'Half Loss', KStakesHalfAdj * 0.5, ifelse(Result == 'Loss', 0, NA))))), 
-                
-  KReturnQuarterAdj = ifelse(Result == 'Win', KStakesQuarterAdj * EUPrice, ifelse(Result == 'Half Win', KStakesQuarterAdj * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakesQuarterAdj, ifelse(Result == 'Half Loss', KStakesQuarterAdj * 0.5, ifelse(Result == 'Loss', 0, NA)))))) %>% tbl_df
+## Applied various fractional Kelly models version I.
+##   stakes based reverser models.
+K1 <- vKelly(dat)
 
-## ----------------------
-## comparison among the Kelly models and the existing staking model by firm A.
-# > dat %>% mutate(KStakes = round((Stakes * HKPrice + 1) / EUPrice, 2), KStakes2 = exp((log(1000) * HKPrice + 1) / EUPrice), KReturn = ifelse(Result == 'Win', KStakes * EUPrice, ifelse(Result == 'Half Win', KStakes * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakes, ifelse(Result == 'Half Loss', KStakes * 0.5, ifelse(Result == 'Loss', 0, NA))))), KReturn2 = ifelse(Result == 'Win', KStakes2 * EUPrice, ifelse(Result == 'Half Win', KStakes2 * (HKPrice * 0.5 + 1), ifelse(Result == 'Push'|Result == 'Cancelled', KStakes2, ifelse(Result == 'Half Loss', KStakes2 * 0.5, ifelse(Result == 'Loss', 0, NA)))))) %>% select(Stakes, KStakes, KStakes2, Return, KReturn, KReturn2) %>% data.frame %>% colSums %>% t %>% tbl_df %>% mutate(Rates = Return / Stakes, KRates = KReturn / KStakes, KRates2 = KReturn2 / KStakes2)
-# # A tibble: 1 × 9
-#    Stakes  KStakes KStakes2  Return  KReturn KReturn2    Rates   KRates  KRates2
-#     <dbl>    <dbl>    <dbl>   <dbl>    <dbl>    <dbl>    <dbl>    <dbl>    <dbl>
-# 1 1663757 816210.6  2001767 1699530 833733.8  2066365 1.021501 1.021469 1.032271## ----------------------
-
-## Omit both proportional betting strategics below due to full-Kelly model is proved as the best betting models.
-##
-## Proportional staking model 1
-#'@ pp1 <- dat %>% mutate(PP1Stakes = Stakes * )
-
-## Proportional staking model 2
-#'@ pp2 <- dat %>% mutate(PP2AStakes = Stakes / HKPrice, PP2ADiff = PP2AStakes - Stakes, PP2BStakes = Stakes / ) #payout for even price.
-
-Kprof <- dat %>% select(HCap, rEMProbB, KProb, KProbFixed, KEMProb, KProbHalf, KProbQuarter, KProbAdj, KHalfAdj, KEMQuarterAdj, Stakes, KStakes, KStakesFixed, KStakesEMProb, KStakesHalf, KStakesQuarter, KStakesAdj, KStakesHalfAdj, KStakesQuarterAdj, Result, Return, KReturn, KReturnFixed, KReturnEMProb, KReturnHalf, KReturnQuarter, KReturnAdj, KReturnHalfAdj, KReturnQuarterAdj)
-
-kable(summary(Kprof), caption = 'Table 4.3.2.2 : Summary Table of Various Kelly Models')
+kable(summary(K1$Kelly1$data), caption = 'Table 4.3.2.2A : Summary Table of Various Kelly Models (Stakes reversed based models)')
 ```
 
-*table 4.3.2.2* : `r paste0(dim(Kprof), collapse = ' x ')` : *League stakes profiling of firm A from 2011~2015.*
+*table 4.3.2.2A* : `r paste0(dim(K1$Kelly1$data), collapse = ' x ')` : *PL of Stakes reversed Kelly models year 2011~2015.*
 
-```{r}
-Edge <- Kprof %>% select(-HCap, -Result) %>% .[c(1:9)] %>% colMeans %>% percent
-Edge[c('KProb', 'KEMProb', 'KProbHalf', 'KProbQuarter')] <- Edge[c('KProb', 'KEMProb', 'KProbHalf', 'KProbQuarter')]/(1 - Edge[c('KProb', 'KEMProb', 'KProbHalf', 'KProbQuarter')]) - 1
-Edge['rEMProbB'] <- Edge['rEMProbB'] * 100 - 1
-
-KK <- Kprof %>% select(-HCap, -Result) %>% .[-c(1:9)] %>% colSums %>% matrix(nrow = 9, dimnames = list(names(.)[1:9], c('Stakes', 'Return'))) %>% tbl_df %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = Return - Stakes, PL.R = percent(PL / Stakes))
-sumd <- data.frame(Edge, KK) %>% tbl_df
-rm(Edge, KK)
+```{r data-Kelly1B, echo = FALSE, results = 'asis'}
+#'@ suppressMessages(library('formattable'))
 
 tagList(
   tags$div(align = "center", 
            class = "bg-info", 
-           tags$h3(class = "bg-primary", "Profit and Loss of Diversified Investment"), 
+           tags$h3(class = "bg-primary", "PL of Stakes based reversed Kelly Models"), 
            tags$h5(align = "center", class = "text-muted", 
-                   "Various Kelly Staking Models and Profit and Loss (2011-2015) ($0,000)")), 
-  as.htmlwidget(sumd %>% formattable))
+                   "Stakes of Firm A at Agency A (2011~2015) ($0,000)")), 
+  as.htmlwidget(K1$Kelly1$summary %>% formattable(list(
+    Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
+    
+    Stakes = color_tile('white', 'darkgoldenrod'), 
+    
+    Return = color_tile('white', 'darkgoldenrod'), 
+    
+    PL = color_tile('white', 'darkgoldenrod'), 
+    
+    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
+    ))))
 ```
 
-*table 4.3.2.3* : `r paste0(dim(sumd), collapse = ' x ')` : *P&L of multiple Kelly models from 2011~2015.*
+*table 4.3.2.2B* : `r paste0(dim(K1$Kelly1$summary), collapse = ' x ')` : *PL of Stakes based reversed Kelly models year 2011~2015.*
+
+#### Reversed rEMProbB based Kelly models
+
+  `rEMProbB` (real EM Probabilities Back) are the application of the parameter from reversion of the stakes where add-on some modified version Kelly models.
+
+```{r data-Kelly2A, echo = FALSE, results = 'asis'}
+## reload the function due to unable found.
+suppressMessages(source('./function/vKelly2.R'))
+
+## Applied various fractional Kelly models version II.
+##   rEMProb based model without adjust the stakes.
+K2 <- vKelly2(dat)
+
+kable(summary(K2$Kelly1$data), caption = 'Table 4.3.2.3 : Summary Table of Various Kelly Models (reversed rEMProbB based models)')
+```
+
+*table 4.3.2.3A* : `r paste0(dim(K2$Kelly1$data), collapse = ' x ')` : *League stakes profiling of firm A from 2011~2015.*
+
+```{r data-Kelly2B, echo = FALSE, results = 'asis'}
+#'@ suppressMessages(library('formattable'))
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "PL of Reversed rEMProbB Kelly Models"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Stakes of Firm A at Agency A (2011~2015) ($0,000)")), 
+  as.htmlwidget(K2$Kelly1$summary %>% formattable(list(
+
+    Stakes = color_tile('white', 'darkgoldenrod'), 
+    
+    Return = color_tile('white', 'darkgoldenrod'), 
+    
+    PL = color_tile('white', 'darkgoldenrod'), 
+    
+    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
+    ))))
+```
+
+*table 4.3.2.3B* : `r paste0(dim(K2$Kelly1$summary), collapse = ' x ')` : *PL of Reversed rEMProbB Kelly models year 2011~2015.*
 
 ### 4.3.3 Dynamic Kelly Ⓜodels
 
@@ -829,8 +791,10 @@ $$r\begin{Bmatrix}
 
 
 ```{r}
+## Need to correct the content, below just a sample...
+
 ## Random pick 2 observations among each stratified levels of Result.
-K <- llply(split(dat, dat$Result), function(x) x[sample(nrow(x), 2), c('Result', 'KReturn', 'Return', 'EUPrice', 'HKPrice', 'KStakes', 'Stakes', 'Rebates')]) %>% ldply(., .id = 'Result') %>% mutate(KReturn = currency(KReturn), Return = currency(Return), KStakes = currency(KStakes), Stakes = currency(Stakes), Rebates = percent(Rebates), Change = percent(KStakes / Stakes - 1)) %>% .[sample(nrow(.), nrow(.)), ]
+K <- llply(split(dat, dat$Result), function(x) x[sample(nrow(x), 2), c('Result', 'Return', 'EUPrice', 'HKPrice', 'Stakes', 'Rebates')]) %>% ldply(., .id = 'Result') %>% mutate(KReturn = currency(Return), Return = currency(Return), KStakes = currency(Stakes), Stakes = currency(Stakes), Rebates = percent(Rebates), Change = percent(KStakes / Stakes - 1)) %>% .[sample(nrow(.), nrow(.)), ]
 
 ## http://www.w3schools.com/colors/colors_picker.asp
 K %>% formattable(list(
@@ -847,7 +811,9 @@ K %>% formattable(list(
 
 *table 4.3.3.1* : `r paste0(dim(K), collapse = ' x ')` : *Kelly stakes and firm A's stakes of annually investment summary table.*^[The annum return rates but not all data return rates since we need to use the return of that particular year to reverse. The weight parameter in later section will take last year performance to be weight controller. Due to the firm A does not only placed bets with one agent but couples of agencies. Let say placed one millions HKD on a soccer match with higher price simultaniously compare to placed bets on one agency with price decreasingly, therefore the Kelly stakes will definately defferent with firm A's stakes.]
 
-```{r }
+```{r eval = FALSE}
+## sample, need to modify...
+
 suppressMessages(library('tidyverse'))
 
 ## weight function to get the likelihood staking amount, maximum likelihood methos will be applicable in section 4.5 and 4.6
@@ -856,7 +822,7 @@ suppressMessages(library('tidyverse'))
 #'@ mtx %<>% mutate(`Win` = ifelse(dat$Result == 'Win', 1, 0), `Half Win` = ifelse(dat$Result == 'Half Win', 1, 0), Push = ifelse(dat$Result == 'Half Loss', 1, 0), `Half Loss` = ifelse(dat$Result == 'Half Loss', 1, 0))
 
 mtx <- dat %>% spread(Result, Stakes, fill = 0)
-weight <- lm(Return ~ Win + `Half Win` + Push + `Half Loss` + Loss, data = mtx[c('Return', 'KStakes', 'Win', 'Half Win', 'Push', 'Half Loss', 'Loss')])
+weight <- lm(Return ~ Win + `Half Win` + Push + `Half Loss` + Loss, data = mtx[c('Return', 'Stakes', 'Win', 'Half Win', 'Push', 'Half Loss', 'Loss')])
 ```
 
 **Bank Roll**
@@ -977,7 +943,7 @@ German Bundesliga and Spanish Primera Liga...
 
 ![*figure 4.4.3 : Comparison of various mixed Poison models III (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-03.jpg)
 
-  From above models, the author list the models and states even pick the worse model among the models even highly accurate than bookmaker while *E(Score)&Dep&Weighted* is the best.
+  From above models, the author list the models and states that even though pick the worst model among the models still more accurate than bookmaker while *E(Score)&Dep&Weighted* is the best.
 
 ![*figure 4.4.4 : Comparison of various odds modelling models (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-04.jpg)
 
