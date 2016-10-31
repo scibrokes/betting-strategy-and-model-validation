@@ -100,7 +100,10 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1) {
     mutate(rEMProbB = rEMProbB * weight) %>% select(-No)
   
   K1 %<>% mutate(
-    
+    ## rEMProbB * netEMEdge doesn't make sense for static data since rEMProbB is a linear known value which was 
+    ##   retrived by PL divided by Stakes divided again by netProbB, unless it is Poison models based decrete model, 
+    ##   applicable to time series, which is use the netEMEdge of last year data as weight parameter for 
+    ##   current year staking models. `KStakesHKPriceEdge` and `KStakesnetProbBEdge`.
     KStakesHKPriceEdge = ((weight.stakes * rEMProbB * netEMEdge) * EUPrice - 1) / HKPrice,
     
     KStakesnetProbBEdge = ((weight.stakes * rEMProbB * netEMEdge) * (1 / netProbB) - 1) / (1 / netProbB - 1),
@@ -156,7 +159,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1) {
     KStakesHalfAdjnetProbB = ifelse(KStakesHalfAdjnetProbB > 0, KStakesHalfAdjnetProbB, 0), 
     KStakesEMQuarterAdj = ifelse(KStakesEMQuarterAdj > 0, KStakesEMQuarterAdj, 0), 
     KStakesEMQuarterAdjnetProbB = ifelse(KStakesEMQuarterAdjnetProbB > 0, KStakesEMQuarterAdjnetProbB, 0)
-  )
+  ) %>% na.omit
   
   ## ==================== Kelly weight 2 ======================================
   ## The models will be execute only when all weight.stakes and all weight 
@@ -228,7 +231,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1) {
       KStakesHalfAdjnetProbB = ifelse(KStakesHalfAdjnetProbB > 0, KStakesHalfAdjnetProbB, 0), 
       KStakesEMQuarterAdj = ifelse(KStakesEMQuarterAdj > 0, KStakesEMQuarterAdj, 0), 
       KStakesEMQuarterAdjnetProbB = ifelse(KStakesEMQuarterAdjnetProbB > 0, KStakesEMQuarterAdjnetProbB, 0)
-    )
+    ) %>% na.omit
   }
   
   ## ==================== P&L Comparison ========================================
@@ -385,12 +388,9 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1) {
     
     sumd <- K %>% mutate(sm = 1) %>% 
       
-      ddply(.(sm), summarise, From = min(TimeUS), To = max(TimeUS), #Sess, League, 
-            Stakes = currency(sum(Stakes)), #HCap, 
-            HKPrice = mean(HKPrice), EUPrice = mean(EUPrice), #Result, 
-            Return = currency(sum(Return)), PL = currency(sum(PL)), PL.R = percent(mean(PL.R)), 
-            Rebates = percent(mean(Rebates)), RebatesS = currency(sum(RebatesS)), 
-            rRates = mean(rRates), 
+      ddply(.(sm), summarise, From = min(TimeUS), To = max(TimeUS), HKPrice = mean(HKPrice), 
+            EUPrice = mean(EUPrice), Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL), 
+            PL.R = mean(PL.R), Rebates = mean(Rebates), RebatesS = sum(RebatesS), rRates = mean(rRates), 
             netEMEdge = mean(netEMEdge), netProbB = mean(netProbB), rEMProbB = mean(rEMProbB), 
             weight.stakes = mean(weight.stakes), weight = mean(weight), 
             
@@ -467,9 +467,31 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1) {
              KPLHalfAdj.R = percent(KPLHalfAdj / KStakesHalfAdj), 
              KPLHalfAdjnetProbB.R = percent(KPLHalfAdjnetProbB / KStakesHalfAdjnetProbB), 
              KPLEMQuarterAdj.R = percent(KPLEMQuarterAdj / KStakesEMQuarterAdj), 
-             KPLEMQuarterAdjnetProbB.R = percent(KPLEMQuarterAdjnetProbB / KStakesEMQuarterAdjnetProbB)
-             
-             ) %>% select(-sm) %>% tbl_df
+             KPLEMQuarterAdjnetProbB.R = percent(KPLEMQuarterAdjnetProbB / KStakesEMQuarterAdjnetProbB)) %>% 
+      
+      mutate(KPLHKPriceEdge.R = ifelse(is.nan(KPLHKPriceEdge.R), 0, KPLHKPriceEdge.R), 
+             KPLnetProbBEdge.R = ifelse(is.nan(KPLnetProbBEdge.R), 0, KPLnetProbBEdge.R), 
+             KPLHKPrice.R = ifelse(is.nan(KPLHKPrice.R), 0, KPLHKPrice.R), 
+             KPLnetProbB.R = ifelse(is.nan(KPLnetProbB.R), 0, KPLnetProbB.R), 
+             KPLFixed.R = ifelse(is.nan(KPLFixed.R), 0, KPLFixed.R), 
+             KPLFixednetProbB.R = ifelse(is.nan(KPLFixednetProbB.R), 0, KPLFixednetProbB.R), 
+             KPLEMProb.R = ifelse(is.nan(KPLEMProb.R), 0, KPLEMProb.R), 
+             KPLEMProbnetProbB.R = ifelse(is.nan(KPLEMProbnetProbB.R), 0, KPLEMProbnetProbB.R), 
+             KPLHalf.R = ifelse(is.nan(KPLHalf.R), 0, KPLHalf.R), 
+             KPLHalfnetProbB.R = ifelse(is.nan(KPLHalfnetProbB.R), 0, KPLHalfnetProbB.R), 
+             KPLQuarter.R = ifelse(is.nan(KPLQuarter.R), 0, KPLQuarter.R), 
+             KPLQuarternetProbB.R = ifelse(is.nan(KPLQuarternetProbB.R), 0, KPLQuarternetProbB.R), 
+             KPLAdj.R = ifelse(is.nan(KPLAdj.R), 0, KPLAdj.R), 
+             KPLAdjnetProbB.R = ifelse(is.nan(KPLAdjnetProbB.R), 0, KPLAdjnetProbB.R), 
+             KPLHalfAdj.R = ifelse(is.nan(KPLHalfAdj.R), 0, KPLHalfAdj.R), 
+             KPLHalfAdjnetProbB.R = ifelse(is.nan(KPLHalfAdjnetProbB.R), 0, KPLHalfAdjnetProbB.R), 
+             KPLEMQuarterAdj.R = ifelse(is.nan(KPLEMQuarterAdj.R), 0, KPLEMQuarterAdj.R), 
+             KPLEMQuarterAdjnetProbB.R = ifelse(is.nan(KPLEMQuarterAdjnetProbB.R), 0, KPLEMQuarterAdjnetProbB.R)) %>% 
+      
+     mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(PL), PL.R = percent(PL.R), 
+            Rebates = percent(Rebates), RebatesS = currency(RebatesS)
+    
+       ) %>% select(-sm) %>% tbl_df
     
     sumdf <- data.frame(
       # From = sumd$From, To = sumd$To, HKPrice = sumd$HKPrice, EUPrice = sumd$EUPrice, 
@@ -495,7 +517,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1) {
                KPLHalfAdjnetProbB, KPLEMQuarterAdj, KPLEMQuarterAdjnetProbB) %>% t
     ) %>% data.frame(Category = rownames(.), .) %>% tbl_df %>% 
       mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(PL), 
-             PL.R = percent(PL / Stakes))
+             PL.R = percent(ifelse(is.nan(PL / Stakes), 0, PL / Stakes)))
     
     options(warn = 0)
     return(list(data = K, summary = sumdf))
