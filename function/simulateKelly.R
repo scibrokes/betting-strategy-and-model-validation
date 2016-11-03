@@ -1,28 +1,43 @@
-simulateKelly <- function(mbase, type = 'flat', weight.stakes, weight, maxit = 100, parallel = FALSE) {
+simulateKelly <- function(mbase, leagueProf, lPmean = 'runif', Kelly = 'stakes', type = 'flat', weight.stakes = 1, 
+                          weight = 1, maxit = 100, parallel = FALSE) {
   ## Comparison of various fractional Kelly models
   ## mbase = a converted data frame by using readfirmData() and arrfirmData()s.
-  ## type = 'flat' ot 'dynamic' for static or dynamic which is simulate the process to get the optimal weight 
-  ##   parameter.
+  ## type = 'flat', 'weight' or 'dynamic' for static or dynamic which is simulate the process to get the 
+  ## optimal weight  parameter.
   ## weight.stakes = a numeric weight parameter in single or vector format. Manual weight only work on 'flat' type.
   ## weight = a numeric weight parameter in single or vector format. Manual weight only work on 'flat' type.
   ## maxit = maximum iteration for the dynamic process. Only work on 'dynamic' type.
   ##   Once choose 'dynamic'.
+  ## type = 'flat' : both 'weight.stakes' and 'weight' will only usable for 'flat' type.
+  ## type = 'weight' : Once you choose type = 'weight', both 'weight.stakes' and 'weight' 
+  ##   will auto ignore all input value but using previous year data to get a constant 
+  ##   weight parameter.
+  ## type = 'dynamic' : Once you choose 'dynamic' type, both 'weight.stakes' and 'weight' 
+  ##   will auto ignore all input value but using data from previous until latest staked 
+  ##   match to generates a vector of weighted parameters.
+  ## Kelly = 'stakes' or Kelly = 'prob' in order to simulate the vKelly() or vKelly2(). By the way, please select 
+  ##   if the mean value of the league risk profile resampling by `runif` of `rnorm`.
+  ## lPmean = 'runif' or lPmean = 'rnorm'.
   
   ## --------------------- Load packages --------------------------------
   suppressMessages(library('formattable'))
   suppressMessages(library('plyr'))
   suppressMessages(library('tidyverse'))
+  suppressMessages(library('BBmisc'))
   suppressMessages(source('./function/vKelly.R'))
+  suppressMessages(source('./function/vKelly2.R'))
   
   ## --------------------- Data validation -------------------------------- 
   if(!is.data.frame(mbase)) stop('Kindly apply the readfirmData() and arrfirmData() 
                                  in order to turn the data into a fittable data frame.')
   
+  if(!is.data.frame(leagueProf)) stop('Kindly insert a data frame of league risk profile which list the min, median, sd and max stakes.')
+  
   if(!is.logical(parallel)) parallel <- as.logical(as.numeric(parallel))
   
-  if(!c('flat', 'dynamic') %in% type) {
+  if(type != 'flat' & type != 'weight' & type != 'dynamic') {
     
-    stop('Kindly choose "flat" or "dynamic" for parameter named "type". You can choose 
+    stop('Kindly choose "flat", "weight" or "dynamic" for parameter named "type". You can choose 
          fit the "weight" parameter controller for both models.')
     
   } else {
@@ -90,6 +105,30 @@ simulateKelly <- function(mbase, type = 'flat', weight.stakes, weight, maxit = 1
     }
   }
   
-  
-  
+  if(Kelly != 'stakes'& Kelly != 'prob') {
+    stop('Kindly choose Kelly = "stakes" or Kelly = "prob" for simulation.')
+  } else {
+    
+    ## simulate 100 times to get the mean value.
+    #'@ llply(seq(10), function(i) {
+    #'@   x <- NULL
+    #'@   y <- mutate(lRiskProf, mean = runif(mean, min, max))
+    #'@   z <- suppressMessages(join(dat, y))
+    #'@   x[[i]] <- mutate(z, Stakes = mean)
+    #'@   vKelly(x[[i]])$summary
+    #'@ }, .parallel = TRUE, .paropts = list(.options.snow = opts)) %>% ldply(., Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes)
+    
+    K <- list()
+    for(i in maxit) {
+      
+      lProf <- leagueProf %>% 
+        mutate(mean = ifelse(lPmean == 'runif', runif(mean, min, max), 
+                      ifelse(lPmean == 'rnorm', rnorm(mean, sd), 0)))
+      mb <- join(mbase, lProf) %>% mutate(Stakes = mean)
+      
+      if(Kelly == 'stakes') K[[i]] <- vKelly(mb, weight.stakes = weight.stakes, weight = weight)
+      if(Kelly == 'prob') K[[i]] <- vKelly2(mb, weight.stakes = weight.stakes, weight = weight)
+    }
+  }
+  return(list(K, leagueProf = leagueProf, lPmean = lPmean, Kelly = Kelly, maxit = maxit))
 }
