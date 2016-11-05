@@ -17,7 +17,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
   ##   type = either 'weight', both 'weight.stakes' and 'weight' will auto ignore all 
   ##   input value but using previous year data to get a constant weight parameter.
   ##   `theta` will be weight1 and `dres` will be weight2.
-  ## type = 'dynamic' : Once you choose 'dynamic' type, both 'weight.stakes' and 'weight' 
+  ## type = 'dynamic1' or type = 'dynamic2' : Once you choose 'dynamic' type, both 'weight.stakes' and 'weight' 
   ##   will auto ignore all input value but using data from previous until latest staked 
   ##   match to generates a vector of weighted parameters.
   
@@ -66,27 +66,27 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
   
   ## --------------------- Convert probabilities -------------------------------- 
   ## weighted parameter estimation
-  #'@ mbase %<>% mutate(theta = suppressAll(
-  #'@   ifelse(Result == 'Win', 1, 
-  #'@   ifelse(Result == 'Half Win', 0.5, 
-  #'@   ifelse(Result == 'Push'|Result == 'Cancelled', 0, 
-  #'@   ifelse(Result == 'Half Loss', -0.5, 
-  #'@   ifelse(Result == 'Loss', -1, NA)))))), 
-  #'@                   dWin = ifelse(Result == 'Win', 1, 0), 
-  #'@                   dwhf = ifelse(Result == 'Half Win', 1, 0), 
-  #'@                   dpus = ifelse(Result == 'Push'|Result == 'Cancelled', 1, 0), 
-  #'@                   dlhf = ifelse(Result == 'Half Loss', 1, 0), 
-  #'@                   dlos = ifelse(Result == 'Loss', 1, 0))
-  
-  mbase %<>% mutate(
-    theta = as.numeric(plyr::mapvalues(Result, 
-                                       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-                                       c(1, 0.5, 0, 0, -0.5, -1))), 
+  mbase %<>% mutate(theta = suppressAll(
+    ifelse(Result == 'Win', 1, 
+           ifelse(Result == 'Half Win', 0.5, 
+                  ifelse(Result == 'Push'|Result == 'Cancelled', 0, 
+                         ifelse(Result == 'Half Loss', -0.5, 
+                                ifelse(Result == 'Loss', -1, NA)))))), 
     dWin = ifelse(Result == 'Win', 1, 0), 
     dwhf = ifelse(Result == 'Half Win', 1, 0), 
-    dpus = ifelse(Result == 'Push' | Result == 'Cancelled', 1, 0), 
+    dpus = ifelse(Result == 'Push'|Result == 'Cancelled', 1, 0), 
     dlhf = ifelse(Result == 'Half Loss', 1, 0), 
     dlos = ifelse(Result == 'Loss', 1, 0))
+  
+  #'@ mbase %<>% mutate(
+  #'@   theta = as.numeric(plyr::mapvalues(Result, 
+  #'@                 c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
+  #'@                 c(1, 0.5, 0, 0, -0.5, -1))), 
+  #'@   dWin = ifelse(Result == 'Win', 1, 0), 
+  #'@   dwhf = ifelse(Result == 'Half Win', 1, 0), 
+  #'@   dpus = ifelse(Result == 'Push' | Result == 'Cancelled', 1, 0), 
+  #'@   dlhf = ifelse(Result == 'Half Loss', 1, 0), 
+  #'@   dlos = ifelse(Result == 'Loss', 1, 0))
   
   if(type == 'flat' | type == 'weight1' | type == 'weight2') {
     
@@ -171,16 +171,64 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
 
       }
     }
-  } else if(type == 'dynamic'){
-    ##
-    ##
-    ##
-    ##  simulate the Kelly model...
-    stop('Not yet ready, kindly refer to another function in staking model and money management...')
-    
   } else {
-    stop('Kindly choose the parameter `type = flat`, `type = weight1`, `type = weight2` or `type = dynamic`.')
-  }
+    if(type == 'dynamic1'){
+      
+      ## measure the current year rRates to know the rEMProbB. 
+      m <- ddply(mbase, .(Sess), summarise, rRates = mean(Return / Stakes), 
+                 theta = mean(theta), dWin = mean(dWin), dwhf = mean(dwhf), 
+                 dpus = mean(dpus), dlhf = mean(dlhf), dlos = mean(dlos)) %>% tbl_df
+      
+      if(any(!c('rRates', 'rEMProbB', 'rEMProbL', 'netEMEdge') %in% names(mbase))){
+        mbase$rRates <- rep(as.numeric(m$rRates + 1), 
+                            ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
+        mbase %<>% mutate(rEMProbB = rRates * netProbB, rEMProbL = 1 - rEMProbB, 
+                          netEMEdge = rEMProbB / netProbB)
+      }
+      
+      mbase %<>% mutate(thetacum = cummean(theta))
+      mbase %<>% filter(Sess != unique(Sess)[1])
+      wt <- data_frame(No = seq(nrow(mbase)))
+      wt$weight <- exp(mbase$thetacum)
+      wt$weight.stakes <- weight.stakes ## not yet found the way to weight the staking.
+      ## might probably need to apply MCMC to siimulate the staking
+      ##   in order to get the weight value for weight.stakes.
+      ## Test the result prior to add EM simulation for stakes weight.
+      
+    } else if(type == 'dynamic2'){
+      
+      ## measure the current year rRates to know the rEMProbB. 
+      m <- ddply(mbase, .(Sess), summarise, rRates = mean(Return / Stakes), 
+                 theta = mean(theta), dWin = mean(dWin), dwhf = mean(dwhf), 
+                 dpus = mean(dpus), dlhf = mean(dlhf), dlos = mean(dlos)) %>% tbl_df
+      
+      if(any(!c('rRates', 'rEMProbB', 'rEMProbL', 'netEMEdge') %in% names(mbase))){
+        mbase$rRates <- rep(as.numeric(m$rRates + 1), 
+                            ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
+        mbase %<>% mutate(rEMProbB = rRates * netProbB, rEMProbL = 1 - rEMProbB, 
+                          netEMEdge = rEMProbB / netProbB)
+      }
+      
+      mbase %<>% mutate(dWincum = cummean(dWin), dwhfcum = cummean(dwhf), 
+                        dpuscum = cummean(dpus), dlhfcum = cummean(dlhf), 
+                        dloscum = cummean(dlos), dres = suppressAll(
+                          ifelse(Result == 'Win', dWin, ## dres value will be weight2
+                          ifelse(Result == 'Half Win', dwhf, 
+                          ifelse(Result == 'Push'|Result == 'Cancelled', dpus, 
+                          ifelse(Result == 'Half Loss', dlhf, 
+                          ifelse(Result == 'Loss', dlos, NA)))))))
+      mbase %<>% filter(Sess != unique(Sess)[1])
+      wt <- data_frame(No = seq(nrow(mbase)))
+      wt$weight <- exp(mbase$dres)
+      wt$weight.stakes <- weight.stakes ## not yet found the way to weight the staking.
+      ## might probably need to apply MCMC to siimulate the staking
+      ##   in order to get the weight value for weight.stakes.
+      ## Test the result prior to add EM simulation for stakes weight.
+      
+    } else {
+      stop('Kindly choose the parameter `type = flat`, `type = weight1`, `type = weight2`, `type = dynamic1` or `type = dynamic2`.')
+      }
+    }
   
   ## ====================== Kelly weight 1 ====================================
   ## The weight.stakes and weight parameters will be equal to 1 if there has no 
@@ -265,7 +313,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
   ##   adjustment applied outside the fraction.
   ## 
   if((all(wt$weight.stakes != 1) | all(wt$weight != 1)) | 
-     type == 'weight1' | type == 'weight2' | type == 'dynamic') {
+     type == 'weight1' | type == 'weight2' | type == 'dynamic1' | type == 'dynamic2') {
     K2 <- mbase %>% select(TimeUS, DateUS, Sess, League, Stakes, HCap, HKPrice, EUPrice, 
                            Result, Return, PL, PL.R, Rebates, RebatesS, rRates, netEMEdge, netProbB, 
                            netProbL, rEMProbB, rEMProbL) %>% cbind(wt) %>% select(-No)

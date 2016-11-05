@@ -70,7 +70,10 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
     + Section [4.3.2 Weight Function] - Fractional Kelly model.
     + Section [4.3.3 weighted Fractional Kelly Ⓜodel] - Weighted Fractional Kelly model.
     + Section [4.3.4 Dynamic Fractional Kelly Ⓜodel] - Dynamic Weighted Fractional Kelly model.
-  - Section [4.4 Poisson Ⓜodel] - Soccer Scores, Odds Price and Stakes modelling.
+  - Section [4.4 Poisson Ⓜodel] - Soccer Scores Odds Modelling.
+    + Section [4.4.1 Niko Marttinen (2001)] - Creating a Profitable Sportsbook Betting Modelling.
+    + Section [4.4.2 Dixon and Coles (1996)] - Odds Modelling and Betting Stretagy.
+    + Section [4.4.3 ®γσ, Eng Lian Hu (2016)] - Odds Modelling and Testing Efficiency in Sportsbook Betting.
   - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - Simulate the staking model.
   - Section [4.6 Expectation Ⓜaximization and Staking Simulation] - Enhance by weighted function on Staking model and Simulation.
 
@@ -726,7 +729,7 @@ tagList(
 
   Stakes based reversed Kelly models are the application of the parameter from reversion of the stakes where add-on some modified version Kelly models. I tried to adjust the stakes to get the outcome of PL result.
   
-```{r data-Kelly1A, echo = FALSE, results = 'asis'}
+```{r K1, echo = FALSE, results = 'asis'}
 suppressMessages(library('knitr'))
 suppressMessages(source('./function/vKelly.R'))
 
@@ -747,7 +750,7 @@ kable(summary(K1$Kelly1$data), caption = 'Table 4.3.2.2A : Summary Table of Vari
 
   From above table summary, we can know the range of risk management applicable to various adjusted Kelly models. Now we try to compare the Profit & Loss from below table.
   
-```{r data-Kelly1B, echo = FALSE, results = 'asis'}
+```{r K1B, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
 
 tagList(
@@ -775,7 +778,7 @@ tagList(
 
   Due to there has no league risk management profile, here I try to use the mean value of stakes on every single league as the baseline and set the min and max value to simulate 100 times.
 
-```{r data-Kelly1Mean-A, echo = FALSE, results = 'asis'}
+```{r K1mean1, echo = FALSE, results = 'asis'}
 ## Applied various fractional Kelly models version II.
 ##   rEMProb based model without adjust the stakes.
 #'@ K1 <- vKelly(mbase = suppressMessages(join(dat, lRiskProf)) %>% mutate(Stakes = mean))
@@ -804,7 +807,7 @@ load('./KellyApps/K1mean1.rda')
 
   From above table summary, we can know the range of risk management applicable to various adjusted Kelly models. </s> Now we try to compare the Profit & Loss from below table.
   
-```{r data-Kelly1Mean-B, echo = FALSE, results = 'asis'}
+```{r K1mean1B, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
 
 tagList(
@@ -832,7 +835,7 @@ tagList(
 
   Due to there has no league risk management profile, here I try to use the mean value of stakes on every single league as the baseline.
 
-```{r data-Kelly1Med-A, echo = FALSE, results = 'asis'}
+```{r K1mean2, echo = FALSE, results = 'asis'}
 ## Applied various fractional Kelly models version II.
 ##   rEMProb based model without adjust the stakes.
 #'@ K1 <- vKelly(mbase = suppressMessages(join(dat, lRiskProf)) %>% mutate(Stakes = median))
@@ -861,7 +864,7 @@ load('./KellyApps/K1mean2.rda')
 
   From above table summary, we can know the range of risk management applicable to various adjusted Kelly models.</s> Now we try to compare the Profit & Loss from below table.
   
-```{r data-Kelly1Med-B, echo = FALSE, results = 'asis'}
+```{r K1mean2B, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
 
 tagList(
@@ -890,7 +893,7 @@ tagList(
 
   `rEMProbB` (real EM Probabilities Back) are the application of the parameter from reversion of the stakes where add-on some modified version Kelly models. For the EM probabilities based models, I had just simply adjusted for staking and get the different outcome of Profit & Loss.
 
-```{r data-Kelly2B-A, echo = FALSE, results = 'asis'}
+```{r K2, echo = FALSE, results = 'asis'}
 ## reload the function due to unable found.
 suppressMessages(source('./function/vKelly2.R'))
 
@@ -905,7 +908,7 @@ kable(summary(K2$Kelly1$data), caption = 'Table 4.3.2.3 : Summary Table of Vario
 
   From above table summary, we can know the range of risk management applicable to various adjusted Kelly models. Now we try to compare the Profit & Loss from below table.
 
-```{r data-Kelly2B-B, echo = FALSE, results = 'asis'}
+```{r K2B, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
 
 tagList(
@@ -932,7 +935,7 @@ tagList(
 
   Due to there has no league risk management profile, here I try to use the mean value of stakes on every single league as the baseline and set the min and max value to simulate 100 times.
 
-```{r data-Kelly2Mean-A, echo = FALSE, results = 'asis'}
+```{r K2mean1, echo = FALSE, results = 'asis'}
 ## reload the function due to unable found.
 suppressMessages(source('./function/vKelly2.R'))
 
@@ -964,7 +967,7 @@ load('./KellyApps/K2mean1.rda')
 
   From above table summary, we can know the range of risk management applicable to various adjusted Kelly models.</s> Now we try to compare the Profit & Loss from below table.
   
-```{r data-Kelly2Mean-B, echo = FALSE, results = 'asis'}
+```{r K2mean1B, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
 
 tagList(
@@ -991,7 +994,7 @@ tagList(
 
   Due to there has no league risk management profile, here I try to use the median value of stakes on every single league as the baseline.
 
-```{r data-Kelly2Med-A, echo = FALSE, results = 'asis'}
+```{r K2mean2, echo = FALSE, results = 'asis'}
 ## reload the function due to unable found.
 suppressMessages(source('./function/vKelly2.R'))
 
@@ -1023,7 +1026,7 @@ load('./KellyApps/K2mean2.rda')
 
   From above table summary, we can know the range of risk management applicable to various adjusted Kelly models.</s> Now we try to compare the Profit & Loss from below table.
   
-```{r data-Kelly2Med-B, echo = FALSE, results = 'asis'}
+```{r K2mean2B, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
 
 tagList(
@@ -1193,7 +1196,7 @@ tagList(
 
   Stakes based reversed Kelly models are the application of the parameter from reversion of the stakes where add-on some modified version Kelly models. I tried to adjust by add a constant weight value `theta` to get the outcome of PL result.
   
-```{r data-K1W1, echo = FALSE, results = 'asis'}
+```{r K1W1, echo = FALSE, results = 'asis'}
 suppressMessages(library('knitr'))
 suppressMessages(source('./function/vKelly.R'))
 
@@ -1232,7 +1235,7 @@ tagList(
 
   Now we try to look at a vector `dres` weighted values.
   
-```{r data-K1W2, echo = FALSE, results = 'asis'}
+```{r K1W2, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
 ## Applied various fractional Kelly models version I.
 ##   stakes based reverser models.
@@ -1267,7 +1270,7 @@ tagList(
 
   `rEMProbB` (real EM Probabilities Back) are the application of the parameter from reversion of the stakes where add-on some modified version Kelly models. For the EM probabilities based models, I had just simply adjusted by added a constant `theta` to get the different outcome of Profit & Loss.
 
-```{r data-K2W1, echo = FALSE, results = 'asis'}
+```{r K2W1, echo = FALSE, results = 'asis'}
 ## reload the function due to unable found.
 suppressMessages(source('./function/vKelly2.R'))
 
@@ -1300,7 +1303,7 @@ tagList(
 
   Now we try to look at a vector `dres` weighted values.
 
-```{r data-K2W2, echo = FALSE, results = 'asis'}
+```{r K2W2, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
 K2W2 <- vKelly2(dat, type = 'weight2')
 
@@ -1333,23 +1336,119 @@ tagList(
 
   Due to the weighted models only analyse on year 2012~2015, here I need to summarise the static and weigthed data to do comparison from the profit and loss prior to further section.
 
+  From the tables in section [4.3.2 Fractional Kelly Ⓜodel] and [4.3.3 Weighted Fractional Kelly Ⓜodels] we tried to weighted the Kelly models to increase the profit. Now we try to do a dynamic weighted parameters. For the staking and money management which is portfolio management, I leave it to [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement].
 
+#### Stakes based reversed Kelly models
 
-```{r eval = FALSE}
-## sample, need to modify...
+```{r K1D1, echo = FALSE, results = 'asis'}
+## Applied various fractional Kelly models version I.
+##   stakes based reverser models.
+K1D1 <- vKelly(dat, type = 'dynamic1')
 
-suppressMessages(library('tidyverse'))
+K1D1sum <- data.frame(K1D1.1 = K1D1$Kelly1$summary, A = '', K1D1.2 = K1D1$Kelly2$summary, B = '', K1D1.3 = K1D1$Kelly3$summary, C = '', K1D1.4 = K1D1$Kelly4$summary) %>% tbl_df
 
-## weight function to get the likelihood staking amount, maximum likelihood methos will be applicable in section 4.5 and 4.6
-#'@ n <- length(levels(dat$Result)) * nrow(dat)
-#'@ mtx <- matrix(rep(0, n), nc = length(levels(dat$Result)), dimnames = list(NULL, levels(dat$Result))) %>% as.data.frame %>% tbl_df
-#'@ mtx %<>% mutate(`Win` = ifelse(dat$Result == 'Win', 1, 0), `Half Win` = ifelse(dat$Result == 'Half Win', 1, 0), Push = ifelse(dat$Result == 'Half Loss', 1, 0), `Half Loss` = ifelse(dat$Result == 'Half Loss', 1, 0))
-
-mtx <- dat %>% spread(Result, Stakes, fill = 0)
-weight <- lm(Return ~ Win + `Half Win` + Push + `Half Loss` + Loss, data = mtx[c('Return', 'Stakes', 'Win', 'Half Win', 'Push', 'Half Loss', 'Loss')])
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "PL of Stakes Reversed based Kelly Models"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
+  as.htmlwidget(K1D1sum %>% formattable(list(
+    Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
+    
+    Stakes = color_tile('white', 'darkgoldenrod'), 
+    
+    Return = color_tile('white', 'darkgoldenrod'), 
+    
+    PL = color_tile('white', 'darkgoldenrod'), 
+    
+    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
+    ))))
 ```
 
-**Bank Roll**
+*table 4.3.4.1A* : `r paste0(dim(K1D1sum), collapse = ' x ')` : *PL of Reversed stakes dynamic 1 Kelly models 1 year 2012~2015.*
+
+```{r K1D2, echo = FALSE, results = 'asis'}
+K1D2 <- vKelly(dat, type = 'dynamic2')
+
+K1D2sum <- data.frame(K1D2.1 = K1D2$Kelly1$summary, A = '', K1D2.2 = K1D2$Kelly2$summary, B = '', K1D2.3 = K1D2$Kelly3$summary, C = '', K1D2.4 = K1D2$Kelly4$summary) %>% tbl_df
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "PL of Stakes Reversed based Kelly Models"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
+  as.htmlwidget(K1D2sum %>% formattable(list(
+    Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
+    
+    Stakes = color_tile('white', 'darkgoldenrod'), 
+    
+    Return = color_tile('white', 'darkgoldenrod'), 
+    
+    PL = color_tile('white', 'darkgoldenrod'), 
+    
+    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
+    ))))
+```
+
+*table 4.3.4.1B* : `r paste0(dim(K1D2sum), collapse = ' x ')` : *PL of Reversed stakes dynamic 2 Kelly models 1 year 2012~2015.*
+
+#### Reversed rEMProbB based Kelly models
+
+```{r K2D1, echo = FALSE, results = 'asis'}
+K2D1 <- vKelly2(dat, type = 'dynamic1')
+
+K2D1sum <- data.frame(K2D1.1 = K2D1$Kelly1$summary, A = '', K2D1.2 = K2D1$Kelly2$summary) %>% tbl_df
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "PL of Reversed Prob Kelly Models"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
+  as.htmlwidget(K2D1sum %>% formattable(list(
+    Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
+    
+    Stakes = color_tile('white', 'darkgoldenrod'), 
+    
+    Return = color_tile('white', 'darkgoldenrod'), 
+    
+    PL = color_tile('white', 'darkgoldenrod'), 
+    
+    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
+    ))))
+```
+
+*table 4.3.4.2A* : `r paste0(dim(K2D1sum), collapse = ' x ')` : *PL of Reversed rEMProbB dynamic 1 Kelly models 2 year 2012~2015.*
+
+```{r K2D2, echo = FALSE, results = 'asis'}
+K2D2 <- vKelly2(dat, type = 'dynamic2')
+
+K2D2sum <- data.frame(K2D2.1 = K2D2$Kelly1$summary, A = '', K2D2.2 = K2D2$Kelly2$summary) %>% tbl_df
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "PL of Reversed Prob Kelly Models"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
+  as.htmlwidget(K2D2sum %>% formattable(list(
+    Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
+    
+    Stakes = color_tile('white', 'darkgoldenrod'), 
+    
+    Return = color_tile('white', 'darkgoldenrod'), 
+    
+    PL = color_tile('white', 'darkgoldenrod'), 
+    
+    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
+    ))))
+```
+
+*table 4.3.4.2B* : `r paste0(dim(K2D2sum), collapse = ' x ')` : *PL of Reversed rEMProbB dynamic 2 Kelly models 2 year 2012~2015.*
+
+#### Bank Roll
 
 ```{r eval = FALSE}
 suppressMessages(library('htmltools'))
@@ -1442,6 +1541,8 @@ ddply(BR, .(year(DateUS)), summarise, Stakes = sum(Stakes), Return = sum(Return)
 
 ## 4.4 Poisson Ⓜodel
 
+### 4.4.1 Niko Marttinen (2001)
+
 > Data has been collected over the last four seasons in the English Premier League.
 These include 1997-1998, 1998-1999, 1999-2000 and 2000-2001 seasons. We
 have also collected the season 2000-2001 data from the main European football
@@ -1478,6 +1579,8 @@ German Bundesliga and Spanish Primera Liga...
   
   He concludes that the multinomial ordered probit model is the best fit model but the software for fitting is not generally available. Meanwhile, the Poisson model is more versatile than probit logit model based on the dataset accross the European soccer leagues.^[There has a lot of papers with regard to application of logit probit models on soccer betting, might read through and made comparison with my **®Model** *®γσ, Eng Lian Hu (2016)*. I used to read though the logit probit and there has a complicated parameters setting for various effects like : wheather, players' condition, couch, pitch condition and even though the distance travel and the players' stamina modelling.]
 
+### 4.4.2 Dixon and Coles (1996)
+
   Here we introduce the *Dixon and Coles (1996)* model and its codes. You are freely learning from below links if interest.
 
   - [Dixon and Cole's Poisson regression R Packages](http://lastplanetranking.blogspot.com/2013/11/code.html)
@@ -1499,13 +1602,17 @@ suppressMessages(library('DT'))
 #'@ preData[duplicated(preData[c('Date', 'Home', 'Away')]), c('Date', 'Home', 'Away', 'HG', 'AG', 'InPlay', 'InPlay2', 'Mins', 'Mins2', 'Picked2')] %>% tbl_df %>% datatable
 ```
 
-*table 4.4.1 : Samples of filtered multiple bets placed on same matches.*
+*table 4.4.2.1 : Samples of filtered multiple bets placed on same matches.*
 
-  Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I filter-up the sample data to be `r paste(dim(preData), collapse = ' x ')`. I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation *Robert Johnson (2011)*^[Kindly refer to 23th paper in [7.4 References]] from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
+  Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I try to filter-up the sample data to be only English soccer leagues as shinyApps [EnglishApps](..................). I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation *Robert Johnson (2011)*^[Kindly refer to 23th paper in [7.4 References]] from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
+
+### 4.4.3 ®γσ, Eng Lian Hu (2016)
 
   Below is my previous research paper which was more sophiscated than Dixon-Coles model. You can refer it and I will just omit the section as mentioned at the beginning section of this staking validation research paper.
   
 <iframe src="https://raw.githubusercontent.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers/master/Odds%20Modelling%20and%20Testing%20Inefficiency%20of%20Sports-Bookmakers/Odds_Modelling_and_Testing_Inefficiency_of_Sports-Bookmakers.pdf" style="width:560px; height:500px;" frameborder="0"></iframe>
+
+  By refer to [4.4.1 Niko Marttinen (2001)], I've add the enhancement on  [Odds Modelling and Testing Inefficiency of Sports Bookmakers](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers) as future improvement while the weighted function might be enhanced soonly.
 
   Here I cannot reverse computing from barely $\rho_i^{EM}$ without know the $\lambda_{ij}$ and $\gamma$ values. Therefore I try to using both Home and Away Scores to simulate and test to get the maximum likelihood $\rho_i^{EM}$.
 
@@ -1520,7 +1627,9 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
   - $Odds_{em}$ = 0.40 while $Odds_{BK}$ = 0.50, The edge to firm will be 0.5 ÷ 0.4 = `r 0.5/0.4`
   - $Odds_{em}$ = 0.64 while $Odds_{BK}$ = 0.80, The edge to firm will be 0.8 ÷ 0.64 = `r 0.8/0.64`
   
-  We know above edge is same but due to the probability of occurance an event/goal at 0.4 is smaller than 0.64. Here I try to bootstrap/resampling the scores of matches of the dataset and apply maximum likelihood on the poisson model to test the Kelly model and get the mean/likelihood value. Boostrapping the scores and staking model will be falling in the following sections [4.5 Staking Ⓜodel and Ⓜoney Management] and  [4.6 Expectation Ⓜaximization and Staking Simulation].
+  We know above edge is same but due to the probability of occurance an event/goal at 0.4 is smaller than 0.64. In [4.3.3 Weighted Fractional Kelly Ⓜodels] I tried to use a weight function to measure the effect of Win-All, Win-Half, Push, Loss-Half, Loss and also Cancelled and there has generated a higher profit. It might be more effective to apply Poison models for the mentioned effects but I leave it for future improvement.
+  
+  Here I try to bootstrap/resampling the scores of matches of the dataset to test the Kelly model and get the mean/likelihood value. Boostrapping the scores and staking model will be falling in the following sections [4.5 Staking Ⓜodel and Ⓜoney Management] and [4.6 Expectation Ⓜaximization and Staking Simulation].
 
 ## 4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement
 
@@ -1693,7 +1802,7 @@ options(op)
   
   *John Fingleton & Patrick Waldron (1999)* applied Shin model to test the portion of hedge funds and smart punters. As I stated in [4.2 Linear Ⓜodel], the sparkR, RHadoop and noSQL require in order to analyse the high volume betslips dataset. Its interesting and will conduct the research if all betslips of bookmaker(s) is(are) available in the future.
 
-  From the [4.3 Kelly Ⓜodel] we test the staking model, the *table 4.2.1* we apply the linear models and choose the best fit model based on the edge of odds price. [4.4 Poisson Ⓜodel] we try to reverse the odds price placed to get the probabilities of scoring different scores. Now we try to test the return of staking on different handicap (ex: 0, 0.25, 0.5, 0.75, 1 etc.) to know which handicap earn the most. Nowadays the hotest matches of four major leagues provides few handicaps market, there will be another case study and research to increase the profit base on same probabilities  and also edge but staking on different handicap. The dataset will be collect for research beyond the future.
+  From the [4.3 Kelly Ⓜodel] we test the staking model, the *table 4.2.1* we apply the linear models and choose the best fit model based on the edge of odds price. [4.4 Poisson Ⓜodel] we try to reverse the odds price placed to get the probabilities of scoring different scores. Now we try to test the return of staking on different handicap (ex: 0, 0.25, 0.5, 0.75, 1 etc.) to know which handicap earn the most. Nowadays the hotest matches of four major leagues provides few handicaps market, there will be another case study and research to increase the profit base on same probabilities  and also edge but staking on different handicap. The dataset will be collect for research beyond the future. The effects of Win-Half and Loss-Half might probably more effective by application of Poison models since it is a descrete outcome while I take it as a known linear effects this time due to the odds price of Handicap we placed always within a range from 0.7 to 1.25.
 
   I will be apply Shiny to write a dynamic website to utilise the function as web based apps. I am currently conducting another research on [Analyse the Finance and Stocks Price of Bookmakers](https://github.com/scibrokes/analyse-the-finance-and-stocks-price-of-bookmakers) which is an analysis on the public listed companies and also anonymous companies revenue and profit & loss. You are welcome to refer [SHOW ME SHINY](http://www.showmeshiny.com/category/topics/sports/) and build your own shinyapps.
   
