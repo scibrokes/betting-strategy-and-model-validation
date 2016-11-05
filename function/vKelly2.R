@@ -1,4 +1,4 @@
-vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, weight.prob = NULL, type = 'flat') {
+vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
   ## Comparison of various fractional Kelly models
   ## 
   ## Kindly apply readfirmDate() and arrfirmData() prior to measure the various 
@@ -13,9 +13,9 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, weight.prob = NULL, ty
   ##   bet on Win-All and Win-Half might come out with different P&L although it is 
   ##   exactly same strength of indexes between both teams.
   ## type = 'flat' : both 'weight.stakes' and 'weight' will only usable for 'flat' type.
-  ## type = 'weight1' or type = 'weight2' : Once you choose type = either 'weight', both 
-  ##   'weight.stakes' and 'weight' will auto ignore all input value but using previous 
-  ##   year data to get a constant weight parameter.
+  ## type = 'weight1' or type = 'weight2' : Once you choose 
+  ##   type = either 'weight', both 'weight.stakes' and 'weight' will auto ignore all 
+  ##   input value but using previous year data to get a constant weight parameter.
   ##   `theta` will be weight1 and `dres` will be weight2.
   ## type = 'dynamic' : Once you choose 'dynamic' type, both 'weight.stakes' and 'weight' 
   ##   will auto ignore all input value but using data from previous until latest staked 
@@ -39,6 +39,31 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, weight.prob = NULL, ty
   suppressMessages(library('tidyverse'))
   suppressMessages(library('BBmisc'))
   
+  ## --------------------- Data validation --------------------------------------
+  if(!is.data.frame(mbase)) {
+    stop('Kindly apply the readfirmData() and arrfirmData() in order to turn the data into a fittable data frame.')
+  }
+  
+  #'@ if(mbase$rEMProbB <= 0) stop('Invalid rEMProbB value, probabilities must be greater than 0 due to odds price cannot be 0.')
+  #'@ if(mbase$rEMProbL <= 0) stop('Invalid rEMProbL value, probabilities must be greater than 0 due to odds price cannot be 0.')
+  #'@ if(mbase$netProbB <= 0) stop('Invalid netProbB value, probabilities must be greater than 0 due to odds price cannot be 0.')
+  #'@ if(mbase$netProbL <= 0) stop('Invalid netProbL value, probabilities must be greater than 0 due to odds price cannot be 0.')
+  #'@ if(mbase$HKPrice <= 0) stop('Invalid HKPrice value, probabilities must be greater than 0 due to odds price cannot be 0.')
+  #'@ if(mbase$EUPrice <= 1) stop('Invalid EUPrice value, probabilities must be greater than 0 due to odds price cannot be 0.')
+  
+  wt <- data_frame(No = seq(nrow(mbase)))
+  
+  ## Re-categorise the soccer financial settlement date. Due to I have no the 
+  ##   history matches dataset from bookmakers. The scrapped spbo time is not 
+  ##   stable (always change, moreover there just an information website) where 
+  ##   firm A is the firm who placed bets with millions HKD (although the 
+  ##   kick-off time might also changed after placed that particular bet), 
+  ##   therefore I follow the kick-off time of the firm A.
+  mbase <- mbase[order(mbase$DateUK),] %>% mutate(
+    TimeUS = format(DateUK, tz = 'EST', usetz = TRUE, 
+                    format = '%Y-%m-%d %H:%M:%S'), 
+    DateUS = as.Date(TimeUS), PL.R = PL / Stakes, RebatesS = Stakes * Rebates)
+  
   ## --------------------- Convert probabilities -------------------------------- 
   ## weighted parameter estimation
   #'@ mbase %<>% mutate(theta = suppressAll(
@@ -54,30 +79,51 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, weight.prob = NULL, ty
   #'@                   dlos = ifelse(Result == 'Loss', 1, 0))
   
   mbase %<>% mutate(
-    theta = plyr::mapvalues(Result, c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-                   c(1, 0.5, 0, 0, -0.5, -1)), 
+    theta = as.numeric(plyr::mapvalues(Result, 
+                                       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
+                                       c(1, 0.5, 0, 0, -0.5, -1))), 
     dWin = ifelse(Result == 'Win', 1, 0), 
     dwhf = ifelse(Result == 'Half Win', 1, 0), 
-    dpus = ifelse(Result == 'Push'|Result == 'Cancelled', 1, 0), 
+    dpus = ifelse(Result == 'Push' | Result == 'Cancelled', 1, 0), 
     dlhf = ifelse(Result == 'Half Loss', 1, 0), 
     dlos = ifelse(Result == 'Loss', 1, 0))
   
-  if(type == 'flat'|type == 'weight1'|type == 'weight2') {
-    m <- ddply(mbase, .(Sess), summarise, rRates = percent(mean(rRates)), 
-               theta = mean(theta), dWin = mean(dWin), dwhf = mean(dwhf), dpus = mean(dpus), 
-               dlhf = mean(dlhf), dlos = mean(dlos)) %>% tbl_df
+  if(type == 'flat' | type == 'weight1' | type == 'weight2') {
+    
+    m <- ddply(mbase, .(Sess), summarise, rRates = mean(Return / Stakes), 
+               theta = mean(theta), dWin = mean(dWin), dwhf = mean(dwhf), 
+               dpus = mean(dpus), dlhf = mean(dlhf), dlos = mean(dlos)) %>% tbl_df
+    
+    if(any(!c('rRates', 'rEMProbB', 'rEMProbL', 'netEMEdge') %in% names(mbase))){
+      mbase$rRates <- rep(as.numeric(m$rRates + 1), 
+                          ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
+      mbase %<>% mutate(rEMProbB = rRates * netProbB, rEMProbL = 1 - rEMProbB, 
+                        netEMEdge = rEMProbB / netProbB)
+    }
     
     if(type == 'flat') {
-      if(any(!c('rRates', 'rEMProbB', 'rEMProbL', 'netEMEdge') %in% names(mbase))){
-        mbase$rRates <- rep(as.numeric(m$rRates + 1), 
-                            ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-        mbase %<>% mutate(rEMProbB = rRates * netProbB, rEMProbL = 1 - rEMProbB, 
-                          netEMEdge = rEMProbB / netProbB)
+      
+      if(!is.numeric(weight.stakes)) {
+        wt$weight.stakes <- 1
+      } else {
+        if(!is.vector(weight.stakes)) {
+          stop('Kindly insert a range of vector or single numeric value as weight.stakes parameter.')
+        } else {
+          if(is.vector(weight.stakes)) wt$weight.stakes <- weight.stakes
+        }
+      }
+      
+      if(!is.numeric(weight)) {
+        wt$weight <- 1
+      } else {
+        if(!is.vector(weight)) {
+          stop('Kindly insert a range of vector or single numeric value as weight parameter.')
+        } else {
+          if(is.vector(weight)) wt$weight <- weight
+        }
       }
       
     } else {
-      if(weight.prob != 'rRates' & weight.prob != 'theta') 
-        stop('Kindly choose weight.prob = "rRates" or weight.prob = "theta".')
       
       mbase$theta <- rep(as.numeric(m$theta + 1), ## theta value will be weight1
                          ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
@@ -93,18 +139,37 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, weight.prob = NULL, ty
                         ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
       
       mbase %<>% 
-        mutate(rEMProbB = ifelse(weight.prob == 'rRates', rRates * theta * netProbB, 
-                          ifelse(weight.prob == 'theta', theta * netProbB, rEMProbB)), 
-               rEMProbL = 1 - rEMProbB, netEMEdge = rEMProbB / netProbB, 
-               dres = suppressAll(
-                 ifelse(Result == 'Win', dWin, ## dres value will be weight2
+        mutate(dres = suppressAll(
+          ifelse(Result == 'Win', dWin, ## dres value will be weight2
                  ifelse(Result == 'Half Win', dwhf, 
-                 ifelse(Result == 'Push'|Result == 'Cancelled', dpus, 
-                 ifelse(Result == 'Half Loss', dlhf, 
-                 ifelse(Result == 'Loss', dlos, NA)))))))
-               #'@ dres = plyr::mapvalues(Result, 
-               #'@              c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-               #'@              c(dWin, dwhf, dpus, dpus, dlhf, dlos)))
+                        ifelse(Result == 'Push'|Result == 'Cancelled', dpus, 
+                               ifelse(Result == 'Half Loss', dlhf, 
+                                      ifelse(Result == 'Loss', dlos, NA)))))))
+      #'@ dres = plyr::mapvalues(Result, 
+      #'@        c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
+      #'@        c(dWin, dwhf, dpus, dpus, dlhf, dlos)))
+      
+      if(type == 'weight1') {
+        
+        mbase %<>% filter(Sess != unique(Sess)[1])
+        wt <- data_frame(No = seq(nrow(mbase)))
+        wt$weight <- exp(mbase$theta)
+        wt$weight.stakes <- weight.stakes ## not yet found the way to weight the staking.
+        ## might probably need to apply MCMC to siimulate the staking
+        ##   in order to get the weight value for weight.stakes.
+        ## Test the result prior to add EM simulation for stakes weight.
+
+      } else if(type == 'weight2') {
+        
+        mbase %<>% filter(Sess != unique(Sess)[1])
+        wt <- data_frame(No = seq(nrow(mbase)))
+        wt$weight <- exp(mbase$dres)
+        wt$weight.stakes <- weight.stakes ## not yet found the way to weight the staking.
+        ## might probably need to apply MCMC to siimulate the staking
+        ##   in order to get the weight value for weight.stakes.
+        ## Test the result prior to add EM simulation for stakes weight.
+
+      }
     }
   } else if(type == 'dynamic'){
     ##
@@ -112,68 +177,10 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, weight.prob = NULL, ty
     ##
     ##  simulate the Kelly model...
     stop('Not yet ready, kindly refer to another function in staking model and money management...')
-
+    
   } else {
     stop('Kindly choose the parameter `type = flat`, `type = weight1`, `type = weight2` or `type = dynamic`.')
   }
-  
-  ## --------------------- Data validation --------------------------------------
-  if(!is.data.frame(mbase)) {
-    stop('Kindly apply the readfirmData() and arrfirmData() in order to turn the data into a fittable data frame.')
-  }
-  
-  #'@ if(mbase$rEMProbB <= 0) stop('Invalid rEMProbB value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  #'@ if(mbase$rEMProbL <= 0) stop('Invalid rEMProbL value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  #'@ if(mbase$netProbB <= 0) stop('Invalid netProbB value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  #'@ if(mbase$netProbL <= 0) stop('Invalid netProbL value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  #'@ if(mbase$HKPrice <= 0) stop('Invalid HKPrice value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  #'@ if(mbase$EUPrice <= 1) stop('Invalid EUPrice value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  
-  wt <- data_frame(No = seq(nrow(mbase)))
-  
-  if(type == 'flat') {
-    
-    if(!is.numeric(weight.stakes)) {
-      wt$weight.stakes <- 1
-    } else {
-      if(!is.vector(weight.stakes)) {
-        stop('Kindly insert a range of vector or single numeric value as weight.stakes parameter.')
-      } else {
-        if(is.vector(weight.stakes)) wt$weight.stakes <- weight.stakes
-      }
-    }
-    
-    if(!is.numeric(weight)) {
-      wt$weight <- 1
-    } else {
-      if(!is.vector(weight)) {
-        stop('Kindly insert a range of vector or single numeric value as weight parameter.')
-      } else {
-        if(is.vector(weight)) wt$weight <- weight
-      }
-    }
-  } else if(type == 'weight1') {
-    wt$weight <- mbase$theta
-    mbase %<>% mutate(rEMProbB = rEMProbB1, rEMProbL = rEMProbL1, netEMEdge = netEMEdge1)
-    
-  } else if(type == 'weight2') {
-    wt$weight <- mbase$dres
-    mbase %<>% mutate(rEMProbB = rEMProbB2, rEMProbL = rEMProbL2, netEMEdge = netEMEdge2)
-    
-  } else if(type == 'dynamic') {
-    stop('Not yet ready, kindly refer to another function in staking model and money management...')
-  }
-  
-  ## Re-categorise the soccer financial settlement date. Due to I have no the 
-  ##   history matches dataset from bookmakers. The scrapped spbo time is not 
-  ##   stable (always change, moreover there just an information website) where 
-  ##   firm A is the firm who placed bets with millions HKD (although the 
-  ##   kick-off time might also changed after placed that particular bet), 
-  ##   therefore I follow the kick-off time of the firm A.
-  mbase <- mbase[order(mbase$DateUK),] %>% mutate(
-    TimeUS = format(DateUK, tz = 'EST', usetz = TRUE, 
-                    format = '%Y-%m-%d %H:%M:%S'), 
-    DateUS = as.Date(TimeUS), PL.R = PL / Stakes, RebatesS = Stakes * Rebates)
   
   ## ====================== Kelly weight 1 ====================================
   ## The weight.stakes and weight parameters will be equal to 1 if there has no 
@@ -257,7 +264,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, weight.prob = NULL, ty
   ## Weight for probabilities applied within fraction but weight.stakes for stakes 
   ##   adjustment applied outside the fraction.
   ## 
-  if((all(wt$weight.stakes) != 1 & all(wt$weight) != 1) | 
+  if((all(wt$weight.stakes != 1) | all(wt$weight != 1)) | 
      type == 'weight1' | type == 'weight2' | type == 'dynamic') {
     K2 <- mbase %>% select(TimeUS, DateUS, Sess, League, Stakes, HCap, HKPrice, EUPrice, 
                            Result, Return, PL, PL.R, Rebates, RebatesS, rRates, netEMEdge, netProbB, 
@@ -738,18 +745,18 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, weight.prob = NULL, ty
     options(warn = 0)
     return(list(data = K, summary = sumdf))
   }
-    
+  
   ## ==================== Return function ========================================
   
-  if(all(wt$weight.stakes) != 1 & all(wt$weight) != 1) {
+  if(all(wt$weight.stakes != 1) | all(wt$weight != 1)) {
     tmp <- list(data = mbase, Kelly1 = KellyPL(K1), Kelly2 = KellyPL(K2), 
-                weight.stakes = weight.stakes, weight = weight)
+                weight.stakes = wt$weight.stakes, weight = wt$weight)
     options(warn = 0)
     return(tmp)
     
   } else {
     tmp <- list(data = mbase, Kelly1 = KellyPL(K1), 
-                weight.stakes = weight.stakes, weight = weight)
+                weight.stakes = wt$weight.stakes, weight = wt$weight)
     options(warn = 0)
     return(tmp)
   }

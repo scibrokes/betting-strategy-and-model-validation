@@ -615,6 +615,8 @@ render_graph(graph)
 
 <iframe src="https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/8adcccbde5140a4321bf064ef2e065551bc195ed/references/Creating%20a%20Profitable%20Betting%20Strategy%20for%20Football%20by%20Using%20Statistical%20Modelling.pdf" style="width:560px; height:500px;" frameborder="0"></iframe>
 
+  *diagram 4.3.0* get the idea from above paper which is count the odds price offers by bookmakers into calculation. My previous [Odds Modelling and Testing Inefficiency of Sports Bookmakers](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers) odds modelling will be conducted further enhanced beyond next few years. In this staking model, I will also use the idea to measure the weakness of bookmakers but also enhanced our staking strategics. Meanwhile, [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion)^[We can know from Part I where we can easily make profit from bookmakers but the Part II will enhanced to increase the profit and also the money management.] will use a basket of bookmakers' odds price to simulate it.
+
 <br>
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/kOvJGcxtIp4" frameborder="0" allowfullscreen></iframe>
@@ -792,8 +794,8 @@ tagList(
 #'@   }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
 
 ## save above data to easier for loading.
-#'@ save(K1mean1, file = './data/K1mean1.rda')
-load('./data/K1mean1.rda')
+#'@ save(K1mean1, file = './KellyApps/K1mean1.rda')
+load('./KellyApps/K1mean1.rda')
 
 #'@ kable(summary(K1mean1), caption = 'Table 4.3.2.2C : Summary Table of Various Kelly Models (Stakes Reversed based with Mean Stakes Adjusted Models)')
 ```
@@ -849,12 +851,12 @@ tagList(
 #'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
 
 ## save above data to easier for loading.
-#'@ save(K1mean2, file = './data/K1mean2.rda')
-load('./data/K1mean2.rda')
+#'@ save(K1mean2, file = './KellyApps/K1mean2.rda')
+load('./KellyApps/K1mean2.rda')
 
 #'@ kable(summary(K1mean2), caption = 'Table 4.3.2.2E : Summary Table of Various Kelly Models  (Stakes Reversed based with Mean Stakes Adjusted Models)')
 ```
-<s>
+
 *table 4.3.2.2E* : `r paste0(dim(K1mean2), collapse = ' x ')` : *Summary of Stakes reversed Kelly models (mean value of stakes with sd range as staking adjuster) year 2011~2015.*
 
   From above table summary, we can know the range of risk management applicable to various adjusted Kelly models.</s> Now we try to compare the Profit & Loss from below table.
@@ -868,16 +870,15 @@ tagList(
            tags$h3(class = "bg-primary", "PL of Reversed Stakes based Kelly Models (Mean with sd Adjusted Stakes)"), 
            tags$h5(align = "center", class = "text-muted", 
                    "Stakes of Firm A at Agency A (2011~2015) ($0,000)")), 
-  as.htmlwidget(K1mean2 %>% formattable(list(
-    Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
+  as.htmlwidget(K1mean2 %>% tbl_df %>% formattable(list(
     
     Stakes = color_tile('white', 'darkgoldenrod'), 
     
     Return = color_tile('white', 'darkgoldenrod'), 
     
-    PL = color_tile('white', 'darkgoldenrod'), 
+    PL = color_tile('white', 'darkgoldenrod')#, 
     
-    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
+    #PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
     ))))
 ```
 
@@ -919,9 +920,9 @@ tagList(
     
     Return = color_tile('white', 'darkgoldenrod'), 
     
-    PL = color_tile('white', 'darkgoldenrod'), 
+    PL = color_tile('white', 'darkgoldenrod')#, 
     
-    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
+    #PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
     ))))
 ```
 
@@ -953,8 +954,8 @@ suppressMessages(source('./function/vKelly2.R'))
 #'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
 
 ## save above data to easier for loading.
-#'@ save(K2mean1, file = './data/K2mean1.rda')
-load('./data/K2mean1.rda')
+#'@ save(K2mean1, file = './KellyApps/K2mean1.rda')
+load('./KellyApps/K2mean1.rda')
 
 #'@ kable(summary(K2), caption = 'Table 4.3.2.3C : Summary Table of Various Kelly Models (Reversed rEMProbB based with Mean Stakes Adjusted models)')
 ```
@@ -1012,8 +1013,8 @@ suppressMessages(source('./function/vKelly2.R'))
 #'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
 
 ## save above data to easier for loading.
-#'@ save(K2mean2, file = './data/K2mean2.rda')
-load('./data/K2mean2.rda')
+#'@ save(K2mean2, file = './KellyApps/K2mean2.rda')
+load('./KellyApps/K2mean2.rda')
 
 #'@ kable(summary(K2mean2), caption = 'Table 4.3.2.3E : Summary Table of Various Kelly Models (Reversed rEMProbB based with Mean Stakes Adjusted models)')
 ```
@@ -1066,6 +1067,10 @@ $$r\begin{Bmatrix}
   Here I try to diversified the weight parameters on *equation 4.3.3.2*. The first year data will be the baseline for further years analysis. The $\phi(r)$ function is a contant variable which using previous years's data to apply on current year staking model. You can also use other method to find yours.
 
 ```{r weight-para, echo = FALSE, results = 'asis'}
+## ======================================================================
+## Added below weight function into the vKelly() and vKelly2()
+## ======================================================================
+
 ## weighted parameter estimation
 dat2 <- dat %>% mutate(
   theta = suppressAll(
@@ -1082,6 +1087,10 @@ dat2 <- dat %>% mutate(
 ```
 
 ```{r weight-para-draft, eval = FALSE, echo = FALSE, results = 'asis'}
+## ======================================================================
+## Added below weight function into the vKelly() and vKelly2()
+## ======================================================================
+
 ## I dont pretand to know the true weight function, here I try both methods bewlo to do the comparison.
 ## option 1
 - $\theta$ = 1    if Win
@@ -1151,30 +1160,40 @@ rEMProbB netProbB    theta     dWin     dwhf     dpus     dlhf     dlos
 ```
 
 ```{r weight-para2, echo = FALSE, results = 'asis'}
-## weighted parameter estimation
+## static weighted parameter estimation
 theta <- ddply(dat2, .(Sess), summarise, rRates = percent(mean(rRates)), 
              theta = mean(theta), dWin = mean(dWin), dwhf = mean(dwhf), 
              dpus = mean(dpus), dlhf = mean(dlhf), dlos = mean(dlos)) %>% tbl_df
 
-theta %>% formattable %>% as.htmlwidget
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "Weighted Value Estimation for Weighted Kelly Models"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Weighted Table (2011~2015)")), 
+  as.htmlwidget(theta %>% formattable(list(
+
+    rRates = color_tile('white', 'darkgoldenrod'), 
+    theta = color_tile('white', 'darkgoldenrod'), 
+    dWin = color_tile('white', 'darkgoldenrod'), 
+    dwhf = color_tile('white', 'darkgoldenrod'), 
+    dpus = color_tile('white', 'darkgoldenrod'), 
+    dlhf = color_tile('white', 'darkgoldenrod'), 
+    dlos = color_tile('white', 'darkgoldenrod')
+    ))))
 ```
 
 *table 4.3.3.1* : `r paste0(dim(theta), collapse = ' x ')` : *The static weight parameter from year 2011~2015.*
 
-  Above parameters just a static weight parameter or constant across a year, you can simulate by apply the Epectation Maximization to get a dynamic vector of weight parameters across the soccer matches. The later section will conduct a monte carlo simulation from 2011 until 2015 to get the best fit outcome.
-
-```{r weight-para3, echo = FALSE, results = 'asis'}
-
-
-```
+  Above parameters just a static weighted parameter or constant across a year, you can simulate by apply the Epectation Maximization to get a dynamic vector of weight parameters across the soccer matches. The later section will conduct a monte carlo simulation from 2011 until 2015 to get the best fit outcome.
 
 #### Stakes based reversed Kelly models
 
 **Weighted Fractional Models**
 
-  Stakes based reversed Kelly models are the application of the parameter from reversion of the stakes where add-on some modified version Kelly models. I tried to adjust the stakes to get the outcome of PL result.
+  Stakes based reversed Kelly models are the application of the parameter from reversion of the stakes where add-on some modified version Kelly models. I tried to adjust by add a constant weight value `theta` to get the outcome of PL result.
   
-```{r data-wKelly1A, echo = FALSE, results = 'asis'}
+```{r data-K1W1, echo = FALSE, results = 'asis'}
 suppressMessages(library('knitr'))
 suppressMessages(source('./function/vKelly.R'))
 
@@ -1186,17 +1205,9 @@ suppressMessages(source('./function/vKelly.R'))
 
 ## Applied various fractional Kelly models version I.
 ##   stakes based reverser models.
-K1 <- vKelly(dat)
+K1W1 <- vKelly(dat, type = 'weight1')
 
-kable(summary(K1$Kelly1$data), caption = 'Table 4.3.2.2A : Summary Table of Various Kelly Models (Stakes reversed based models)')
-```
-
-*table 4.3.3.2A* : `r paste0(dim(K1$Kelly1$data), collapse = ' x ')` : *Summary of Stakes reversed weighted Kelly models year 2012~2015.*
-
-  From above table summary, we can know the range of risk management applicable to various adjusted Kelly models. Now we try to compare the Profit & Loss from below table.
-  
-```{r data-wKelly1B, echo = FALSE, results = 'asis'}
-#'@ suppressMessages(library('formattable'))
+K1W1sum <- data.frame(K1W1.1 = K1W1$Kelly1$summary, A = '', K1W1.2 = K1W1$Kelly2$summary, B = '', K1W1.3 = K1W1$Kelly3$summary, C = '', K1W1.4 = K1W1$Kelly4$summary) %>% tbl_df
 
 tagList(
   tags$div(align = "center", 
@@ -1204,7 +1215,7 @@ tagList(
            tags$h3(class = "bg-primary", "PL of Stakes Reversed based Kelly Models"), 
            tags$h5(align = "center", class = "text-muted", 
                    "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
-  as.htmlwidget(K1$Kelly1$summary %>% formattable(list(
+  as.htmlwidget(K1W1sum %>% formattable(list(
     Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
     
     Stakes = color_tile('white', 'darkgoldenrod'), 
@@ -1217,34 +1228,25 @@ tagList(
     ))))
 ```
 
-*table 4.3.3.2B* : `r paste0(dim(K1$Kelly1$summary), collapse = ' x ')` : *PL of Stakes based reversed weighted Kelly models year 2012~2015.*
+*table 4.3.3.2A* : `r paste0(dim(K1W1sum), collapse = ' x ')` : *Summary of Stakes reversed weighted 1 Kelly models 1 year 2012~2015.*
 
-**Mean Fractional Models**
-
-  Due to there has no league risk management profile, here I try to use the mean value of stakes on every single league as the baseline.
-
-```{r data-wKelly1Mean-A, echo = FALSE, results = 'asis'}
-## Applied various fractional Kelly models version II.
-##   rEMProb based model without adjust the stakes.
-K1 <- vKelly(mbase = suppressMessages(join(dat, lRiskProf)) %>% mutate(Stakes = mean))
-
-kable(summary(K1$Kelly1$data), caption = 'Table 4.3.2.2C : Summary Table of Various Kelly Models (Stakes Reversed based with Mean Stakes Adjusted Models)')
-```
-
-*table 4.3.3.2C* : `r paste0(dim(K1$Kelly1$data), collapse = ' x ')` : *Summary of Stakes reversed weighted Kelly models (mean value of stakes as staking adjuster) year 2012~2015.*
-
-  From above table summary, we can know the range of risk management applicable to various adjusted Kelly models. Now we try to compare the Profit & Loss from below table.
+  Now we try to look at a vector `dres` weighted values.
   
-```{r data-wKelly1Mean-B, echo = FALSE, results = 'asis'}
+```{r data-K1W2, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
+## Applied various fractional Kelly models version I.
+##   stakes based reverser models.
+K1W2 <- vKelly(dat, type = 'weight2')
+
+K1W2sum <- data.frame(K1W2.1 = K1W2$Kelly1$summary, A = '', K1W2.2 = K1W2$Kelly2$summary, B = '', K1W2.3 = K1W2$Kelly3$summary, C = '', K1W2.4 = K1W2$Kelly4$summary) %>% tbl_df
 
 tagList(
   tags$div(align = "center", 
            class = "bg-info", 
-           tags$h3(class = "bg-primary", "PL of Reversed rEMProbB Kelly Models (Mean Stakes)"), 
+           tags$h3(class = "bg-primary", "PL of Stakes Reversed based Kelly Models"), 
            tags$h5(align = "center", class = "text-muted", 
                    "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
-  as.htmlwidget(K1$Kelly1$summary %>% formattable(list(
+  as.htmlwidget(K1W2sum %>% formattable(list(
     Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
     
     Stakes = color_tile('white', 'darkgoldenrod'), 
@@ -1257,80 +1259,33 @@ tagList(
     ))))
 ```
 
-*table 4.3.3.2D* : `r paste0(dim(K1$Kelly1$summary), collapse = ' x ')` : *PL of Stakes reversed weighted Kelly models (mean value of stakes as staking adjuster) year 2012~2015.*
-
-**Median Fractional Models**
-
-  Due to there has no league risk management profile, here I try to use the median value of stakes on every single league as the baseline.
-
-```{r data-wKelly1Med-A, echo = FALSE, results = 'asis'}
-## Applied various fractional Kelly models version II.
-##   rEMProb based model without adjust the stakes.
-K1 <- vKelly(mbase = suppressMessages(join(dat, lRiskProf)) %>% mutate(Stakes = median))
-
-kable(summary(K1$Kelly1$data), caption = 'Table 4.3.2.2E : Summary Table of Various Kelly Models  (Stakes Reversed based with Median Stakes Adjusted Models)')
-```
-
-*table 4.3.3.2E* : `r paste0(dim(K1$Kelly1$data), collapse = ' x ')` : *Summary of Stakes reversed weighted Kelly models (median value of stakes as staking adjuster) year 2012~2015.*
-
-  From above table summary, we can know the range of risk management applicable to various adjusted Kelly models. Now we try to compare the Profit & Loss from below table.
-  
-```{r data-wKelly1Med-B, echo = FALSE, results = 'asis'}
-#'@ suppressMessages(library('formattable'))
-
-tagList(
-  tags$div(align = "center", 
-           class = "bg-info", 
-           tags$h3(class = "bg-primary", "PL of Reversed Stakes based Kelly Models (Median Stakes)"), 
-           tags$h5(align = "center", class = "text-muted", 
-                   "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
-  as.htmlwidget(K1$Kelly1$summary %>% formattable(list(
-    Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
-    
-    Stakes = color_tile('white', 'darkgoldenrod'), 
-    
-    Return = color_tile('white', 'darkgoldenrod'), 
-    
-    PL = color_tile('white', 'darkgoldenrod'), 
-    
-    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
-    ))))
-```
-
-*table 4.3.3.2F* : `r paste0(dim(K1$Kelly1$summary), collapse = ' x ')` : *PL of Stakes reversed weighted Kelly models year (median value of stakes as staking adjuster) 2012~2015.*
+*table 4.3.3.2B* : `r paste0(dim(K1W2sum), collapse = ' x ')` : *Summary of Stakes reversed weighted 2 Kelly models 2 year 2012~2015.*
 
 #### Reversed rEMProbB based Kelly models
 
 **Weighted Fractional Models**
 
-  `rEMProbB` (real EM Probabilities Back) are the application of the parameter from reversion of the stakes where add-on some modified version Kelly models. For the EM probabilities based models, I had just simply adjusted for staking and get the different outcome of Profit & Loss.
+  `rEMProbB` (real EM Probabilities Back) are the application of the parameter from reversion of the stakes where add-on some modified version Kelly models. For the EM probabilities based models, I had just simply adjusted by added a constant `theta` to get the different outcome of Profit & Loss.
 
-```{r data-wKelly2B-A, echo = FALSE, results = 'asis'}
+```{r data-K2W1, echo = FALSE, results = 'asis'}
 ## reload the function due to unable found.
 suppressMessages(source('./function/vKelly2.R'))
 
 ## Applied various fractional Kelly models version II.
 ##   rEMProb based model without adjust the stakes.
-K2 <- vKelly2(dat)
+K2W1 <- vKelly2(dat, type = 'weight1')
 
-kable(summary(K2$Kelly1$data), caption = 'Table 4.3.2.3 : Summary Table of Various Kelly Models (reversed rEMProbB based models)')
-```
-
-*table 4.3.3.3A* : `r paste0(dim(K2$Kelly1$data), collapse = ' x ')` : *Summary of Reversed rEMProbB weighted Kelly models year 2012~2015.*
-
-  From above table summary, we can know the range of risk management applicable to various adjusted Kelly models. Now we try to compare the Profit & Loss from below table.
-
-```{r data-wKelly2B-B, echo = FALSE, results = 'asis'}
-#'@ suppressMessages(library('formattable'))
+K2W1sum <- data.frame(K2W1.1 = K2W1$Kelly1$summary, A = '', K2W1.2 = K2W1$Kelly2$summary) %>% tbl_df
 
 tagList(
   tags$div(align = "center", 
            class = "bg-info", 
-           tags$h3(class = "bg-primary", "PL of Reversed rEMProbB Kelly Models"), 
+           tags$h3(class = "bg-primary", "PL of Reversed Prob Kelly Models"), 
            tags$h5(align = "center", class = "text-muted", 
                    "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
-  as.htmlwidget(K2$Kelly1$summary %>% formattable(list(
-
+  as.htmlwidget(K2W1sum %>% formattable(list(
+    Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
+    
     Stakes = color_tile('white', 'darkgoldenrod'), 
     
     Return = color_tile('white', 'darkgoldenrod'), 
@@ -1341,38 +1296,25 @@ tagList(
     ))))
 ```
 
-*table 4.3.3.3B* : `r paste0(dim(K2$Kelly1$summary), collapse = ' x ')` : *PL of Reversed rEMProbB weighted Kelly models year 2012~2015.*
+*table 4.3.3.3A* : `r paste0(dim(K2W1sum), collapse = ' x ')` : *Summary of Reversed rEMProbB weighted 1 Kelly models 2 year 2012~2015.*
 
-**Mean Fractional Models**
+  Now we try to look at a vector `dres` weighted values.
 
-  Due to there has no league risk management profile, here I try to use the mean value of stakes on every single league as the baseline.
-
-```{r data-wKelly2Mean-A, echo = FALSE, results = 'asis'}
-## reload the function due to unable found.
-suppressMessages(source('./function/vKelly2.R'))
-
-## Applied various fractional Kelly models version II.
-##   rEMProb based model without adjust the stakes.
-K2 <- vKelly2(mbase = suppressMessages(join(dat, lRiskProf)) %>% mutate(Stakes = mean))
-
-kable(summary(K2$Kelly1$data), caption = 'Table 4.3.2.3C : Summary Table of Various Kelly Models (Reversed rEMProbB based with Mean Stakes Adjusted models)')
-```
-
-*table 4.3.3.3C* : `r paste0(dim(K2$Kelly1$data), collapse = ' x ')` : *Summary of Reversed rEMProbB weighted Kelly models year (mean value of stakes as staking adjuster) 2012~2015.*
-
-  From above table summary, we can know the range of risk management applicable to various adjusted Kelly models. Now we try to compare the Profit & Loss from below table.
-  
-```{r data-wKelly2Mean-B, echo = FALSE, results = 'asis'}
+```{r data-K2W2, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
+K2W2 <- vKelly2(dat, type = 'weight2')
+
+K2W2sum <- data.frame(K2W2.1 = K2W2$Kelly1$summary, A = '', K2W2.2 = K2W2$Kelly2$summary) %>% tbl_df
 
 tagList(
   tags$div(align = "center", 
            class = "bg-info", 
-           tags$h3(class = "bg-primary", "PL of Reversed rEMProbB Kelly Models (Mean Stakes)"), 
+           tags$h3(class = "bg-primary", "PL of Reversed Prob Kelly Models"), 
            tags$h5(align = "center", class = "text-muted", 
                    "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
-  as.htmlwidget(K2$Kelly1$summary %>% formattable(list(
-
+  as.htmlwidget(K2W2sum %>% formattable(list(
+    Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
+    
     Stakes = color_tile('white', 'darkgoldenrod'), 
     
     Return = color_tile('white', 'darkgoldenrod'), 
@@ -1383,49 +1325,7 @@ tagList(
     ))))
 ```
 
-*table 4.3.3.3D* : `r paste0(dim(K2$Kelly1$summary), collapse = ' x ')` : *PL of Reversed rEMProbB weighted Kelly models (mean value of stakes as staking adjuster) year 2012~2015.*
-
-**Median Fractional Models**
-
-  Due to there has no league risk management profile, here I try to use the median value of stakes on every single league as the baseline.
-
-```{r data-wKelly2Med-A, echo = FALSE, results = 'asis'}
-## reload the function due to unable found.
-suppressMessages(source('./function/vKelly2.R'))
-
-## Applied various fractional Kelly models version II.
-##   rEMProb based model without adjust the stakes.
-K2 <- vKelly2(mbase = suppressMessages(join(dat, lRiskProf)) %>% mutate(Stakes = median))
-
-kable(summary(K2$Kelly1$data), caption = 'Table 4.3.2.3E : Summary Table of Various Kelly Models (Reversed rEMProbB based with Mean Stakes Adjusted models)')
-```
-
-*table 4.3.3.3E* : `r paste0(dim(K2$Kelly1$data), collapse = ' x ')` : *Summary of Reversed rEMProbB weighted Kelly models year (median value of stakes as staking adjuster) year 2012~2015.*
-
-  From above table summary, we can know the range of risk management applicable to various adjusted Kelly models. Now we try to compare the Profit & Loss from below table.
-  
-```{r data-wKelly2Med-B, echo = FALSE, results = 'asis'}
-#'@ suppressMessages(library('formattable'))
-
-tagList(
-  tags$div(align = "center", 
-           class = "bg-info", 
-           tags$h3(class = "bg-primary", "PL of Reversed rEMProbB Kelly Models (Median Stakes)"), 
-           tags$h5(align = "center", class = "text-muted", 
-                   "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
-  as.htmlwidget(K2$Kelly1$summary %>% formattable(list(
-
-    Stakes = color_tile('white', 'darkgoldenrod'), 
-    
-    Return = color_tile('white', 'darkgoldenrod'), 
-    
-    PL = color_tile('white', 'darkgoldenrod'), 
-    
-    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
-    ))))
-```
-
-*table 4.3.3.3F* : `r paste0(dim(K2$Kelly1$summary), collapse = ' x ')` : *PL of Reversed rEMProbB weighted Kelly models (median value of stakes as staking adjuster) year 2012~2015.*
+*table 4.3.3.3B* : `r paste0(dim(K2W2sum), collapse = ' x ')` : *PL of Reversed rEMProbB weighted 2 Kelly models 2 year 2012~2015.*
 
 ### 4.3.4 Dynamic Fractional Kelly Ⓜodel
 
@@ -1757,6 +1657,7 @@ Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 ```{r gvis-options, echo = FALSE, results = 'asis'}
 ## Set options back to original options
 options(op)
+#'@ stopImplicitCluster2()
 ```
 
 # 6. Conclusion

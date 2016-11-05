@@ -30,6 +30,8 @@
   
     + Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp
     + ![regressionApps](figure/20160928_021252.gif)
+    + Kindly click on [*KellyApps*]() to use the ShinyApp
+    + ![KellyApps](figure/.gif)
     + Kindly refer to [English Soccer League]() for analysis on only English soccer which is pretest on my personal research.
 
 ## 3. Old File

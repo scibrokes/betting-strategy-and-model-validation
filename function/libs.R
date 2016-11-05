@@ -1,8 +1,9 @@
+## ========= Setup Options =================================
 ## Setup Options, Loading Required Libraries and Preparing Environment
-
 ## Setting to omit all warnings
 options(warn = -1)
 
+## ========= Load Packages =================================
 ## Loading the package 'BBmisc'
 if(suppressMessages(!require('BBmisc'))){
   install.packages('BBmisc', repos = 'https://cran.rstudio.com')}
@@ -35,12 +36,14 @@ rm(pkgs)
 
 ## Load the functions
 funs <- c('scrapSPBO.R', 'readfirmData.R', 'arrfirmData.R', 'readSPBO.R', 'vKelly.R', 
-          'vKelly2.R', 'Kprof.R', 'simulateKelly.R', 'bvp.R')
+          'vKelly2.R', 'Kprof.R', 'simulateKelly.R', 'bvp.R', 'stopImplicitCluster2.R')
 plyr::l_ply(funs, function(x) source(paste0('function/', x))); rm(funs)
 
+## ========= Setup parallel computing =================================
 ## Creating a parallel computing Cluster and support functions.
 ## Preparing the parallel cluster using the cores
 doParallel::registerDoParallel(cores = detectCores())
+#'@ doParallel::registerDoParallel(cores = 16)
 #'@ BiocParallel::register(MulticoreParam(workers = 8))
 
 ## Set the googleVis options first to change the behaviour of plot.gvis, so that only the chart 
