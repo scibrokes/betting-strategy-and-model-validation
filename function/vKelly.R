@@ -1,4 +1,4 @@
-vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
+vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', parallel = FALSE) {
   ## Comparison of various fractional Kelly models
   ## 
   ## Kindly apply readfirmDate() and arrfirmData() prior to measure the various 
@@ -20,6 +20,7 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
   ## type = 'dynamic1' or type = 'dynamic2' : Once you choose 'dynamic' type, both 'weight.stakes' and 'weight' 
   ##   will auto ignore all input value but using data from previous until latest staked 
   ##   match to generates a vector of weighted parameters.
+  ## parallel = FALSE or parallel = TRUE.
   
   ###############################################################################
   ## Due to the I need to use mean value of reversed probability "rEMProb" as the \pho,
@@ -36,7 +37,10 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
   suppressMessages(library('formattable'))
   suppressMessages(library('plyr'))
   suppressMessages(library('tidyverse'))
+  suppressMessages(library('stringr'))
   suppressMessages(library('BBmisc'))
+  suppressMessages(library('doParallel'))
+  doParallel::registerDoParallel(cores = detectCores())
   
   ## --------------------- Data validation --------------------------------------
   if(!is.data.frame(mbase)) {
@@ -103,38 +107,38 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
     if(type == 'flat') {
     
       if(!is.numeric(weight.stakes)) {
-        wt$weight.stakes <- 1
+        wt$weight.stakes <- 1 # exp(0) = 1; log(1) = 0
       } else {
         if(!is.vector(weight.stakes)) {
           stop('Kindly insert a range of vector or single numeric value as weight.stakes parameter.')
         } else {
-          if(is.vector(weight.stakes)) wt$weight.stakes <- weight.stakes
+          if(is.vector(weight.stakes)) wt$weight.stakes <- weight.stakes # exp(0) = 1; log(1) = 0
         }
       }
       
       if(!is.numeric(weight)) {
-        wt$weight <- 1
+        wt$weight <- 1 # exp(0) = 1; log(1) = 0
       } else {
         if(!is.vector(weight)) {
           stop('Kindly insert a range of vector or single numeric value as weight parameter.')
         } else {
-          if(is.vector(weight)) wt$weight <- weight
+          if(is.vector(weight)) wt$weight <- weight # exp(0) = 1; log(1) = 0
         }
       }
       
     } else {
       
-      mbase$theta <- rep(as.numeric(m$theta), ## theta value will be weight1
+      mbase$theta <- rep(as.numeric(str_replace_na(lag(as.numeric(m$theta)), 0)), ## theta value will be weight1, exp(theta)
                          ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dWin <- rep(as.numeric(m$dWin), 
+      mbase$dWin <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dwin)), 0)), 
                         ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dwhf <- rep(as.numeric(m$dwhf), 
+      mbase$dwhf <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dwhf)), 0)), 
                         ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dpus <- rep(as.numeric(m$dpus), 
+      mbase$dpus <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dpus)), 0)), 
                         ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dlhf <- rep(as.numeric(m$dlhf), 
+      mbase$dlhf <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dlhf)), 0)), 
                         ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dlos <- rep(as.numeric(m$dlos), 
+      mbase$dlos <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dlos)), 0)), 
                         ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
       
       mbase %<>% 
@@ -185,10 +189,78 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
                           netEMEdge = rEMProbB / netProbB)
       }
       
-      mbase %<>% mutate(thetacum = cummean(theta))
+      dw <- ddply(mbase, .(TimeUS), summarise, 
+                  thetac = sum(theta), thetan = length(theta),
+                  dWinc = sum(dWin), dWinn = length(dWin), 
+                  dwhfc = sum(dwhf), dwhfn = length(dwhf), 
+                  dpusc = sum(dpus), dpusn = length(dpus), 
+                  dlhfc = sum(dlhf), dlhfn = length(dlhf), 
+                  dlosc = sum(dlos), dlosn = length(dlos), 
+                  .parallel = parallel) %>% tbl_df %>% 
+        mutate(lagTimeUS = c(0, lag(TimeUS)[-1])) %>% .[-1] %>% # drop the TimeUS to 
+        mutate(thetas = cumsum(thetac)/cumsum(thetan),          #  avoid duplicate column
+               dWins = cumsum(dWinc)/cumsum(dWinn),             #  TimeUS after join()
+               dwhfs = cumsum(dwhfc)/cumsum(dwhfn), 
+               dpuss = cumsum(dpusc)/cumsum(dpusn), 
+               dlhfs = cumsum(dlhfc)/cumsum(dlhfn), 
+               dloss = cumsum(dlosc)/cumsum(dlosn))
+               
+      
+      ## Below codes took more than an hour. Therefore use below lag() and 
+      ##  join() will be solved. 
+      #'@ timeID <- dw$TimeUS
+      #'@ mbase$thetas <- rep(0, nrow(mbase))
+      #'@ mbase$dWins <- rep(0, nrow(mbase))
+      #'@ mbase$dwhfs <- rep(0, nrow(mbase))
+      #'@ mbase$dpuss <- rep(0, nrow(mbase))
+      #'@ mbase$dlhfs <- rep(0, nrow(mbase))
+      #'@ mbase$dloss <- rep(0, nrow(mbase))
+      #'@ 
+      #'@ for(i in 1:length(timeID)){
+      #'@   if(i == 1) {
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$thetas <- 0
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dWins <- 0
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dwhfs <- 0
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dpuss <- 0
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlhfs <- 0
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dloss <- 0
+      #'@     
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$thetan <- 1
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dWinn <- 1
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dwhfn <- 1
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dpusn <- 1
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlhfn <- 1
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlosn <- 1
+      #'@     
+      #'@   } else {
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$thetas <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$thetac)
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dWins <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dWinc)
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dwhfs <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dwhfc)
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dpuss <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dpusc)
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlhfs <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dlhfc)
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dloss <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dlosc)
+      #'@     
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$thetan <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$thetan)
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dWinn <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dWinn)
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dwhfn <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dwhfn)
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dpusn <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dpusn)
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlhfn <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dlhfn)
+      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlosn <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dlosn)
+      #'@   }
+      #'@ }; rm(timeID, i)
+      
+      mbase %<>% mutate(lagTimeUS = c(0, lag(TimeUS)[-1]))
+      mbase %<>% join(dw, by = 'lagTimeUS') %>% tbl_df %>% 
+        mutate(dres = suppressAll(
+          ifelse(Result == 'Win', dWins, ## dres value will be weight2
+          ifelse(Result == 'Half Win', dwhfs, 
+          ifelse(Result == 'Push'|Result == 'Cancelled', dpuss, 
+          ifelse(Result == 'Half Loss', dlhfs, 
+          ifelse(Result == 'Loss', dloss, NA)))))))
+      
       mbase %<>% filter(Sess != unique(Sess)[1])
       wt <- data_frame(No = seq(nrow(mbase)))
-      wt$weight <- exp(mbase$thetacum)
+      wt$weight <- exp(mbase$thetas)
       wt$weight.stakes <- weight.stakes ## not yet found the way to weight the staking.
       ## might probably need to apply MCMC to siimulate the staking
       ##   in order to get the weight value for weight.stakes.
@@ -208,14 +280,31 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat') {
                           netEMEdge = rEMProbB / netProbB)
       }
       
-      mbase %<>% mutate(dWincum = cummean(dWin), dwhfcum = cummean(dwhf), 
-                        dpuscum = cummean(dpus), dlhfcum = cummean(dlhf), 
-                        dloscum = cummean(dlos), dres = suppressAll(
-                          ifelse(Result == 'Win', dWin, ## dres value will be weight2
-                          ifelse(Result == 'Half Win', dwhf, 
-                          ifelse(Result == 'Push'|Result == 'Cancelled', dpus, 
-                          ifelse(Result == 'Half Loss', dlhf, 
-                          ifelse(Result == 'Loss', dlos, NA)))))))
+      dw <- ddply(mbase, .(TimeUS), summarise, 
+                  thetac = sum(theta), thetan = length(theta),
+                  dWinc = sum(dWin), dWinn = length(dWin), 
+                  dwhfc = sum(dwhf), dwhfn = length(dwhf), 
+                  dpusc = sum(dpus), dpusn = length(dpus), 
+                  dlhfc = sum(dlhf), dlhfn = length(dlhf), 
+                  dlosc = sum(dlos), dlosn = length(dlos), 
+                  .parallel = parallel) %>% tbl_df %>% 
+        mutate(lagTimeUS = c(0, lag(TimeUS)[-1])) %>% .[-1] %>% # drop the TimeUS to 
+        mutate(thetas = cumsum(thetac)/cumsum(thetan),          #  avoid duplicate column
+               dWins = cumsum(dWinc)/cumsum(dWinn),             #  TimeUS after join()
+               dwhfs = cumsum(dwhfc)/cumsum(dwhfn), 
+               dpuss = cumsum(dpusc)/cumsum(dpusn), 
+               dlhfs = cumsum(dlhfc)/cumsum(dlhfn), 
+               dloss = cumsum(dlosc)/cumsum(dlosn))
+      
+      mbase %<>% mutate(lagTimeUS = c(0, lag(TimeUS)[-1]))
+      mbase %<>% join(dw, by = 'lagTimeUS') %>% tbl_df %>% 
+        mutate(dres = suppressAll(
+          ifelse(Result == 'Win', dWins, ## dres value will be weight2
+          ifelse(Result == 'Half Win', dwhfs, 
+          ifelse(Result == 'Push'|Result == 'Cancelled', dpuss, 
+          ifelse(Result == 'Half Loss', dlhfs, 
+          ifelse(Result == 'Loss', dloss, NA)))))))
+      
       mbase %<>% filter(Sess != unique(Sess)[1])
       wt <- data_frame(No = seq(nrow(mbase)))
       wt$weight <- exp(mbase$dres)

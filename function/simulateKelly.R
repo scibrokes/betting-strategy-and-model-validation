@@ -35,7 +35,7 @@ simulateKelly <- function(mbase, leagueProf, lPmean = 'runif', Kelly = 'stakes',
   
   if(!is.logical(parallel)) parallel <- as.logical(as.numeric(parallel))
   
-  if(type != 'flat' & type != 'weight' & type != 'dynamic') {
+  if(type != 'flat' & type != 'weight' & type != 'dynamic1') {
     
     stop('Kindly choose "flat", "weight" or "dynamic" for parameter named "type". You can choose 
          fit the "weight" parameter controller for both models.')
@@ -109,14 +109,10 @@ simulateKelly <- function(mbase, leagueProf, lPmean = 'runif', Kelly = 'stakes',
     stop('Kindly choose Kelly = "stakes" or Kelly = "prob" for simulation.')
   } else {
     
-    ## simulate 100 times to get the mean value.
-    #'@ llply(seq(10), function(i) {
-    #'@   x <- NULL
-    #'@   y <- mutate(lRiskProf, mean = runif(mean, min, max))
-    #'@   z <- suppressMessages(join(dat, y))
-    #'@   x[[i]] <- mutate(z, Stakes = mean)
-    #'@   vKelly(x[[i]])$summary
-    #'@ }, .parallel = TRUE, .paropts = list(.options.snow = opts)) %>% ldply(., Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes)
+    ## risk management
+    ## dynamic variance staking risk management similar with idea from bollinger bands.
+    #'@ $$ = k^2 * r^2 * f^2$$
+    
     
     K <- list()
     for(i in maxit) {
