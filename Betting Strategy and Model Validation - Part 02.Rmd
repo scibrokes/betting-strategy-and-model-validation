@@ -70,10 +70,12 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
     + Section [4.3.2 Weight Function] - Fractional Kelly model.
     + Section [4.3.3 weighted Fractional Kelly Ⓜodel] - Weighted Fractional Kelly model.
     + Section [4.3.4 Dynamic Fractional Kelly Ⓜodel] - Dynamic Weighted Fractional Kelly model.
+    + Section [4.3.5 Bank Roll] - Bank roll listing across the Kelly models.
   - Section [4.4 Poisson Ⓜodel] - Soccer Scores Odds Modelling.
     + Section [4.4.1 Niko Marttinen (2001)] - Creating a Profitable Sportsbook Betting Modelling.
     + Section [4.4.2 Dixon and Coles (1996)] - Odds Modelling and Betting Stretagy.
     + Section [4.4.3 ®γσ, Eng Lian Hu (2016)] - Odds Modelling and Testing Efficiency in Sportsbook Betting.
+    + Section [4.4.4 Combination Handicap] - Descrete result of handicap and P&L.
   - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - Simulate the staking model.
   - Section [4.6 Expectation Ⓜaximization and Staking Simulation] - Enhance by weighted function on Staking model and Simulation.
 
@@ -1448,7 +1450,7 @@ tagList(
 
 *table 4.3.4.2B* : `r paste0(dim(K2D2sum), collapse = ' x ')` : *PL of Reversed rEMProbB dynamic 2 Kelly models 2 year 2012~2015.*
 
-#### Bank Roll
+### 4.3.5 Bank Roll
 
 ```{r eval = FALSE}
 suppressMessages(library('htmltools'))
@@ -1549,7 +1551,7 @@ have also collected the season 2000-2001 data from the main European football
 betting leagues, such as English Division 1, Division 2 Division 3, Italian Serie A,
 German Bundesliga and Spanish Primera Liga...
 
-*quote 4.4.1 : the dataset for the studies (source : Niko Marttinen (2001)).*
+*quote 4.4.1.1 : the dataset for the studies (source : Niko Marttinen (2001)).*
 
   *Niko Marttinen (2001)*^[Kindly refer to 1th paper in [Reference for industry knowdelege and academic research portion for the paper.]] has enhanced the *Dixon and Coles (1996)* which are :
   
@@ -1560,17 +1562,17 @@ German Bundesliga and Spanish Primera Liga...
 
   From above models, the author has compare the efficiency and the best fit model for scores prediction as below.
 
-![*figure 4.4.1 : Comparison of various Poison models (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-01.jpg)
+![*figure 4.4.1.1 : Comparison of various Poison models (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-01.jpg)
 
-  From *figure 4.4.1* above, the author compare the deviance of the models^[Kindly refer to [Generalized Linear Models in R, Part 2: Understanding Model Fit in Logistic Regression Output](http://www.theanalysisfactor.com/r-glm-model-fit/), [devianceTest](http://www.mathworks.com/help/stats/generalizedlinearmodel.deviancetest.html?s_tid=gn_loc_drop) and [Use of Deviance Statistics for Comparing Models](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Use%20of%20Deviance%20Statistics%20for%20Comparing%20Models.pdf) to learn about the method of comparison.]
+  From *figure 4.4.1.1* above, the author compare the deviance of the models^[Kindly refer to [Generalized Linear Models in R, Part 2: Understanding Model Fit in Logistic Regression Output](http://www.theanalysisfactor.com/r-glm-model-fit/), [devianceTest](http://www.mathworks.com/help/stats/generalizedlinearmodel.deviancetest.html?s_tid=gn_loc_drop) and [Use of Deviance Statistics for Comparing Models](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Use%20of%20Deviance%20Statistics%20for%20Comparing%20Models.pdf) to learn about the method of comparison.]
 
-![*figure 4.4.2 : Comparison of various mixed Poison models II (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-02.jpg)
+![*figure 4.4.1.2 : Comparison of various mixed Poison models II (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-02.jpg)
 
-![*figure 4.4.3 : Comparison of various mixed Poison models III (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-03.jpg)
+![*figure 4.4.1.3 : Comparison of various mixed Poison models III (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-03.jpg)
 
   From above models, the author list the models and states that even though pick the worst model among the models still more accurate than bookmaker while *E(Score)&Dep&Weighted* is the best.
 
-![*figure 4.4.4 : Comparison of various odds modelling models (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-04.jpg)
+![*figure 4.4.1.4 : Comparison of various odds modelling models (source : Niko Marttinen (2001)).*](figure/NikoMarttinen2001-04.jpg)
 
   Besides, *Niko Marttinen (2001)* not only choose Poison model throughly as the odds modelling model but also compare to below models :-
   
@@ -1588,22 +1590,6 @@ German Bundesliga and Spanish Primera Liga...
   - [Dixon Coles model - Python](http://www.sportshacker.net/posts/simple_dixon_coles.html)
   - [Predicting Football Using R](http://pena.lt/y/2014/11/02/predicting-football-using-r/)
 
-```{r data-Poisson, echo = FALSE, results = 'asis'}
-## Load package again due to cannot find the function
-suppressMessages(library('DT'))
-
-## Apply Poisson model to simulate different scores to maximum likelihood value ρ.
-## reverse Kelly Criterion to abtain the average EMPrice, reversed bivarite poisson to get the EMprobB
-##
-## benchmarking logistic regression using glm.fit , bigglm, speedglm, glmnet, LiblineaR
-## http://stackoverflow.com/questions/19532651/benchmarking-logistic-regression-using-glm-fit-bigglm-speedglm-glmnet-libli
-##
-## Test if placed multiple bets on same match, merge data files in Part I has checked the multiple-bets in same match. Here we need to filter the unique data for scores modelling.
-#'@ preData[duplicated(preData[c('Date', 'Home', 'Away')]), c('Date', 'Home', 'Away', 'HG', 'AG', 'InPlay', 'InPlay2', 'Mins', 'Mins2', 'Picked2')] %>% tbl_df %>% datatable
-```
-
-*table 4.4.2.1 : Samples of filtered multiple bets placed on same matches.*
-
   Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I try to filter-up the sample data to be only English soccer leagues as shinyApps [EnglishApps](..................). I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation *Robert Johnson (2011)*^[Kindly refer to 23th paper in [7.4 References]] from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
 
 ### 4.4.3 ®γσ, Eng Lian Hu (2016)
@@ -1614,21 +1600,50 @@ suppressMessages(library('DT'))
 
   By refer to [4.4.1 Niko Marttinen (2001)], I've add the enhancement on  [Odds Modelling and Testing Inefficiency of Sports Bookmakers](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers) as future improvement while the weighted function might be enhanced soonly.
 
-  Here I cannot reverse computing from barely $\rho_i^{EM}$ without know the $\lambda_{ij}$ and $\gamma$ values. Therefore I try to using both Home and Away Scores to simulate and test to get the maximum likelihood $\rho_i^{EM}$.
+  Here I cannot reverse computing from barely $\rho_i^{EM}$ without know the $\lambda_{ij}$ and $\gamma$ values. Meanwhile, the staked matches is a descrete random soccer teams accross all leagues and tournaments. Therefore I just simply use reverse EM probabilities by mean value of edge in previous section Kelly.
 
 $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta_{ij}) \cdots equation\ 4.4.1$$
-```{r }
-## model bivariate poison to retrieve the scores and resampling to get the likelihood value.
-#'@ bvp()
-```
 
-  In order to minimzie the risk, I tried to validate the odds price range invested by firm A.^[As I used to work in **AS3388** which always take bets from **Starlizard** where they only placed bets within the odds price range from 0.70 ~ -0.70. They are not placed bets on all odds price in same edge]. The sportbook consulatancy firms will not place same amount of stakes on same edge, lets take example as below :-
+### 4.4.4 Combination Handicap
+
+  In order to minimzie the risk, I tried to validate the odds price range invested by firm A.^[As I used to work in **AS3388** which always take bets from **Starlizard** where they only placed bets within the odds price range from 0.70 ~ -0.70. They are not placed bets on all odds price in same edge]. The sportbook consulatancy firms might probably not place same amount of stakes on same edge, lets take example as below :-
   
   - $Odds_{em}$ = 0.40 while $Odds_{BK}$ = 0.50, The edge to firm will be 0.5 ÷ 0.4 = `r 0.5/0.4`
   - $Odds_{em}$ = 0.64 while $Odds_{BK}$ = 0.80, The edge to firm will be 0.8 ÷ 0.64 = `r 0.8/0.64`
   
-  We know above edge is same but due to the probability of occurance an event/goal at 0.4 is smaller than 0.64. In [4.3.3 Weighted Fractional Kelly Ⓜodels] I tried to use a weight function to measure the effect of Win-All, Win-Half, Push, Loss-Half, Loss and also Cancelled and there has generated a higher profit. It might be more effective to apply Poison models for the mentioned effects but I leave it for future improvement.
+  We know above edge is same but due to the probability of occurance an event/goal at 0.4 is smaller than 0.64. In [4.3.3 Weighted Fractional Kelly Ⓜodels] I tried to use a weight function to measure the effect of Win-All, Win-Half, Push, Loss-Half, Loss and also Cancelled and there has generated a higher profit.
   
+  Again, I don't pretend to know the correct models but here I try to simulate the occurance of the combination and independent handicaps by testing below distribution.
+  
+  - normal distribution
+  - binomial distribution
+  - Poison distribution
+  
+**Comparison Chart**
+
+![*figure 4.4.4.1 : Binomial vs. Poisson*](figure/bnom-vs-pois01.jpg)
+
+![*figure 4.4.4.2 : Difference Between Binomial and Poisson Distribution*](figure/bnom-vs-pois02.jpg)
+
+  You can know about the use of the distribution through below articles.
+
+ - *figure 4.4.4.1* : [Binomial vs. Poisson](http://www2.cedarcrest.edu/academic/bio/hale/biostat/session12links/BvsP.html)
+ - *figure 4.4.4.2* : [Difference Between Binomial and Poisson Distribution](http://keydifferences.com/difference-between-binomial-and-poisson-distribution.html)
+ - [Difference between Poisson and Binomial distributions](http://math.stackexchange.com/questions/1050184/difference-between-poisson-and-binomial-distributions)
+ - [Statistical Distributions (e.g. Normal, Poisson, Binomial) and their uses](http://www.healthknowledge.org.uk/public-health-textbook/research-methods/1b-statistical-methods/statistical-distributions)
+
+![*figure 4.4.4.3 : Diagram of network among probability distributions*](figure/table-of-common-distributions.jpg)
+ 
+ From above diagram we can know the network and relationship among probability distributions. Besides, we can try to refer to below probability distribution listing attach with R codes and examples for pratice :
+ 
+ - [Probability Distributions in R (Stat 5101, Geyer)](http://www.stat.umn.edu/geyer/old/5101/rlook.html)
+
+![*figure 4.4.4.4 : R functions in probability distributions*](figure/r-functions-for-prob-dist.jpg)
+
+```{r}
+
+```
+
   Here I try to bootstrap/resampling the scores of matches of the dataset to test the Kelly model and get the mean/likelihood value. Boostrapping the scores and staking model will be falling in the following sections [4.5 Staking Ⓜodel and Ⓜoney Management] and [4.6 Expectation Ⓜaximization and Staking Simulation].
 
 ## 4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement
@@ -1648,6 +1663,14 @@ $$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1}{N}\log\left( {\frac{{{S_N
 $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
   
   Now we look at abpve function from a different perspective by considering the observed values $x_{1}, x_{2}, x_{3}… x_{n}$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
+
+
+### 4.5.2 Risk Management
+
+
+
+
+### 4.5.3 Investors' Fund Refill
 
   Below top-up and refill the fund into the pool is another method for risk management on money management while there is very dangerous if that leverage is higher. Similar with high leverage with contra in option market, endless pupm-in the fund will be very dangerous. Therefore we need to simulate what if the initial fund is smaller than the .
 

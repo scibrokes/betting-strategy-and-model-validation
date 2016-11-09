@@ -42,39 +42,39 @@ K1W2WS1 <- vKelly()
 
 ## --------------- 10. K1W2WS2 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-K1W2WS2 <- vKelly()
+K1W2WS2 <- vKelly2()
 
 ## --------------- 11. K2W1WS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-K2W1WS1 <- vKelly()
+K2W1WS1 <- vKelly2()
 
 ## --------------- 12. K2W1WS2 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-K2W1WS2 <- vKelly()
+K2W1WS2 <- vKelly2()
 
 ## --------------- 13. K2W2WS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-K2W2WS1 <- vKelly()
+K2W2WS1 <- vKelly2()
 
 ## --------------- 14. K2W2WS2 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-K2W2WS2 <- vKelly()
+K2W2WS2 <- vKelly2()
 
 ## --------------- 15. K1D1 ------------------------
 ## Reserved Stakes Kelly Models with Weight past year until latest soccer match's dynamic theta values. (mix weighted on W, WH, P, C, LH, L)
-K1D1 <- vKelly()
+K1D1 <- vKelly(dat, type = 'dynamic1')
 
 ## --------------- 16. K1D2 ------------------------
 ## Reserved Stakes Kelly Models with Weight past year until latest soccer match's dynamic dres values. (separate weighted on W, WH, P, C, LH, L)
-K2D2 <- vKelly()
+K2D2 <- vKelly(dat, type = 'dynamic2')
 
 ## --------------- 17. K2D1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year until latest soccer match's dynamic theta values. (mix weighted on W, WH, P, C, LH, L)
-K2D1 <- vKelly()
+K2D1 <- vKelly2(dat, type = 'dynamic1')
 
 ## --------------- 18. K2D2 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year until latest soccer match's dynamic dres values. (separate weighted on W, WH, P, C, LH, L)
-K2D2 <- vKelly()
+K2D2 <- vKelly2(dat, type = 'dynamic2')
 
 ## --------------- 19. K1D1WS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
@@ -94,19 +94,19 @@ K1D2WS2 <- vKelly()
 
 ## --------------- 23. K2D1WS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-K2D1WS1 <- vKelly()
+K2D1WS1 <- vKelly2()
 
 ## --------------- 24. K2D1WS2 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-K2D1WS2 <- vKelly()
+K2D1WS2 <- vKelly2()
 
 ## --------------- 25. K2D2WS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-K2D2WS1 <- vKelly()
+K2D2WS1 <- vKelly2()
 
 ## --------------- 26. K2D2WS2 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-K2D2WS2 <- vKelly()
+K2D2WS2 <- vKelly2()
 
 ## --------------- 27. K1W1DWS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
@@ -126,19 +126,19 @@ K1W2DWS2 <- vKelly()
 
 ## --------------- 31. K2W1DWS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-K2W1DWS1 <- vKelly()
+K2W1DWS1 <- vKelly2()
 
 ## --------------- 32. K2W1DWS2 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-K2W1DWS2 <- vKelly()
+K2W1DWS2 <- vKelly2()
 
 ## --------------- 33. K2W2DWS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-K2W2DWS1 <- vKelly()
+K2W2DWS1 <- vKelly2()
 
 ## --------------- 34. K2W2DWS2 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-K2W2DWS2 <- vKelly()
+K2W2DWS2 <- vKelly2()
 
 ## --------------- 35. K1D1DWS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
@@ -158,19 +158,19 @@ K1D2DWS2 <- vKelly()
 
 ## --------------- 39. K2D1DWS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-K2D1DWS1 <- vKelly()
+K2D1DWS1 <- vKelly2()
 
 ## --------------- 40. K2D1DWS2 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-K2D1DWS2 <- vKelly()
+K2D1DWS2 <- vKelly2()
 
 ## --------------- 41. K2D2DWS1 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-K2D2DWS1 <- vKelly()
+K2D2DWS1 <- vKelly2()
 
 ## --------------- 42. K2D2DWS2 ------------------------
 ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-K2D2DWS2 <- vKelly()
+K2D2DWS2 <- vKelly2()
 
 
 

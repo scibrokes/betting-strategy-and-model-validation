@@ -1,4 +1,5 @@
-vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', parallel = FALSE) {
+vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjusted = 1, 
+                   parallel = FALSE) {
   ## Comparison of various fractional Kelly models
   ## 
   ## Kindly apply readfirmDate() and arrfirmData() prior to measure the various 
@@ -17,9 +18,11 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', parallel
   ##   type = either 'weight', both 'weight.stakes' and 'weight' will auto ignore all 
   ##   input value but using previous year data to get a constant weight parameter.
   ##   `theta` will be weight1 and `dres` will be weight2.
-  ## type = 'dynamic1' or type = 'dynamic2' : Once you choose 'dynamic' type, both 'weight.stakes' and 'weight' 
-  ##   will auto ignore all input value but using data from previous until latest staked 
-  ##   match to generates a vector of weighted parameters.
+  ## type = 'dynamic1' or type = 'dynamic2' : Once you choose 'dynamic' type, both 
+  ##   'weight.stakes' and 'weight'  will auto ignore all input value but using data 
+  ##   from previous until latest staked match to generates a vector of weighted parameters.
+  ## adjusted = 1, adjusted is a vector with regards the bonus or dividend for fund.
+  ##   you might refer to quantmod::adjustOHLC()
   ## parallel = FALSE or parallel = TRUE.
   
   ###############################################################################
@@ -40,7 +43,12 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', parallel
   suppressMessages(library('stringr'))
   suppressMessages(library('BBmisc'))
   suppressMessages(library('doParallel'))
-  doParallel::registerDoParallel(cores = detectCores())
+  suppressMessages(library('quantmod'))
+  
+  if(parallel == TRUE) {
+    #'@ registerDoParallel(cores = detectCores())
+    registerDoParallel(cores = 3)
+  }
   
   ## --------------------- Data validation --------------------------------------
   if(!is.data.frame(mbase)) {
@@ -55,6 +63,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', parallel
   #'@ if(mbase$EUPrice <= 1) stop('Invalid EUPrice value, probabilities must be greater than 0 due to odds price cannot be 0.')
   
   wt <- data_frame(No = seq(nrow(mbase)))
+  
+  if(!is.numeric(adjusted)) stop('Kindly insert a vector of numeric values.')
   
   ## Re-categorise the soccer financial settlement date. Due to I have no the 
   ##   history matches dataset from bookmakers. The scrapped spbo time is not 
@@ -130,7 +140,7 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', parallel
       
       mbase$theta <- rep(as.numeric(str_replace_na(lag(as.numeric(m$theta)), 0)), ## theta value will be weight1, exp(theta)
                          ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dWin <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dwin)), 0)), 
+      mbase$dWin <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dWin)), 0)), 
                         ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
       mbase$dwhf <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dwhf)), 0)), 
                         ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
@@ -751,7 +761,7 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', parallel
   
   ## ==================== P&L Comparison ========================================
   
-  KellyPL <- function(K) {
+  KellyPL <- function(K, adjusted = 1) {
     options(warn = -1)
     
     K %<>% mutate(
@@ -1177,21 +1187,89 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', parallel
       mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(PL), 
              PL.R = percent(ifelse(is.nan(PL / Stakes), 0, PL / Stakes)))
     
+    ## refer to quantmod packages xts zoo data type but in tbl_df format.
+    KPnames <- c('netEMEdge', 'PropHKPriceEdge', 'PropnetProbBEdge', 'KProbHKPrice',
+                 'KProbnetProbB', 'KProbFixed', 'KProbFixednetProbB', 'KEMProb',
+                 'KEMProbnetProbB', 'KProbHalf','KProbHalfnetProbB', 'KProbQuarter',
+                 'KProbQuarternetProbB', 'KProbAdj','KProbAdjnetProbB', 'KHalfAdj',
+                 'KHalfAdjnetProbB', 'KEMQuarterAdj', 'KEMQuarterAdjnetProbB')
+    
+    KSnames <- c('Stakes', 'KStakesHKPriceEdge', 'KStakesnetProbBEdge', 'KStakesHKPrice', 
+                 'KStakesnetProbB', 'KStakesFixed', 'KStakesFixednetProbB', 
+                 'KStakesEMProb', 'KStakesEMProbnetProbB', 'KStakesHalf', 
+                 'KStakesHalfnetProbB', 'KStakesQuarter', 'KStakesQuarternetProbB', 
+                 'KStakesAdj', 'KStakesAdjnetProbB', 'KStakesHalfAdj', 
+                 'KStakesHalfAdjnetProbB', 'KStakesEMQuarterAdj', 
+                 'KStakesEMQuarterAdjnetProbB')
+    
+    KPLnames <- c('PL', 'KPLHKPriceEdge', 'KPLnetProbBEdge', 'KPLHKPrice', 'KPLnetProbB', 
+                  'KPLFixed', 'KPLFixednetProbB', 'KPLEMProb', 'KPLEMProbnetProbB', 
+                  'KPLHalf', 'KPLHalfnetProbB', 'KPLQuarter', 'KPLQuarternetProbB', 
+                  'KPLAdj', 'KPLAdjnetProbB', 'KPLHalfAdj', 'KPLHalfAdjnetProbB', 
+                  'KPLEMQuarterAdj', 'KPLEMQuarterAdjnetProbB')
+    
+    KnamesBR <- paste0(KPnames, rep(c('.Open', '.High', '.Low', '.Close', '.Volume', 
+                                      '.Adjusted'), each = length(KPnames)))
+    
+    BR <- matrix(nc = length(KnamesBR), nr = nrow(K), dimnames = list(NULL, KnamesBR)) %>% 
+      tbl_df %>% data.frame(.id = seq(nrow(K)), TimeUS = K$TimeUS, DateUS = K$DateUS, 
+                            League = K$League, .) %>% tbl_df
+    
+    KPL <- K %>% select(PL, KPLHKPriceEdge, KPLnetProbBEdge, KPLHKPrice, KPLnetProbB, KPLFixed, 
+                        KPLFixednetProbB, KPLEMProb, KPLEMProbnetProbB, KPLHalf, KPLHalfnetProbB, 
+                        KPLQuarter, KPLQuarternetProbB, KPLAdj, KPLAdjnetProbB, KPLHalfAdj, 
+                        KPLHalfAdjnetProbB, KPLEMQuarterAdj, KPLEMQuarterAdjnetProbB) %>% 
+      mutate_all(cumsum)
+    
+    KST <- K %>% select(Stakes, KStakesHKPriceEdge, KStakesnetProbBEdge, KStakesHKPrice, 
+                        KStakesnetProbB, KStakesFixed, KStakesFixednetProbB, KStakesEMProb, 
+                        KStakesEMProbnetProbB, KStakesHalf, KStakesHalfnetProbB, KStakesQuarter, 
+                        KStakesQuarternetProbB, KStakesAdj, KStakesAdjnetProbB, KStakesHalfAdj, 
+                        KStakesHalfAdjnetProbB, KStakesEMQuarterAdj, KStakesEMQuarterAdjnetProbB)
+    
+    ## Set initial fund size from the staking and profit & loss, below are 2 criteria...
+    ##  1) fund size must be enough to place a bet, therefore max stakes + $1.
+    ##  2) fund size cannot <= 0 to simulate whole process. Therefore need to set 
+    ##  max loss + $1.
+    initial <- max(max(KST),abs(min(KPL))) + 1
+    
+    KPL <- tbl_df(KPL + initial)
+    KPL2 <- KPL %>% mutate_all(lag)
+    KPL2[1, ] <- initial
+    
+    BR[grep('.Close', names(BR), value = TRUE)] <- KPL
+    BR[grep('.Open', names(BR), value = TRUE)] <- KPL2
+    BR[grep('.High', names(BR), value = TRUE)] <- 
+      apply(BR[grep('.Close|.Open', names(BR), value = TRUE)], 1, max, na.rm = TRUE)
+    BR[grep('.Low', names(BR), value = TRUE)] <- 
+      apply(BR[grep('.Close|.Open', names(BR), value = TRUE)], 1, min, na.rm = TRUE)
+    BR[grep('.Volume', names(BR), value = TRUE)] <- K %>% 
+      select(Stakes, KStakesHKPriceEdge, KStakesnetProbBEdge, KStakesHKPrice, 
+             KStakesnetProbB, KStakesFixed, KStakesFixednetProbB, KStakesEMProb, 
+             KStakesEMProbnetProbB, KStakesHalf, KStakesHalfnetProbB, KStakesQuarter, 
+             KStakesQuarternetProbB, KStakesAdj, KStakesAdjnetProbB, KStakesHalfAdj, 
+             KStakesHalfAdjnetProbB, KStakesEMQuarterAdj, KStakesEMQuarterAdjnetProbB)
+    BR[grep('.Adjusted', names(BR), value = TRUE)] <- adjusted
+    
+    rm(KPL, KPL2, KST)
+    
     options(warn = 0)
-    return(list(data = K, summary = sumdf))
+    return(list(data = K, summary = sumdf, BR = BR, initial = initial))
   }
   
   ## ==================== Return function ========================================
   
   if(all(wt$weight.stakes != 1) | all(wt$weight != 1)) {
-    tmp <- list(data = mbase, Kelly1 = KellyPL(K1), Kelly2 = KellyPL(K2), 
-                          Kelly3 = KellyPL(K3), Kelly4 = KellyPL(K4), 
+    tmp <- list(data = mbase, Kelly1 = KellyPL(K1, adjusted = adjusted), 
+                Kelly2 = KellyPL(K2, adjusted = adjusted), 
+                Kelly3 = KellyPL(K3, adjusted = adjusted), 
+                Kelly4 = KellyPL(K4, adjusted = adjusted), 
                 weight.stakes = wt$weight.stakes, weight = wt$weight)
     options(warn = 0)
     return(tmp)
     
   } else {
-    tmp <- list(data = mbase, Kelly1 = KellyPL(K1), 
+    tmp <- list(data = mbase, Kelly1 = KellyPL(K1, adjusted = adjusted), 
                 weight.stakes = wt$weight.stakes, weight = wt$weight)
     options(warn = 0)
     return(tmp)
