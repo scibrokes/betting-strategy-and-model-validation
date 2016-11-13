@@ -14,18 +14,23 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
   ##   bet on Win-All and Win-Half might come out with different P&L although it is 
   ##   exactly same strength of indexes between both teams.
   ## type = 'flat' : both 'weight.stakes' and 'weight' will only usable for 'flat' type.
-  ## type = 'weight1' or type = 'weight2' : Once you choose 
+  ## type = 'W1', type = 'W2', type = 'WS1',  type = 'WS2', type = 'W1WS1', type = 'W1WS2', 
+  ##   type = 'W2WS1', type = 'W2WS2'. Once you choose 
   ##   type = either 'weight', both 'weight.stakes' and 'weight' will auto ignore all 
   ##   input value but using previous year data to get a constant weight parameter.
-  ##   `theta` will be weight1 and `dres` will be weight2.
-  ## type = 'dynamic1' or type = 'dynamic2' : Once you choose 'dynamic' type, both 
-  ##   'weight.stakes' and 'weight'  will auto ignore all input value but using data 
-  ##   from previous until latest staked match to generates a vector of weighted parameters.
+  ##   `theta` will be W1 and `dres` will be W2.
+  ## type = 'D1', type = 'D2', type = 'D1WS1', type = 'D1WS2', 
+  ##   type = 'D2WS1', type = 'D2WS2', type = 'W1DWS1', type = 'W1DWS2', 
+  ##   type = 'D2WS1', type = 'D2WS2', type = 'D1DWS1', type = 'D1DWS2'. 
+  ##   type = 'D2DWS1', type = 'D2DWS2'. Once you choose 
+  ##   'dynamic' type, both 'weight.stakes' and 'weight'  will auto ignore all input value 
+  ##   but using data from previous until latest staked match to generates a vector of 
+  ##   weighted parameters.
   ## adjusted = 1, adjusted is a vector with regards the bonus or dividend for fund.
   ##   you might refer to quantmod::adjustOHLC()
   ## parallel = FALSE or parallel = TRUE.
   
-  ###############################################################################
+  ############################# Start #########################################
   ## Due to the I need to use mean value of reversed probability "rEMProb" as the \pho,
   ##   therefore need to skip the probabilities section and use stakes section.
   ##   Reverse probabilities from stakes via different fractional Kelly models might 
@@ -33,11 +38,10 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
   ##   rEMProb has already the mean value).
   ##   Here I rewrote vKelly2() which skip the prob section and use rEMProb in 
   ##  staking section.
-  ###############################################################################
+  ############################# End ############################################
   
   ## --------------------- Load packages ----------------------------------------
   options(warn = -1)
-  
   suppressMessages(library('formattable'))
   suppressMessages(library('plyr'))
   suppressMessages(library('tidyverse'))
@@ -45,6 +49,9 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
   suppressMessages(library('BBmisc'))
   suppressMessages(library('doParallel'))
   suppressMessages(library('quantmod'))
+  
+  suppressMessages(source('./function/leagueRiskProf.R'))
+  suppressMessages(source('./function/KellyPL.R'))
   
   if(parallel == TRUE) {
     #'@ registerDoParallel(cores = detectCores())
@@ -73,24 +80,32 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
   ##   firm A is the firm who placed bets with millions HKD (although the 
   ##   kick-off time might also changed after placed that particular bet), 
   ##   therefore I follow the kick-off time of the firm A.
-  mbase <- mbase[order(mbase$DateUK),] %>% mutate(
-    TimeUS = format(DateUK, tz = 'EST', usetz = TRUE, 
-                    format = '%Y-%m-%d %H:%M:%S'), 
-    DateUS = as.Date(TimeUS), PL.R = PL / Stakes, RebatesS = Stakes * Rebates)
+  if(!c('DateUS', 'TimeUS') %in% names(mbase)) {
+    mbase <- mbase[order(mbase$No.x),] %>% mutate(
+      TimeUS = format(DateUK, tz = 'EST', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S'), 
+      DateUS = as.Date(TimeUS))
+  }
+  
+  dateUSID <- unique(mbase$DateUS)
+  timeUSID <- unique(mbase$TimeUS)
+  
+  if(!c('PL.R', 'RebatesS') %in% names(mbase)) {
+    mbase <- mbase[order(mbase$No.x),] %>% mutate(PL.R = PL / Stakes, RebatesS = Stakes * Rebates)
+  }
   
   ## --------------------- Convert probabilities -------------------------------- 
   ## weighted parameter estimation
   mbase %<>% mutate(theta = suppressAll(
     ifelse(Result == 'Win', 1, 
-           ifelse(Result == 'Half Win', 0.5, 
-                  ifelse(Result == 'Push'|Result == 'Cancelled', 0, 
-                         ifelse(Result == 'Half Loss', -0.5, 
-                                ifelse(Result == 'Loss', -1, NA)))))), 
-    dWin = ifelse(Result == 'Win', 1, 0), 
-    dwhf = ifelse(Result == 'Half Win', 1, 0), 
-    dpus = ifelse(Result == 'Push'|Result == 'Cancelled', 1, 0), 
-    dlhf = ifelse(Result == 'Half Loss', 1, 0), 
-    dlos = ifelse(Result == 'Loss', 1, 0))
+    ifelse(Result == 'Half Win', 0.5, 
+    ifelse(Result == 'Push'|Result == 'Cancelled', 0, 
+    ifelse(Result == 'Half Loss', -0.5, 
+    ifelse(Result == 'Loss', -1, NA)))))), 
+                    dWin = ifelse(Result == 'Win', 1, 0), 
+                    dwhf = ifelse(Result == 'Half Win', 1, 0), 
+                    dpus = ifelse(Result == 'Push'|Result == 'Cancelled', 1, 0), 
+                    dlhf = ifelse(Result == 'Half Loss', 1, 0), 
+                    dlos = ifelse(Result == 'Loss', 1, 0))
   
   #'@ mbase %<>% mutate(
   #'@   theta = as.numeric(plyr::mapvalues(Result, 
@@ -102,7 +117,8 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
   #'@   dlhf = ifelse(Result == 'Half Loss', 1, 0), 
   #'@   dlos = ifelse(Result == 'Loss', 1, 0))
   
-  if(type == 'flat' | type == 'weight1' | type == 'weight2') {
+  if(type == 'flat' | type == 'W1' | type == 'W2' | type == 'WS1' | type == 'WS2' | 
+     type == 'W1WS1' | type == 'W1WS2' | type == 'W2WS1' | type == 'W2WS2') {
     
     m <- ddply(mbase, .(Sess), summarise, rRates = mean(Return / Stakes), 
                theta = mean(theta), dWin = mean(dWin), dwhf = mean(dwhf), 
@@ -115,6 +131,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
                         netEMEdge = rEMProbB / netProbB)
     }
     
+    ## --------------------- flat parameters ---------------------------------
     if(type == 'flat') {
       
       if(!is.numeric(weight.stakes)) {
@@ -139,7 +156,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
       
     } else {
       
-      mbase$theta <- rep(as.numeric(str_replace_na(lag(as.numeric(m$theta)), 0)), ## theta value will be weight1, exp(theta)
+      mbase$theta <- rep(as.numeric(str_replace_na(lag(as.numeric(m$theta)), 0)), ## theta value will be W1, exp(theta)
                          ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
       mbase$dWin <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dWin)), 0)), 
                         ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
@@ -154,7 +171,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
       
       mbase %<>% 
         mutate(dres = suppressAll(
-          ifelse(Result == 'Win', dWin, ## dres value will be weight2, exp(dres)
+          ifelse(Result == 'Win', dWin, ## dres value will be W2, exp(dres)
                  ifelse(Result == 'Half Win', dwhf, 
                         ifelse(Result == 'Push'|Result == 'Cancelled', dpus, 
                                ifelse(Result == 'Half Loss', dlhf, 
@@ -163,30 +180,64 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
       #'@        c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
       #'@        c(dWin, dwhf, dpus, dpus, dlhf, dlos)))
       
-      if(type == 'weight1') {
+      ## --------------------- weight parameters ---------------------------------
+      if(type == 'W1') {
         
         mbase %<>% filter(Sess != unique(Sess)[1])
         wt <- data_frame(No = seq(nrow(mbase)))
         wt$weight <- exp(mbase$theta)
-        wt$weight.stakes <- weight.stakes ## not yet found the way to weight the staking.
-        ## might probably need to apply MCMC to siimulate the staking
-        ##   in order to get the weight value for weight.stakes.
-        ## Test the result prior to add EM simulation for stakes weight.
-
-      } else if(type == 'weight2') {
+        wt$weight.stakes <- weight.stakes
+        
+      } else if(type == 'W2') {
         
         mbase %<>% filter(Sess != unique(Sess)[1])
         wt <- data_frame(No = seq(nrow(mbase)))
         wt$weight <- exp(mbase$dres)
-        wt$weight.stakes <- weight.stakes ## not yet found the way to weight the staking.
-        ## might probably need to apply MCMC to siimulate the staking
-        ##   in order to get the weight value for weight.stakes.
-        ## Test the result prior to add EM simulation for stakes weight.
-
+        wt$weight.stakes <- weight.stakes
+        
+      } else if(type == 'WS1') {
+        
+        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League), summarise, 
+                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
+          mutate(League = factor(League))
+        
+        
+      } else if(type == 'WS2') {
+        
+        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League, Result), summarise, 
+                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
+          mutate(League = factor(League))
+        
+        
+      } else if(type == 'W1WS1') {
+        
+        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League), summarise, 
+                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
+          mutate(League = factor(League))
+        
+      } else if(type == 'W1WS2') {
+        
+        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League, Result), summarise, 
+                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
+          mutate(League = factor(League))
+        
+      } else if(type == 'W2WS1') {
+        
+        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League), summarise, 
+                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
+          mutate(League = factor(League))
+        
+      } else if(type == 'W2WS2') {
+        
+        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League, Result), summarise, 
+                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
+          mutate(League = factor(League))
+        
       }
     }
   } else {
-    if(type == 'dynamic1'){
+    ## --------------------- dynamic parameters ---------------------------------
+    if(type == 'D1'){
       
       ## measure the current year rRates to know the rEMProbB. 
       m <- ddply(mbase, .(Sess), summarise, rRates = mean(Return / Stakes), 
@@ -262,7 +313,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
       mbase %<>% mutate(lagTimeUS = c(0, lag(TimeUS)[-1]))
       mbase %<>% join(dw, by = 'lagTimeUS') %>% tbl_df %>% 
         mutate(dres = suppressAll(
-          ifelse(Result == 'Win', dWins, ## dres value will be weight2
+          ifelse(Result == 'Win', dWins, ## dres value will be W2
           ifelse(Result == 'Half Win', dwhfs, 
           ifelse(Result == 'Push'|Result == 'Cancelled', dpuss, 
           ifelse(Result == 'Half Loss', dlhfs, 
@@ -276,7 +327,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
       ##   in order to get the weight value for weight.stakes.
       ## Test the result prior to add EM simulation for stakes weight.
       
-    } else if(type == 'dynamic2'){
+    } else if(type == 'D2'){
       
       ## measure the current year rRates to know the rEMProbB. 
       m <- ddply(mbase, .(Sess), summarise, rRates = mean(Return / Stakes), 
@@ -309,7 +360,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
       mbase %<>% mutate(lagTimeUS = c(0, lag(TimeUS)[-1]))
       mbase %<>% join(dw, by = 'lagTimeUS') %>% tbl_df %>% 
         mutate(dres = suppressAll(
-          ifelse(Result == 'Win', dWins, ## dres value will be weight2
+          ifelse(Result == 'Win', dWins, ## dres value will be W2
           ifelse(Result == 'Half Win', dwhfs, 
           ifelse(Result == 'Push'|Result == 'Cancelled', dpuss, 
           ifelse(Result == 'Half Loss', dlhfs, 
@@ -323,10 +374,34 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
       ##   in order to get the weight value for weight.stakes.
       ## Test the result prior to add EM simulation for stakes weight.
       
+    } else if(type == 'D1WS1'){
+      
+    } else if(type == 'D1WS2'){
+    
+    } else if(type == 'D2WS1'){
+    
+    } else if(type == 'D2WS2'){
+    
+    } else if(type == 'W1DWS1'){
+    
+    } else if(type == 'W1DWS2'){
+    
+    } else if(type == 'W2DWS1'){
+      
+    } else if(type == 'W2DWS2'){
+      
+    } else if(type == 'D1DWS1'){
+      
+    } else if(type == 'D1DWS2'){
+    
+    } else if(type == 'D1DWS1'){
+      
+    } else if(type == 'D1DWS2'){
+      
     } else {
-      stop('Kindly choose the parameter `type = flat`, `type = weight1`, `type = weight2`, `type = dynamic1` or `type = dynamic2`.')
-      }
+      stop('Kindly choose the parameter `type = flat`, `type = W1`, `type = W2`, `type = D1` or `type = D2`.')
     }
+  }
   
   ## ====================== Kelly weight 1 ====================================
   ## The weight.stakes and weight parameters will be equal to 1 if there has no 
@@ -411,7 +486,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
   ##   adjustment applied outside the fraction.
   ## 
   if((all(wt$weight.stakes != 1) | all(wt$weight != 1)) | 
-     type == 'weight1' | type == 'weight2' | type == 'dynamic1' | type == 'dynamic2') {
+     type == 'W1' | type == 'W2' | type == 'D1' | type == 'D2') {
     K2 <- mbase %>% select(TimeUS, DateUS, Sess, League, Stakes, HCap, HKPrice, EUPrice, 
                            Result, Return, PL, PL.R, Rebates, RebatesS, rRates, netEMEdge, netProbB, 
                            netProbL, rEMProbB, rEMProbL) %>% cbind(wt) %>% select(-No)
@@ -477,486 +552,8 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
   }
   
   ## ==================== P&L Comparison ========================================
-  
-  KellyPL <- function(K, adjusted = 1) {
-    options(warn = -1)
-    
-    K %<>% mutate(
-      KReturnHKPriceEdge = suppressAll(
-        ifelse(Result == 'Win', KStakesHKPriceEdge * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesHKPriceEdge * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesHKPriceEdge, 
-                             ifelse(Result == 'Half Loss', KStakesHKPriceEdge * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@        c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@        c(KStakesHKPriceEdge * EUPrice, 
-      #'@          KStakesHKPriceEdge * (HKPrice * 0.5 + 1), 
-      #'@          KStakesHKPriceEdge, KStakesHKPriceEdge, 
-      #'@          KStakesHKPriceEdge * 0.5, 0))), 
-      
-      KReturnnetProbBEdge = suppressAll(
-        ifelse(Result == 'Win', KStakesnetProbBEdge * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesnetProbBEdge * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesnetProbBEdge, 
-                             ifelse(Result == 'Half Loss', KStakesnetProbBEdge * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesnetProbBEdge * EUPrice, 
-      #'@         KStakesnetProbBEdge * (HKPrice * 0.5 + 1), 
-      #'@         KStakesnetProbBEdge, KStakesnetProbBEdge, 
-      #'@         KStakesnetProbBEdge * 0.5, 0))), 
-      
-      KReturnHKPrice = suppressAll(
-        ifelse(Result == 'Win', KStakesHKPrice * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesHKPrice * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesHKPrice, 
-                             ifelse(Result == 'Half Loss', KStakesHKPrice * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesHKPrice * EUPrice, 
-      #'@         KStakesHKPrice * (HKPrice * 0.5 + 1), 
-      #'@         KStakesHKPrice, KStakesHKPrice, 
-      #'@         KStakesHKPrice * 0.5, 0))), 
-      
-      KReturnnetProbB = suppressAll(
-        ifelse(Result == 'Win', KStakesnetProbB * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesnetProbB * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesnetProbB, 
-                             ifelse(Result == 'Half Loss', KStakesnetProbB * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesnetProbB * EUPrice, 
-      #'@         KStakesnetProbB * (HKPrice * 0.5 + 1), 
-      #'@         KStakesnetProbB, KStakesnetProbB, 
-      #'@         KStakesnetProbB * 0.5, 0))), 
-      
-      KReturnFixed = suppressAll(
-        ifelse(Result == 'Win', KStakesFixed * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesFixed * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesFixed, 
-                             ifelse(Result == 'Half Loss', KStakesFixed * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesFixed * EUPrice, 
-      #'@         KStakesFixed * (HKPrice * 0.5 + 1), 
-      #'@         KStakesFixed, KStakesFixed, 
-      #'@         KStakesFixed * 0.5, 0))), 
-      
-      KReturnFixednetProbB = suppressAll(
-        ifelse(Result == 'Win', KStakesFixednetProbB * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesFixednetProbB * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesFixednetProbB, 
-                             ifelse(Result == 'Half Loss', KStakesFixednetProbB * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesFixednetProbB * EUPrice, 
-      #'@         KStakesFixednetProbB * (HKPrice * 0.5 + 1), 
-      #'@         KStakesFixednetProbB, KStakesFixednetProbB, 
-      #'@         KStakesFixednetProbB * 0.5, 0))), 
-      
-      KReturnEMProb = suppressAll(
-        ifelse(Result == 'Win', KStakesEMProb * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesEMProb * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesEMProb, 
-                             ifelse(Result == 'Half Loss', KStakesEMProb * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesEMProb * EUPrice, 
-      #'@         KStakesEMProb * (HKPrice * 0.5 + 1), 
-      #'@         KStakesEMProb, KStakesEMProb, 
-      #'@         KStakesEMProb * 0.5, 0))), 
-      
-      KReturnEMProbnetProbB = suppressAll(
-        ifelse(Result == 'Win', KStakesEMProbnetProbB * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesEMProbnetProbB * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesEMProbnetProbB, 
-                             ifelse(Result == 'Half Loss', KStakesEMProbnetProbB * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesEMProbnetProbB * EUPrice, 
-      #'@         KStakesEMProbnetProbB * (HKPrice * 0.5 + 1), 
-      #'@         KStakesEMProbnetProbB, KStakesEMProbnetProbB, 
-      #'@         KStakesEMProbnetProbB * 0.5, 0))), 
-      
-      KReturnHalf = suppressAll(
-        ifelse(Result == 'Win', KStakesHalf * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesHalf * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesHalf, 
-                             ifelse(Result == 'Half Loss', KStakesHalf * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesHalf * EUPrice, 
-      #'@         KStakesHalf * (HKPrice * 0.5 + 1), 
-      #'@         KStakesHalf, KStakesHalf, 
-      #'@         KStakesHalf * 0.5, 0))), 
-      
-      KReturnHalfnetProbB = suppressAll(
-        ifelse(Result == 'Win', KStakesHalfnetProbB * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesHalfnetProbB * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesHalfnetProbB, 
-                             ifelse(Result == 'Half Loss', KStakesHalfnetProbB * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesHalfnetProbB * EUPrice, 
-      #'@         KStakesHalfnetProbB * (HKPrice * 0.5 + 1), 
-      #'@         KStakesHalfnetProbB, KStakesHalfnetProbB, 
-      #'@         KStakesHalfnetProbB * 0.5, 0))), 
-      
-      KReturnQuarter = suppressAll(
-        ifelse(Result == 'Win', KStakesQuarter * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesQuarter * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesQuarter, 
-                             ifelse(Result == 'Half Loss', KStakesQuarter * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesQuarter * EUPrice, 
-      #'@         KStakesQuarter * (HKPrice * 0.5 + 1), 
-      #'@         KStakesQuarter, KStakesQuarter, 
-      #'@         KStakesQuarter * 0.5, 0))), 
-      
-      KReturnQuarternetProbB = suppressAll(
-        ifelse(Result == 'Win', KStakesQuarternetProbB * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesQuarternetProbB * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesQuarternetProbB, 
-                             ifelse(Result == 'Half Loss', KStakesQuarternetProbB * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesQuarternetProbB * EUPrice, 
-      #'@         KStakesQuarternetProbB * (HKPrice * 0.5 + 1), 
-      #'@         KStakesQuarternetProbB, KStakesQuarternetProbB, 
-      #'@         KStakesQuarternetProbB * 0.5, 0))), 
-      
-      KReturnAdj = suppressAll(
-        ifelse(Result == 'Win', KStakesAdj * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesAdj * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesAdj, 
-                             ifelse(Result == 'Half Loss', KStakesAdj * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesAdj * EUPrice, 
-      #'@         KStakesAdj * (HKPrice * 0.5 + 1), 
-      #'@         KStakesAdj, KStakesAdj, 
-      #'@         KStakesAdj * 0.5, 0))), 
-      
-      KReturnAdjnetProbB = suppressAll(
-        ifelse(Result == 'Win', KStakesAdjnetProbB * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesAdjnetProbB * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesAdjnetProbB, 
-                             ifelse(Result == 'Half Loss', KStakesAdjnetProbB * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesAdjnetProbB * EUPrice, 
-      #'@         KStakesAdjnetProbB * (HKPrice * 0.5 + 1), 
-      #'@         KStakesAdjnetProbB, KStakesAdjnetProbB, 
-      #'@         KStakesAdjnetProbB * 0.5, 0))), 
-      
-      KReturnHalfAdj = suppressAll(
-        ifelse(Result == 'Win', KStakesHalfAdj * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesHalfAdj * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesHalfAdj, 
-                             ifelse(Result == 'Half Loss', KStakesHalfAdj * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesHalfAdj * EUPrice, 
-      #'@         KStakesHalfAdj * (HKPrice * 0.5 + 1), 
-      #'@         KStakesHalfAdj, KStakesHalfAdj, 
-      #'@         KStakesHalfAdj * 0.5, 0))), 
-      
-      KReturnHalfAdjnetProbB = suppressAll(
-        ifelse(Result == 'Win', KStakesHalfAdjnetProbB * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesHalfAdjnetProbB * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesHalfAdjnetProbB, 
-                             ifelse(Result == 'Half Loss', KStakesHalfAdjnetProbB * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesHalfAdjnetProbB * EUPrice, 
-      #'@         KStakesHalfAdjnetProbB * (HKPrice * 0.5 + 1), 
-      #'@         KStakesHalfAdjnetProbB, KStakesHalfAdjnetProbB, 
-      #'@         KStakesHalfAdjnetProbB * 0.5, 0))), 
-      
-      KReturnEMQuarterAdj = suppressAll(
-        ifelse(Result == 'Win', KStakesEMQuarterAdj * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesEMQuarterAdj * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesEMQuarterAdj, 
-                             ifelse(Result == 'Half Loss', KStakesEMQuarterAdj * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))), 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesEMQuarterAdj * EUPrice, 
-      #'@         KStakesEMQuarterAdj * (HKPrice * 0.5 + 1), 
-      #'@         KStakesEMQuarterAdj, KStakesEMQuarterAdj, 
-      #'@         KStakesEMQuarterAdj * 0.5, 0))), 
-      
-      KReturnEMQuarterAdjnetProbB = suppressAll(
-        ifelse(Result == 'Win', KStakesEMQuarterAdjnetProbB * EUPrice, 
-               ifelse(Result == 'Half Win', KStakesEMQuarterAdjnetProbB * (HKPrice * 0.5 + 1), 
-                      ifelse(Result == 'Push'|Result == 'Cancelled', KStakesEMQuarterAdjnetProbB, 
-                             ifelse(Result == 'Half Loss', KStakesEMQuarterAdjnetProbB * 0.5, 
-                                    ifelse(Result == 'Loss', 0, NA)))))) 
-      #'@ plyr::mapvalues(Result, 
-      #'@       c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-      #'@       c(KStakesEMQuarterAdjnetProbB * EUPrice, 
-      #'@         KStakesEMQuarterAdjnetProbB * (HKPrice * 0.5 + 1), 
-      #'@         KStakesEMQuarterAdjnetProbB, KStakesEMQuarterAdjnetProbB, 
-      #'@         KStakesEMQuarterAdjnetProbB * 0.5, 0)))
-      ) %>% tbl_df
-    
-    K %<>% mutate(KPLHKPriceEdge = KReturnHKPriceEdge - KStakesHKPriceEdge, 
-                  KPLnetProbBEdge = KReturnnetProbBEdge - KStakesnetProbBEdge, 
-                  KPLHKPrice = KReturnHKPrice - KStakesHKPrice, 
-                  KPLnetProbB = KReturnnetProbB - KStakesnetProbB, 
-                  KPLFixed = KReturnFixed - KStakesFixed, 
-                  KPLFixednetProbB = KReturnFixednetProbB - KStakesFixednetProbB, 
-                  KPLEMProb = KReturnEMProb - KStakesEMProb, 
-                  KPLEMProbnetProbB = KReturnEMProbnetProbB - KStakesEMProbnetProbB, 
-                  KPLHalf = KReturnHalf - KStakesHalf, 
-                  KPLHalfnetProbB = KReturnHalfnetProbB - KStakesHalfnetProbB, 
-                  KPLQuarter = KReturnQuarter - KStakesQuarter, 
-                  KPLQuarternetProbB = KReturnQuarternetProbB - KStakesQuarternetProbB, 
-                  KPLAdj = KReturnAdj - KStakesAdj, 
-                  KPLAdjnetProbB = KReturnAdjnetProbB - KStakesAdjnetProbB, 
-                  KPLHalfAdj = KReturnHalfAdj - KStakesHalfAdj, 
-                  KPLHalfAdjnetProbB = KReturnHalfAdjnetProbB - KStakesHalfAdjnetProbB, 
-                  KPLEMQuarterAdj = KReturnEMQuarterAdj - KStakesEMQuarterAdj, 
-                  KPLEMQuarterAdjnetProbB = KReturnEMQuarterAdjnetProbB - KStakesEMQuarterAdjnetProbB)
-    
-    K %<>% mutate(KPLHKPriceEdge.R = percent(KPLHKPriceEdge / KStakesHKPriceEdge), 
-                  KPLnetProbBEdge.R = percent(KPLnetProbBEdge / KStakesnetProbBEdge), 
-                  KPLHKPrice.R = percent(KPLHKPrice / KStakesHKPrice), 
-                  KPLnetProbB.R = percent(KPLnetProbB / KStakesnetProbB), 
-                  KPLFixed.R = percent(KPLFixed / KStakesFixed), 
-                  KPLFixednetProbB.R = percent(KPLFixednetProbB / KStakesFixednetProbB), 
-                  KPLEMProb.R = percent(KPLEMProb / KStakesEMProb), 
-                  KPLEMProbnetProbB.R = percent(KPLEMProbnetProbB / KStakesEMProbnetProbB), 
-                  KPLHalf.R = percent(KPLHalf / KStakesHalf), 
-                  KPLHalfnetProbB.R = percent(KPLHalfnetProbB / KStakesHalfnetProbB), 
-                  KPLQuarter.R = percent(KPLQuarter / KStakesQuarter), 
-                  KPLQuarternetProbB.R = percent(KPLQuarternetProbB / KStakesQuarternetProbB), 
-                  KPLAdj.R = percent(KPLAdj / KStakesAdj), 
-                  KPLAdjnetProbB.R = percent(KPLAdjnetProbB / KStakesAdjnetProbB), 
-                  KPLHalfAdj.R = percent(KPLHalfAdj / KStakesHalfAdj), 
-                  KPLHalfAdjnetProbB.R = percent(KPLHalfAdjnetProbB / KStakesHalfAdjnetProbB), 
-                  KPLEMQuarterAdj.R = percent(KPLEMQuarterAdj / KStakesEMQuarterAdj), 
-                  KPLEMQuarterAdjnetProbB.R = percent(KPLEMQuarterAdjnetProbB / KStakesEMQuarterAdjnetProbB))
-    
-    sumd <- K %>% mutate(sm = 1) %>% 
-      
-      ddply(.(sm), summarise, From = min(TimeUS), To = max(TimeUS), HKPrice = mean(HKPrice), 
-            EUPrice = mean(EUPrice), Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL), 
-            PL.R = mean(PL.R), Rebates = mean(Rebates), RebatesS = sum(RebatesS), rRates = mean(rRates), 
-            netEMEdge = mean(netEMEdge), netProbB = mean(netProbB), rEMProbB = mean(rEMProbB), 
-            weight.stakes = mean(weight.stakes), weight = mean(weight), 
-            
-            KStakesHKPriceEdge = currency(sum(KStakesHKPriceEdge)), 
-            KStakesnetProbBEdge = currency(sum(KStakesnetProbBEdge)), 
-            KStakesHKPrice = currency(sum(KStakesHKPrice)), 
-            KStakesnetProbB = currency(sum(KStakesnetProbB)), 
-            KStakesFixed = currency(sum(KStakesFixed)), 
-            KStakesFixednetProbB = currency(sum(KStakesFixednetProbB)), 
-            KStakesEMProb = currency(sum(KStakesEMProb)), 
-            KStakesEMProbnetProbB = currency(sum(KStakesEMProbnetProbB)), 
-            KStakesHalf = currency(sum(KStakesHalf)), 
-            KStakesHalfnetProbB = currency(sum(KStakesHalfnetProbB)), 
-            KStakesQuarter = currency(sum(KStakesQuarter)), 
-            KStakesQuarternetProbB = currency(sum(KStakesQuarternetProbB)), 
-            KStakesAdj = currency(sum(KStakesAdj)), 
-            KStakesAdjnetProbB = currency(sum(KStakesAdjnetProbB)), 
-            KStakesHalfAdj = currency(sum(KStakesHalfAdj)), 
-            KStakesHalfAdjnetProbB = currency(sum(KStakesHalfAdjnetProbB)), 
-            KStakesEMQuarterAdj = currency(sum(KStakesEMQuarterAdj)), 
-            KStakesEMQuarterAdjnetProbB = currency(sum(KStakesEMQuarterAdjnetProbB)), 
-            
-            KReturnHKPriceEdge = currency(sum(KReturnHKPriceEdge)), 
-            KReturnnetProbBEdge = currency(sum(KReturnnetProbBEdge)), 
-            KReturnHKPrice = currency(sum(KReturnHKPrice)), 
-            KReturnnetProbB = currency(sum(KReturnnetProbB)), 
-            KReturnFixed = currency(sum(KReturnFixed)), 
-            KReturnFixednetProbB = currency(sum(KReturnFixednetProbB)), 
-            KReturnEMProb = currency(sum(KReturnEMProb)), 
-            KReturnEMProbnetProbB = currency(sum(KReturnEMProbnetProbB)), 
-            KReturnHalf = currency(sum(KReturnHalf)), 
-            KReturnHalfnetProbB = currency(sum(KReturnHalfnetProbB)), 
-            KReturnQuarter = currency(sum(KReturnQuarter)), 
-            KReturnQuarternetProbB = currency(sum(KReturnQuarternetProbB)), 
-            KReturnAdj = currency(sum(KReturnAdj)), 
-            KReturnAdjnetProbB = currency(sum(KReturnAdjnetProbB)), 
-            KReturnHalfAdj = currency(sum(KReturnHalfAdj)), 
-            KReturnHalfAdjnetProbB = currency(sum(KReturnHalfAdjnetProbB)), 
-            KReturnEMQuarterAdj = currency(sum(KReturnEMQuarterAdj)), 
-            KReturnEMQuarterAdjnetProbB = currency(sum(KReturnEMQuarterAdjnetProbB)), 
-            
-            KPLHKPriceEdge = currency(sum(KPLHKPriceEdge)), 
-            KPLnetProbBEdge = currency(sum(KPLnetProbBEdge)), 
-            KPLHKPrice = currency(sum(KPLHKPrice)), KPLnetProbB = currency(sum(KPLnetProbB)), 
-            KPLFixed = currency(mean(KPLFixed)), 
-            KPLFixednetProbB = currency(sum(KPLFixednetProbB)), 
-            KPLEMProb = currency(sum(KPLEMProb)), 
-            KPLEMProbnetProbB = currency(sum(KPLEMProbnetProbB)), 
-            KPLHalf = currency(sum(KPLHalf)), 
-            KPLHalfnetProbB = currency(sum(KPLHalfnetProbB)), 
-            KPLQuarter = currency(sum(KPLQuarter)), 
-            KPLQuarternetProbB = currency(sum(KPLQuarternetProbB)), 
-            KPLAdj = currency(sum(KPLAdj)), 
-            KPLAdjnetProbB = currency(sum(KPLAdjnetProbB)), 
-            KPLHalfAdj = currency(sum(KPLHalfAdj)), 
-            KPLHalfAdjnetProbB = currency(sum(KPLHalfAdjnetProbB)), 
-            KPLEMQuarterAdj = currency(sum(KPLEMQuarterAdj)), 
-            KPLEMQuarterAdjnetProbB = currency(sum(KPLEMQuarterAdjnetProbB))) %>% 
-      
-      mutate(KPLHKPriceEdge.R = percent(KPLHKPriceEdge / KStakesHKPriceEdge), 
-             KPLnetProbBEdge.R = percent(KPLnetProbBEdge / KStakesnetProbBEdge), 
-             KPLHKPrice.R = percent(KPLHKPrice / KStakesHKPrice), 
-             KPLnetProbB.R = percent(KPLnetProbB / KStakesnetProbB), 
-             KPLFixed.R = percent(KPLFixed / KStakesFixed), 
-             KPLFixednetProbB.R = percent(KPLFixednetProbB / KStakesFixednetProbB), 
-             KPLEMProb.R = percent(KPLEMProb / KStakesEMProb), 
-             KPLEMProbnetProbB.R = percent(KPLEMProbnetProbB / KStakesEMProbnetProbB), 
-             KPLHalf.R = percent(KPLHalf / KStakesHalf), 
-             KPLHalfnetProbB.R = percent(KPLHalfnetProbB / KStakesHalfnetProbB), 
-             KPLQuarter.R = percent(KPLQuarter / KStakesQuarter), 
-             KPLQuarternetProbB.R = percent(KPLQuarternetProbB / KStakesQuarternetProbB), 
-             KPLAdj.R = percent(KPLAdj / KStakesAdj), 
-             KPLAdjnetProbB.R = percent(KPLAdjnetProbB / KStakesAdjnetProbB), 
-             KPLHalfAdj.R = percent(KPLHalfAdj / KStakesHalfAdj), 
-             KPLHalfAdjnetProbB.R = percent(KPLHalfAdjnetProbB / KStakesHalfAdjnetProbB), 
-             KPLEMQuarterAdj.R = percent(KPLEMQuarterAdj / KStakesEMQuarterAdj), 
-             KPLEMQuarterAdjnetProbB.R = percent(KPLEMQuarterAdjnetProbB / KStakesEMQuarterAdjnetProbB)) %>% 
-      
-      mutate(KPLHKPriceEdge.R = ifelse(is.nan(KPLHKPriceEdge.R), 0, KPLHKPriceEdge.R), 
-             KPLnetProbBEdge.R = ifelse(is.nan(KPLnetProbBEdge.R), 0, KPLnetProbBEdge.R), 
-             KPLHKPrice.R = ifelse(is.nan(KPLHKPrice.R), 0, KPLHKPrice.R), 
-             KPLnetProbB.R = ifelse(is.nan(KPLnetProbB.R), 0, KPLnetProbB.R), 
-             KPLFixed.R = ifelse(is.nan(KPLFixed.R), 0, KPLFixed.R), 
-             KPLFixednetProbB.R = ifelse(is.nan(KPLFixednetProbB.R), 0, KPLFixednetProbB.R), 
-             KPLEMProb.R = ifelse(is.nan(KPLEMProb.R), 0, KPLEMProb.R), 
-             KPLEMProbnetProbB.R = ifelse(is.nan(KPLEMProbnetProbB.R), 0, KPLEMProbnetProbB.R), 
-             KPLHalf.R = ifelse(is.nan(KPLHalf.R), 0, KPLHalf.R), 
-             KPLHalfnetProbB.R = ifelse(is.nan(KPLHalfnetProbB.R), 0, KPLHalfnetProbB.R), 
-             KPLQuarter.R = ifelse(is.nan(KPLQuarter.R), 0, KPLQuarter.R), 
-             KPLQuarternetProbB.R = ifelse(is.nan(KPLQuarternetProbB.R), 0, KPLQuarternetProbB.R), 
-             KPLAdj.R = ifelse(is.nan(KPLAdj.R), 0, KPLAdj.R), 
-             KPLAdjnetProbB.R = ifelse(is.nan(KPLAdjnetProbB.R), 0, KPLAdjnetProbB.R), 
-             KPLHalfAdj.R = ifelse(is.nan(KPLHalfAdj.R), 0, KPLHalfAdj.R), 
-             KPLHalfAdjnetProbB.R = ifelse(is.nan(KPLHalfAdjnetProbB.R), 0, KPLHalfAdjnetProbB.R), 
-             KPLEMQuarterAdj.R = ifelse(is.nan(KPLEMQuarterAdj.R), 0, KPLEMQuarterAdj.R), 
-             KPLEMQuarterAdjnetProbB.R = ifelse(is.nan(KPLEMQuarterAdjnetProbB.R), 0, KPLEMQuarterAdjnetProbB.R)) %>% 
-      
-     mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(PL), PL.R = percent(PL.R), 
-            Rebates = percent(Rebates), RebatesS = currency(RebatesS)
-    
-       ) %>% select(-sm) %>% tbl_df
-    
-    sumdf <- data.frame(
-      # From = sumd$From, To = sumd$To, HKPrice = sumd$HKPrice, EUPrice = sumd$EUPrice, 
-      # netProbB = sumd$netProbB, rRates = sumd$rRates, weight.stakes = sumd$weight.stakes, 
-      # weight = sumd$weight, Rebates = sumd$Rebates, netProbB = sumd$netProbB, 
-      # rEMProbB = sumd$rEMProbB, 
-      Stakes = sumd %>% 
-        select(Stakes, KStakesHKPriceEdge, KStakesnetProbBEdge, KStakesHKPrice, 
-               KStakesnetProbB, KStakesFixed, KStakesFixednetProbB, KStakesEMProb, 
-               KStakesEMProbnetProbB, KStakesHalf, KStakesHalfnetProbB, KStakesQuarter, 
-               KStakesQuarternetProbB, KStakesAdj, KStakesAdjnetProbB, KStakesHalfAdj, 
-               KStakesHalfAdjnetProbB, KStakesEMQuarterAdj, KStakesEMQuarterAdjnetProbB) %>% t, 
-      Return = sumd %>% 
-        select(Return, KReturnHKPriceEdge, KReturnnetProbBEdge, KReturnHKPrice, KReturnnetProbB, 
-               KReturnFixed, KReturnFixednetProbB, KReturnEMProb, KReturnEMProbnetProbB, 
-               KReturnHalf, KReturnHalfnetProbB, KReturnQuarter, KReturnQuarternetProbB, 
-               KReturnAdj, KReturnAdjnetProbB, KReturnHalfAdj, KReturnHalfAdjnetProbB, 
-               KReturnEMQuarterAdj, KReturnEMQuarterAdjnetProbB) %>% t, 
-      PL = sumd %>% 
-        select(PL, KPLHKPriceEdge, KPLnetProbBEdge, KPLHKPrice, KPLnetProbB, KPLFixed, 
-               KPLFixednetProbB, KPLEMProb, KPLEMProbnetProbB, KPLHalf, KPLHalfnetProbB, 
-               KPLQuarter, KPLQuarternetProbB, KPLAdj, KPLAdjnetProbB, KPLHalfAdj, 
-               KPLHalfAdjnetProbB, KPLEMQuarterAdj, KPLEMQuarterAdjnetProbB) %>% t
-    ) %>% data.frame(Category = rownames(.), .) %>% tbl_df %>% 
-      mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(PL), 
-             PL.R = percent(ifelse(is.nan(PL / Stakes), 0, PL / Stakes)))
-    
-    ## refer to quantmod packages xts zoo data type but in tbl_df format.
-    KPnames <- c('netEMEdge', 'PropHKPriceEdge', 'PropnetProbBEdge', 'KProbHKPrice',
-                'KProbnetProbB', 'KProbFixed', 'KProbFixednetProbB', 'KEMProb',
-                'KEMProbnetProbB', 'KProbHalf','KProbHalfnetProbB', 'KProbQuarter',
-                'KProbQuarternetProbB', 'KProbAdj','KProbAdjnetProbB', 'KHalfAdj',
-                'KHalfAdjnetProbB', 'KEMQuarterAdj', 'KEMQuarterAdjnetProbB')
-    
-    KSnames <- c('Stakes', 'KStakesHKPriceEdge', 'KStakesnetProbBEdge', 'KStakesHKPrice', 
-                 'KStakesnetProbB', 'KStakesFixed', 'KStakesFixednetProbB', 
-                 'KStakesEMProb', 'KStakesEMProbnetProbB', 'KStakesHalf', 
-                 'KStakesHalfnetProbB', 'KStakesQuarter', 'KStakesQuarternetProbB', 
-                 'KStakesAdj', 'KStakesAdjnetProbB', 'KStakesHalfAdj', 
-                 'KStakesHalfAdjnetProbB', 'KStakesEMQuarterAdj', 
-                 'KStakesEMQuarterAdjnetProbB')
-    
-    KPLnames <- c('PL', 'KPLHKPriceEdge', 'KPLnetProbBEdge', 'KPLHKPrice', 'KPLnetProbB', 
-                  'KPLFixed', 'KPLFixednetProbB', 'KPLEMProb', 'KPLEMProbnetProbB', 
-                  'KPLHalf', 'KPLHalfnetProbB', 'KPLQuarter', 'KPLQuarternetProbB', 
-                  'KPLAdj', 'KPLAdjnetProbB', 'KPLHalfAdj', 'KPLHalfAdjnetProbB', 
-                  'KPLEMQuarterAdj', 'KPLEMQuarterAdjnetProbB')
-    
-    KnamesBR <- paste0(KPnames, rep(c('.Open', '.High', '.Low', '.Close', '.Volume', 
-                                     '.Adjusted'), each = length(KPnames)))
-    
-    BR <- matrix(nc = length(KnamesBR), nr = nrow(K), dimnames = list(NULL, KnamesBR)) %>% 
-      tbl_df %>% data.frame(.id = seq(nrow(K)), TimeUS = K$TimeUS, DateUS = K$DateUS, 
-                            League = K$League, .) %>% tbl_df
-    
-    KPL <- K %>% select(PL, KPLHKPriceEdge, KPLnetProbBEdge, KPLHKPrice, KPLnetProbB, KPLFixed, 
-                        KPLFixednetProbB, KPLEMProb, KPLEMProbnetProbB, KPLHalf, KPLHalfnetProbB, 
-                        KPLQuarter, KPLQuarternetProbB, KPLAdj, KPLAdjnetProbB, KPLHalfAdj, 
-                        KPLHalfAdjnetProbB, KPLEMQuarterAdj, KPLEMQuarterAdjnetProbB) %>% 
-      mutate_all(cumsum)
-    
-    KST <- K %>% select(Stakes, KStakesHKPriceEdge, KStakesnetProbBEdge, KStakesHKPrice, 
-                        KStakesnetProbB, KStakesFixed, KStakesFixednetProbB, KStakesEMProb, 
-                        KStakesEMProbnetProbB, KStakesHalf, KStakesHalfnetProbB, KStakesQuarter, 
-                        KStakesQuarternetProbB, KStakesAdj, KStakesAdjnetProbB, KStakesHalfAdj, 
-                        KStakesHalfAdjnetProbB, KStakesEMQuarterAdj, KStakesEMQuarterAdjnetProbB)
-    
-    ## Set initial fund size from the staking and profit & loss, below are 2 criteria...
-    ##  1) fund size must be enough to place a bet, therefore max stakes + $1.
-    ##  2) fund size cannot <= 0 to simulate whole process. Therefore need to set 
-    ##  max loss + $1.
-    initial <- max(max(KST),abs(min(KPL))) + 1
-    
-    KPL <- tbl_df(KPL + initial)
-    KPL2 <- KPL %>% mutate_all(lag)
-    KPL2[1, ] <- initial
-    
-    BR[grep('.Close', names(BR), value = TRUE)] <- KPL
-    BR[grep('.Open', names(BR), value = TRUE)] <- KPL2
-    BR[grep('.High', names(BR), value = TRUE)] <- 
-      apply(BR[grep('.Close|.Open', names(BR), value = TRUE)], 1, max, na.rm = TRUE)
-    BR[grep('.Low', names(BR), value = TRUE)] <- 
-      apply(BR[grep('.Close|.Open', names(BR), value = TRUE)], 1, min, na.rm = TRUE)
-    BR[grep('.Volume', names(BR), value = TRUE)] <- K %>% 
-      select(Stakes, KStakesHKPriceEdge, KStakesnetProbBEdge, KStakesHKPrice, 
-             KStakesnetProbB, KStakesFixed, KStakesFixednetProbB, KStakesEMProb, 
-             KStakesEMProbnetProbB, KStakesHalf, KStakesHalfnetProbB, KStakesQuarter, 
-             KStakesQuarternetProbB, KStakesAdj, KStakesAdjnetProbB, KStakesHalfAdj, 
-             KStakesHalfAdjnetProbB, KStakesEMQuarterAdj, KStakesEMQuarterAdjnetProbB)
-    BR[grep('.Adjusted', names(BR), value = TRUE)] <- adjusted
-    
-    rm(KPL, KPL2, KST)
-    
-    options(warn = 0)
-    return(list(data = K, summary = sumdf, BR = BR))
-  }
+  ## load KellyPL() to summarise the P&L of various Kelly models.
+  #'@ suppressMessages(source('./function/KellyPL.R'))
   
   ## ==================== Return function ========================================
   

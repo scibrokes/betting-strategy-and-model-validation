@@ -1,7 +1,7 @@
 ---
 title: "Betting Strategy and Ⓜodel Validation - Part II"
 subtitle: "Betting Model Analysis on Sportsbook Consultancy Firm A"
-author: "[®γσ, Eng Lian Hu](https://englianhu.github.io/) <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸則道®"
+author: "[®γσ, Lian Hu](https://englianhu.github.io/) <img src='figure/ENG.jpg' width='24'> <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸則道®"
 date: "`r Sys.Date()`"
 output:
   tufte::tufte_html:
@@ -1870,6 +1870,8 @@ data.frame(Sys.info = Sys.info()) %>% formattable %>% as.htmlwidget
 
 rm(sys1)
 ```
+
+<object width="425" height="344"><param name="movie" value="http://swf.tubechop.com/tubechop.swf?vurl=8FuwcSIx4f4&start=3361&end=3474&cid=8556301"></param><embed src="http://swf.tubechop.com/tubechop.swf?vurl=8FuwcSIx4f4&start=3361&end=3474&cid=8556301" type="application/x-shockwave-flash" allowfullscreen="true" width="425" height="344"></embed></object>
 
 ## 7.2 Versions' Log
   
