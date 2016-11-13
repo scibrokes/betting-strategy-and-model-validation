@@ -8,16 +8,16 @@ load('./KellyApps/shinyData.RData', envir = .GlobalEnv)
 source('./function/leagueRiskProf.R')
 
 ## league weight parameters
-lRProf1A <- leagueRiskProf(dat, type = 'weight', weight.type = 'all')
-lRProf1B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'all')
-lRProf2A <- leagueRiskProf(dat, type = 'weight', weight.type = 'annual')
-lRProf2B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'annual')
-lRProf3A <- leagueRiskProf(dat, type = 'weight', weight.type = 'daily')
-lRProf3B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'daily')
-lRProf4A <- leagueRiskProf(dat, type = 'weight', weight.type = 'time')
-lRProf4B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'time') #more than 6millions observations, need to take few hours.
-lRProf5A <- leagueRiskProf(dat, type = 'weight', weight.type = 'dynamic') #more than 5millions observations, need to take few hours.
-lRProf5B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'dynamic') #more than 10 millions observations, take more than 5 hours.
+lRProf1A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'all')
+lRProf1B <- leagueRiskProf(dat, type = 'weight.stakes', breakdown = TRUE, weight.type = 'all')
+lRProf2A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'annual')
+lRProf2B <- leagueRiskProf(dat, type = 'weight.stakes', breakdown = TRUE, weight.type = 'annual')
+lRProf3A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'daily')
+lRProf3B <- leagueRiskProf(dat, type = 'weight.stakes', breakdown = TRUE, weight.type = 'daily')
+lRProf4A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'time')
+lRProf4B <- leagueRiskProf(dat, type = 'weight.stakes', breakdown = TRUE, weight.type = 'time') #more than 6millions observations, need to take few hours.
+lRProf5A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'dynamic') #more than 5millions observations, need to take few hours.
+lRProf5B <- leagueRiskProf(dat, type = 'weight.stakes', breakdown = TRUE, weight.type = 'dynamic') #more than 10 millions observations, take more than 5 hours.
 
 ## In order to save the loading time but also the space in folder data, here I omit the 
 ##   join data and combination section but directly fit it into the function vKelly() and vKelly2(). 
@@ -42,6 +42,18 @@ lRProf5B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type =
 #'@   select(No.x, Sess, DateUS, TimeUS, ...) # need to modify
 #'@ names(lRiskProf) <- c('No.x', 'Sess', 'DateUS', 'TimeUS', 'all.1', 'all.2', 'ann.1', 'ann.2', 'day.1', 'day.2', 'time.1', 
 #'@                       'time.2', 'dym.1', 'dym.2')
+
+## result based weight parameters
+wProf1A <- leagueRiskProf(dat, type = 'weight', weight.type = 'all')
+wProf1B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'all')
+wProf2A <- leagueRiskProf(dat, type = 'weight', weight.type = 'annual')
+wProf2B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'annual')
+wProf3A <- leagueRiskProf(dat, type = 'weight', weight.type = 'daily')
+wProf3B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'daily')
+wProf4A <- leagueRiskProf(dat, type = 'weight', weight.type = 'time')
+wProf4B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'time')
+wProf5A <- leagueRiskProf(dat, type = 'weight', weight.type = 'dynamic')
+wProf5B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'dynamic')
 
 ## ================== Kelly Models =============================
 ## --------------- 1. K1 ------------------------
