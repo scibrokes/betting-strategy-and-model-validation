@@ -36,8 +36,8 @@ rm(pkgs)
 
 ## Load the functions
 funs <- c('scrapSPBO.R', 'readfirmData.R', 'arrfirmData.R', 'readSPBO.R', 'vKelly.R', 
-          'vKelly2.R', 'Kprof.R', 'simulateKelly.R', 'bvp.R', 'stopImplicitCluster2.R')
-plyr::l_ply(funs, function(x) source(paste0('function/', x))); rm(funs)
+          'vKelly2.R', 'Kprof.R', 'simulateKelly.R', 'bvp.R') #'stopImplicitCluster2.R'
+plyr::l_ply(funs, function(x) source(paste0('./function/', x))); rm(funs)
 
 ## ========= Setup parallel computing =================================
 ## Creating a parallel computing Cluster and support functions.

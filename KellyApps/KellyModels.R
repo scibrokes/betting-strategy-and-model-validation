@@ -7,7 +7,7 @@ load('./KellyApps/shinyData.RData', envir = .GlobalEnv)
 ## Simulate and save the league profiling : all, annual, daily, time or dynamic.
 source('./function/leagueRiskProf.R')
 
-## league weight parameters
+## --------------- league weight parameters --------------------
 lRProf1A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'all')
 lRProf1B <- leagueRiskProf(dat, type = 'weight.stakes', breakdown = TRUE, weight.type = 'all')
 lRProf2A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'annual')
@@ -43,7 +43,18 @@ lRProf5B <- leagueRiskProf(dat, type = 'weight.stakes', breakdown = TRUE, weight
 #'@ names(lRiskProf) <- c('No.x', 'Sess', 'DateUS', 'TimeUS', 'all.1', 'all.2', 'ann.1', 'ann.2', 'day.1', 'day.2', 'time.1', 
 #'@                       'time.2', 'dym.1', 'dym.2')
 
-## result based weight parameters
+saveRDS(lRProf1A, file = './data/lRProf1A.rds')
+saveRDS(lRProf1B, file = './data/lRProf1B.rds')
+saveRDS(lRProf2A, file = './data/lRProf2A.rds')
+saveRDS(lRProf2B, file = './data/lRProf2B.rds')
+saveRDS(lRProf3A, file = './data/lRProf3A.rds')
+saveRDS(lRProf3B, file = './data/lRProf3B.rds')
+saveRDS(lRProf4A, file = './data/lRProf4A.rds')
+saveRDS(lRProf4B, file = './data/lRProf4B.rds')
+saveRDS(lRProf5A, file = './data/lRProf5A.rds')
+saveRDS(lRProf5B, file = './data/lRProf5B.rds')
+
+## -------------------- result based weight parameters --------------------
 wProf1A <- leagueRiskProf(dat, type = 'weight', weight.type = 'all')
 wProf1B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'all')
 wProf2A <- leagueRiskProf(dat, type = 'weight', weight.type = 'annual')
@@ -54,6 +65,17 @@ wProf4A <- leagueRiskProf(dat, type = 'weight', weight.type = 'time')
 wProf4B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'time')
 wProf5A <- leagueRiskProf(dat, type = 'weight', weight.type = 'dynamic')
 wProf5B <- leagueRiskProf(dat, type = 'weight', breakdown = TRUE, weight.type = 'dynamic')
+
+saveRDS(wProf1A, file = './data/wProf1A.rds')
+saveRDS(wProf1B, file = './data/wProf1B.rds')
+saveRDS(wProf2A, file = './data/wProf2A.rds')
+saveRDS(wProf2B, file = './data/wProf2B.rds')
+saveRDS(wProf3A, file = './data/wProf3A.rds')
+saveRDS(wProf3B, file = './data/wProf3B.rds')
+saveRDS(wProf4A, file = './data/wProf4A.rds')
+saveRDS(wProf4B, file = './data/wProf4B.rds')
+saveRDS(wProf5A, file = './data/wProf5A.rds')
+saveRDS(wProf5B, file = './data/wProf5B.rds')
 
 ## ================== Kelly Models =============================
 ## --------------- 1. K1 ------------------------

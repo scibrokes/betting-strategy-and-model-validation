@@ -1,5 +1,5 @@
-vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjusted = 1, 
-                    parallel = FALSE) {
+vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.type = 'time', 
+                    adjusted = 1, parallel = FALSE) {
   ## Comparison of various fractional Kelly models
   ## 
   ## Kindly apply readfirmDate() and arrfirmData() prior to measure the various 
@@ -95,17 +95,22 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
   
   ## --------------------- Convert probabilities -------------------------------- 
   ## weighted parameter estimation
-  mbase %<>% mutate(theta = suppressAll(
-    ifelse(Result == 'Win', 1, 
-    ifelse(Result == 'Half Win', 0.5, 
-    ifelse(Result == 'Push'|Result == 'Cancelled', 0, 
-    ifelse(Result == 'Half Loss', -0.5, 
-    ifelse(Result == 'Loss', -1, NA)))))), 
-                    dWin = ifelse(Result == 'Win', 1, 0), 
-                    dwhf = ifelse(Result == 'Half Win', 1, 0), 
-                    dpus = ifelse(Result == 'Push'|Result == 'Cancelled', 1, 0), 
-                    dlhf = ifelse(Result == 'Half Loss', 1, 0), 
-                    dlos = ifelse(Result == 'Loss', 1, 0))
+  ## 
+  ## I moved the `dres` parameter and rewrite the theta and hcpW for weight parameter since 
+  ##   the win, win-half, push, loss-hlaf, loss cannot be foreseen. Therefore rewrite handicap based 
+  ##   to forecast will be applicable to real life betting.
+  
+  #'@ mbase %<>% mutate(theta = suppressAll(
+  #'@   ifelse(Result == 'Win', 1, 
+  #'@   ifelse(Result == 'Half Win', 0.5, 
+  #'@   ifelse(Result == 'Push'|Result == 'Cancelled', 0, 
+  #'@   ifelse(Result == 'Half Loss', -0.5, 
+  #'@   ifelse(Result == 'Loss', -1, NA))))))#, 
+  #'@ dWin = ifelse(Result == 'Win', 1, 0), 
+  #'@ dwhf = ifelse(Result == 'Half Win', 1, 0), 
+  #'@ dpus = ifelse(Result == 'Push'|Result == 'Cancelled', 1, 0), 
+  #'@ dlhf = ifelse(Result == 'Half Loss', 1, 0), 
+  #'@ dlos = ifelse(Result == 'Loss', 1, 0))
   
   #'@ mbase %<>% mutate(
   #'@   theta = as.numeric(plyr::mapvalues(Result, 
@@ -116,6 +121,73 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
   #'@   dpus = ifelse(Result == 'Push' | Result == 'Cancelled', 1, 0), 
   #'@   dlhf = ifelse(Result == 'Half Loss', 1, 0), 
   #'@   dlos = ifelse(Result == 'Loss', 1, 0))
+  
+  ## Due to the existing weight parameter 'dres' is not workable, we unable to know the result in advance 
+  ##   therefore I modify it as Handicap based but same theory. For every single possible win-half, push, 
+  ##   or loss-half handicaps will categorise as own groups accordingly to know the possibility of 
+  ##   bet on different handicap will get different outcome. Bet on -0.75 and -1 will get win-half and 
+  ##   push among the option.
+  ## weighted parameter estimation
+  
+  ## Option 1 : (cancelled)
+  ## list the possible win-loss of handicaps as 0, 0.25, 0.5, 0.75.
+  ##   I breakdown from -0.75 to 0.75. For level ball, I categorise the favorite odds as similar with 
+  ##   concedes 1, 2, 3... balls.
+  ## 
+  ## Option 2 : (take it)
+  ## list the possible win-loss of handicaps as 0, 0.25, 0.5, 0.75, 1.00.
+  ##   I breakdown from -1.00 to 1.00. For level ball, I differentiate the level ball with concedes 1, 2, 
+  ##   3... balls due to from the level ball we cannot know the possibility between concedes or taken. Let 
+  ##   say favorite team at level ball, concedes 1 ball and taken 1 ball will combine together and it will 
+  ##   over-weight the possibility of push and make the comparison of gap of weight between -0.75 and -1.00, 
+  ##   etc. Therefore here I try to st it as defult handicap risk profile.
+  ## Here I use the PL/Stakes since it includes the payout as well as the result, therefore the weight value 
+  ##   might probably be more accurate more to only result. $PO_{i}R_{i}$. I dont pretend to know the correct 
+  ##   formula but I try to built two weight models which are solely result based weight and also handicap 
+  ##   breakdown weighted parameters.
+  
+  hcpset <- seq(-1, 1, 0.25)
+  ccal <- seq(-1, -51)
+  cch1 <- seq(-0.75, -50.75)
+  cchf <- seq(-0.5, -50.5)
+  cclh <- seq(-0.25, -50.25)
+  levl <- 0
+  tklh <- seq(0.25, 50.25)
+  tkhf <- seq(0.5, 50.5)
+  tkh1 <- seq(0.75, 50.75)
+  tkal <- seq(1, 51)
+  
+  mbase %<>% mutate(theta = suppressAll(
+    ifelse(Result == 'Win', 1, 
+    ifelse(Result == 'Half Win', 0.5, 
+    ifelse(Result == 'Push'|Result == 'Cancelled', 0, 
+    ifelse(Result == 'Half Loss', -0.5, 
+    ifelse(Result == 'Loss', -1, NA)))))), 
+    #'@ dWin = ifelse(Result == 'Win', 1, 0), 
+    #'@ dwhf = ifelse(Result == 'Half Win', 0.5, 0), 
+    #'@ dpus = ifelse(Result == 'Push'|Result == 'Cancelled', 0, 0), 
+    #'@ dlhf = ifelse(Result == 'Half Loss', -0.5, 0), 
+    #'@ dlos = ifelse(Result == 'Loss', -1, 0), 
+    #'@ F1.00 = ifelse(HCap %in% ccal, hcpset[1], NA), 
+    #'@ F0.75 = ifelse(HCap %in% cch1, hcpset[2], NA), 
+    #'@ F0.50 = ifelse(HCap %in% cchf, hcpset[3], NA), 
+    #'@ F0.25 = ifelse(HCap %in% cclh, hcpset[4], NA), 
+    #'@ Level = ifelse(HCap %in% levl, hcpset[5], NA), 
+    #'@ U0.25 = ifelse(HCap %in% tklh, hcpset[6], NA), 
+    #'@ U0.50 = ifelse(HCap %in% tkhf, hcpset[7], NA), 
+    #'@ U0.75 = ifelse(HCap %in% tkh1, hcpset[8], NA),
+    #'@ U1.00 = ifelse(HCap %in% tkal, hcpset[9], NA), 
+    hdpC = ifelse(HCap %in% ccal, hcpset[1], 
+           ifelse(HCap %in% cch1, hcpset[2], 
+           ifelse(HCap %in% cchf, hcpset[3], 
+           ifelse(HCap %in% cclh, hcpset[4], 
+           ifelse(HCap %in% levl, hcpset[5], 
+           ifelse(HCap %in% tklh, hcpset[6], 
+           ifelse(HCap %in% tkhf, hcpset[7], 
+           ifelse(HCap %in% tkh1, hcpset[8], 
+           ifelse(HCap %in% tkal, hcpset[9], NA))))))))))
+  
+  rm(ccal, cch1, cchf, cclh, levl, tklh, tkhf, tkh1, tkal)
   
   if(type == 'flat' | type == 'W1' | type == 'W2' | type == 'WS1' | type == 'WS2' | 
      type == 'W1WS1' | type == 'W1WS2' | type == 'W2WS1' | type == 'W2WS2') {
@@ -156,26 +228,32 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
       
     } else {
       
-      mbase$theta <- rep(as.numeric(str_replace_na(lag(as.numeric(m$theta)), 0)), ## theta value will be W1, exp(theta)
-                         ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dWin <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dWin)), 0)), 
-                        ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dwhf <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dwhf)), 0)), 
-                        ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dpus <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dpus)), 0)), 
-                        ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dlhf <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dlhf)), 0)), 
-                        ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      mbase$dlos <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dlos)), 0)), 
-                        ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
+      #'@ mbase$theta <- rep(as.numeric(str_replace_na(lag(as.numeric(m$theta)), 0)), ## theta value will be W1, exp(theta)
+      #'@                    ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
+      #'@ mbase$dWin <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dWin)), 0)), 
+      #'@                   ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
+      #'@ mbase$dwhf <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dwhf)), 0)), 
+      #'@                   ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
+      #'@ mbase$dpus <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dpus)), 0)), 
+      #'@                   ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
+      #'@ mbase$dlhf <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dlhf)), 0)), 
+      #'@                   ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
+      #'@ mbase$dlos <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dlos)), 0)), 
+      #'@                   ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
       
-      mbase %<>% 
-        mutate(dres = suppressAll(
-          ifelse(Result == 'Win', dWin, ## dres value will be W2, exp(dres)
-                 ifelse(Result == 'Half Win', dwhf, 
-                        ifelse(Result == 'Push'|Result == 'Cancelled', dpus, 
-                               ifelse(Result == 'Half Loss', dlhf, 
-                                      ifelse(Result == 'Loss', dlos, NA)))))))
+      ## 
+      ## dres parameter is wrong due to we cannot foresee the in-win-hlf-push, loss-hlaf, loss before 
+      ##   a match kick-off. Therefore I rewrite in leagueRiskProf() and call the function within below 
+      ##   conditional elements.
+      ## 
+      ## 
+      #'@ mbase %<>% 
+      #'@   mutate(dres = suppressAll(
+      #'@            ifelse(Result == 'Win', dWin, ## dres value will be W2
+      #'@            ifelse(Result == 'Half Win', dwhf, 
+      #'@            ifelse(Result == 'Push'|Result == 'Cancelled', dpus, 
+      #'@            ifelse(Result == 'Half Loss', dlhf, 
+      #'@            ifelse(Result == 'Loss', dlos, NA)))))))
       #'@ dres = plyr::mapvalues(Result, 
       #'@        c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
       #'@        c(dWin, dwhf, dpus, dpus, dlhf, dlos)))
@@ -183,58 +261,226 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', adjuste
       ## --------------------- weight parameters ---------------------------------
       if(type == 'W1') {
         
+        file.exists('./data/wProf2A.rds') {
+          if(readRDS('./data/wProf2A.rds') %>% names %>% grepl('annual.theta', .) %>% any) {
+            wp <- readRDS('./data/wProf2A.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          wp <- leagueRiskProf(dat, type = 'weight', weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
+        
         mbase %<>% filter(Sess != unique(Sess)[1])
         wt <- data_frame(No = seq(nrow(mbase)))
-        wt$weight <- exp(mbase$theta)
-        wt$weight.stakes <- weight.stakes
+        wt$weight <- suppressAll(
+          join(mbase, wp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.theta
+        wt$weight.stakes <- 1
+        rm(wp)
         
       } else if(type == 'W2') {
         
+        file.exists('./data/wProf2B.rds') {
+          if(readRDS('./data/wProf2B.rds') %>% names %>% grepl('annual.hdpW', .) %>% any) {
+            wp <- readRDS('./data/wProf2B.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          wp <- leagueRiskProf(dat, type = 'weight', weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
+        
         mbase %<>% filter(Sess != unique(Sess)[1])
         wt <- data_frame(No = seq(nrow(mbase)))
-        wt$weight <- exp(mbase$dres)
-        wt$weight.stakes <- weight.stakes
+        wt$weight <- suppressAll(
+          join(mbase, wp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.hdpW
+        wt$weight.stakes <- 1
+        rm(wp)
         
       } else if(type == 'WS1') {
         
-        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League), summarise, 
-                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
-          mutate(League = factor(League))
+        file.exists('./data/lRProf2A.rds') {
+          if(readRDS('./data/lRProf2A.rds') %>% names %>% grepl('annual.1', .) %>% any) {
+            lrp <- readRDS('./data/lRProf2A.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          lrp <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
         
+        mbase %<>% filter(Sess != unique(Sess)[1])
+        wt <- data_frame(No = seq(nrow(mbase)))
+        wt$weight <- 1
+        wt$weight.stakes <- suppressAll(
+          join(mbase, lrp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.1
+        rm(lrp)
         
       } else if(type == 'WS2') {
         
-        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League, Result), summarise, 
-                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
-          mutate(League = factor(League))
+        file.exists('./data/lRProf2B.rds') {
+          if(readRDS('./data/lRProf2B.rds') %>% names %>% grepl('annual.2', .) %>% any) {
+            lrp <- readRDS('./data/lRProf2B.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          lrp <- leagueRiskProf(dat, type = 'weight.stakes', breakdown = TRUE, weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
         
+        mbase %<>% filter(Sess != unique(Sess)[1])
+        wt <- data_frame(No = seq(nrow(mbase)))
+        wt$weight <- 1
+        wt$weight.stakes <- suppressAll(
+          join(mbase, lrp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.2
+        rm(lrp)
         
       } else if(type == 'W1WS1') {
         
-        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League), summarise, 
-                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
-          mutate(League = factor(League))
+        file.exists('./data/wProf2A.rds') {
+          if(readRDS('./data/wProf2A.rds') %>% names %>% grepl('annual.theta', .) %>% any) {
+            wp <- readRDS('./data/wProf2A.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          wp <- leagueRiskProf(dat, type = 'weight', weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
+        
+        file.exists('./data/lRProf2A.rds') {
+          if(readRDS('./data/lRProf2A.rds') %>% names %>% grepl('annual.1', .) %>% any) {
+            lrp <- readRDS('./data/lRProf2A.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          lrp <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
+        
+        mbase %<>% filter(Sess != unique(Sess)[1])
+        wt <- data_frame(No = seq(nrow(mbase)))
+        wt$weight <- suppressAll(
+          join(mbase, wp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.theta
+        wt$weight.stakes <- suppressAll(
+          join(mbase, lrp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.1
+        rm(wp, lrp)
         
       } else if(type == 'W1WS2') {
         
-        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League, Result), summarise, 
-                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
-          mutate(League = factor(League))
+        file.exists('./data/wProf2A.rds') {
+          if(readRDS('./data/wProf2A.rds') %>% names %>% grepl('annual.theta', .) %>% any) {
+            wp <- readRDS('./data/wProf2A.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          wp <- leagueRiskProf(dat, type = 'weight', weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
+        
+        file.exists('./data/lRProf2B.rds') {
+          if(readRDS('./data/lRProf2B.rds') %>% names %>% grepl('annual.2', .) %>% any) {
+            lrp <- readRDS('./data/lRProf2B.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          lrp <- leagueRiskProf(dat, type = 'weight.stakes', breakdown = TRUE, weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
+        
+        mbase %<>% filter(Sess != unique(Sess)[1])
+        wt <- data_frame(No = seq(nrow(mbase)))
+        wt$weight <- suppressAll(
+          join(mbase, wp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.theta
+        wt$weight.stakes <- suppressAll(
+          join(mbase, lrp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.2
+        rm(wp, lrp)
         
       } else if(type == 'W2WS1') {
         
-        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League), summarise, 
-                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
-          mutate(League = factor(League))
+        file.exists('./data/wProf2B.rds') {
+          if(readRDS('./data/wProf2B.rds') %>% names %>% grepl('annual.hdpW', .) %>% any) {
+            wp <- readRDS('./data/wProf2B.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          wp <- leagueRiskProf(dat, type = 'weight', weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
+        
+        file.exists('./data/lRProf2A.rds') {
+          if(readRDS('./data/lRProf2A.rds') %>% names %>% grepl('annual.1', .) %>% any) {
+            lrp <- readRDS('./data/lRProf2A.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          lrp <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
+        
+        mbase %<>% filter(Sess != unique(Sess)[1])
+        wt <- data_frame(No = seq(nrow(mbase)))
+        wt$weight <- suppressAll(
+          join(mbase, wp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.hdpW
+        wt$weight.stakes <- suppressAll(
+          join(mbase, lrp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.1
+        rm(wp, lrp)
         
       } else if(type == 'W2WS2') {
         
-        lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League, Result), summarise, 
-                           ws = exp(mean(PL / Stakes))) %>% tbl_df %>% 
-          mutate(League = factor(League))
+        file.exists('./data/wProf2B.rds') {
+          if(readRDS('./data/wProf2B.rds') %>% names %>% grepl('annual.hdpW', .) %>% any) {
+            wp <- readRDS('./data/wProf2B.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          wp <- leagueRiskProf(dat, type = 'weight', weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
         
+        file.exists('./data/lRProf2B.rds') {
+          if(readRDS('./data/lRProf2B.rds') %>% names %>% grepl('annual.2', .) %>% any) {
+            lrp <- readRDS('./data/lRProf2B.rds') %>% 
+              mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          lrp <- leagueRiskProf(dat, type = 'weight.stakes', breakdown = TRUE, weight.type = 'annual') %>% 
+            mutate(Sess = mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))
+        }
+        
+        mbase %<>% filter(Sess != unique(Sess)[1])
+        wt <- data_frame(No = seq(nrow(mbase)))
+        wt$weight <- suppressAll(
+          join(mbase, wp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.hdpW
+        wt$weight.stakes <- suppressAll(
+          join(mbase, lrp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.2
+        rm(wp, lrp)
       }
     }
+    
   } else {
     ## --------------------- dynamic parameters ---------------------------------
     if(type == 'D1'){

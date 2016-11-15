@@ -20,7 +20,6 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
   options(warn = -1)
   suppressMessages(library('plyr'))
   suppressMessages(library('tidyverse'))
-  suppressMessages(library('plyr'))
   suppressMessages(library('formattable'))
   suppressMessages(library('doParallel'))
   
@@ -136,6 +135,10 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       if(breakdown == TRUE) {
         ## constant daily weight stakes parameter across the leagues by result.
         lRiskProf <- suppressAll(ldply(dateUSID, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, DateUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'DateUS', 'League', 'Result', 'Stakes', 'PL')] %>% 
             filter(DateUS <= x & Sess %in% Sessb)
@@ -160,6 +163,10 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       } else if(breakdown == FALSE) {
         ## constant daily weight stakes parameter across the leagues.
         lRiskProf <- suppressAll(ldply(dateUSID, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, DateUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'DateUS', 'League', 'Result', 'Stakes', 'PL')] %>% 
             filter(DateUS <= x & Sess %in% Sessb)
@@ -190,6 +197,10 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       if(breakdown == TRUE) {
         ## kick-off-time based constant weight stakes parameter across the leagues by result.
         lRiskProf <- suppressAll(ldply(timeUSID, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, TimeUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'TimeUS', 'League', 'Result', 'Stakes', 'PL')] %>% 
             filter(TimeUS <= x & Sess %in% Sessb)
@@ -214,6 +225,10 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       } else if(breakdown == FALSE) {
         ## kick-off-time based constant weight stakes parameter across the leagues.
         lRiskProf <- suppressAll(ldply(timeUSID, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, TimeUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'TimeUS', 'League', 'Result', 'Stakes', 'PL')] %>% 
             filter(TimeUS <= x & Sess %in% Sessb)
@@ -244,6 +259,10 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       if(breakdown == TRUE) {
         ## observation based constant weight stakes parameter across the leagues by result.
         lRiskProf <- suppressAll(ldply(mbase$No.x, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, No.x <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'No.x', 'League', 'Result', 'Stakes', 'PL')] %>% 
             filter(No.x <= x & Sess %in% Sessb)
@@ -268,6 +287,10 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       } else if(breakdown == FALSE) {
         ## observation based constant weight stakes parameter across the leagues.
         lRiskProf <- suppressAll(ldply(mbase$No.x, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, No.x <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'No.x', 'League', 'Result', 'Stakes', 'PL')] %>% 
             filter(No.x <= x & Sess %in% Sessb)
@@ -324,7 +347,7 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
     ##   formula but I try to built two weight models which are solely result based weight and also handicap 
     ##   breakdown weighted parameters.
     
-    hcpset <- hcpset
+    hcpset <- seq(-1, 1, 0.25)
     ccal <- seq(-1, -51)
     cch1 <- seq(-0.75, -50.75)
     cchf <- seq(-0.5, -50.5)
@@ -407,11 +430,15 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
         ## summarise the min, mean, median, sd, max of every leagues with Win-Draw-Loss result breakdown 
         ##   across the years.
         weightProf <- suppressAll(ldply(dateUSID, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, DateUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'DateUS', 'Result', 'theta')] %>% filter(DateUS <= x & Sess %in% Sessb)
           dt1 <- mb$DateUS[length(mb$DateUS)]
           mb1 <- ddply(mb, .(Result), summarise, daily.theta = exp(mean(theta)), 
-                       .parallel = parallel) %>% tbl_df %>% select(-theta)
+                       .parallel = parallel) %>% tbl_df
           
           data.frame(DateUS = dt1, mb1) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
@@ -419,6 +446,10 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       } else if(breakdown == TRUE) {
         ## summarise the min, mean, median, sd, max of every leagues across the years.
         weightProf <- suppressAll(ldply(dateUSID, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, DateUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'DateUS', 'hdpC', 'Stakes', 'PL')] %>% filter(DateUS <= x & Sess %in% Sessb)
           dt1 <- mb$DateUS[length(mb$DateUS)]
@@ -434,22 +465,30 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       
     }else if(weight.type == 'time') {
       
-      if(breakdown == TRUE) {
+      if(breakdown == FALSE) {
         ## summarise the min, mean, median, sd, max of every leagues with Win-Draw-Loss result breakdown 
         ##   across the years.
-        lRiskProf <- suppressAll(ldply(timeUSID, function(x) {
+        weightProf <- suppressAll(ldply(timeUSID, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, TimeUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'TimeUS', 'Result', 'theta')] %>% filter(TimeUS <= x & Sess %in% Sessb)
           dt1 <- mb$TimeUS[length(mb$TimeUS)]
           mb1 <- ddply(mb, .(Result), summarise, time.theta = exp(mean(theta)), 
-                       .parallel = parallel) %>% tbl_df %>% select(-theta)
+                       .parallel = parallel) %>% tbl_df
           
           data.frame(TimeUS = dt1, mb1) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
         
-      } else if(breakdown == FALSE) {
+      } else if(breakdown == TRUE) {
         ## summarise the min, mean, median, sd, max of every leagues across the years.
-        lRiskProf <- suppressAll(ldply(timeUSID, function(x) {
+        weightProf <- suppressAll(ldply(timeUSID, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, TimeUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'TimeUS', 'hdpC', 'Stakes', 'PL')] %>% filter(TimeUS <= x & Sess %in% Sessb)
           dt1 <- mb$TimeUS[length(mb$TimeUS)] 
@@ -465,22 +504,30 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       
     }else if(weight.type == 'dynamic') {
       
-      if(breakdown == TRUE) {
+      if(breakdown == FALSE) {
         ## summarise the min, mean, median, sd, max of every leagues with Win-Draw-Loss result breakdown 
         ##   across the years.
-        lRiskProf <- suppressAll(ldply(mbase$No.x, function(x) {
+        weightProf <- suppressAll(ldply(mbase$No.x, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, No.x <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'No.x', 'Result', 'theta')] %>% filter(No.x <= x & Sess %in% Sessb)
           dt1 <- mb$No.x[length(mb$No.x)]
           mb1 <- ddply(mb, .(Result), summarise, dym.theta = exp(mean(theta)), .parallel = parallel) %>% 
-            tbl_df %>% select(-theta)
+            tbl_df
           
           data.frame(No.x = dt1, mb1) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
         
-      } else if(breakdown == FALSE) {
+      } else if(breakdown == TRUE) {
         ## summarise the min, mean, median, sd, max of every leagues across the years.
-        lRiskProf <- suppressAll(ldply(mbase$No.x, function(x) {
+        weightProf <- suppressAll(ldply(mbase$No.x, function(x) {
+          
+          suppressMessages(library('plyr'))
+          suppressMessages(library('tidyverse'))
+          
           Sessb <- unique(filter(mbase, No.x <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'No.x', 'hdpC', 'Stakes', 'PL')] %>% filter(No.x <= x & Sess %in% Sessb)
           dt1 <- mb$No.x[length(mb$No.x)] 

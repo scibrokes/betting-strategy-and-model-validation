@@ -1871,7 +1871,7 @@ data.frame(Sys.info = Sys.info()) %>% formattable %>% as.htmlwidget
 rm(sys1)
 ```
 
-<object width="425" height="344"><param name="movie" value="http://swf.tubechop.com/tubechop.swf?vurl=8FuwcSIx4f4&start=3361&end=3474&cid=8556301"></param><embed src="http://swf.tubechop.com/tubechop.swf?vurl=8FuwcSIx4f4&start=3361&end=3474&cid=8556301" type="application/x-shockwave-flash" allowfullscreen="true" width="425" height="344"></embed></object>
+<iframe width="560" height="315" src="https://www.youtube.com/embed/bFDTd4eYMCY" frameborder="0" allowfullscreen></iframe>
 
 ## 7.2 Versions' Log
   
