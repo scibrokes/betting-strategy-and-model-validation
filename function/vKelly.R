@@ -67,15 +67,7 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
     stop('Kindly apply the readfirmData() and arrfirmData() in order to turn the data into a fittable data frame.')
   }
   
-  #'@ if(mbase$rEMProbB <= 0) stop('Invalid rEMProbB value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  #'@ if(mbase$rEMProbL <= 0) stop('Invalid rEMProbL value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  #'@ if(mbase$netProbB <= 0) stop('Invalid netProbB value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  #'@ if(mbase$netProbL <= 0) stop('Invalid netProbL value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  #'@ if(mbase$HKPrice <= 0) stop('Invalid HKPrice value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  #'@ if(mbase$EUPrice <= 1) stop('Invalid EUPrice value, probabilities must be greater than 0 due to odds price cannot be 0.')
-  
   wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
-  
   if(!is.numeric(adjusted)) stop('Kindly insert a vector of numeric values.')
   
   ## Re-categorise the soccer financial settlement date. Due to I have no the 
@@ -85,13 +77,19 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
   ##   kick-off time might also changed after placed that particular bet), 
   ##   therefore I follow the kick-off time of the firm A.
   if(!c('DateUS', 'TimeUS') %in% names(mbase)) {
-    mbase <- mbase[order(mbase$No.x),] %>% mutate(
+    mbase <- mbase %>% mutate(
       TimeUS = format(DateUK, tz = 'EST', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S'), 
       DateUS = as.Date(TimeUS))
+    mbase <- mbase[order(mbase$TimeUS, mbase$No.x, decreasing = c(FALSE, FALSE)),]
   }
   
-  dateUSID <- unique(mbase$DateUS)
-  timeUSID <- unique(mbase$TimeUS)
+  if(!any(grepl('obs', names(mbase)))) {
+    ## observation based for dynamic simulation use.
+    mbase %<>% mutate(obs = seq(1, nrow(.)))
+  }
+  
+  dateUSID <- sort(unique(mbase$DateUS))
+  timeUSID <- sort(unique(mbase$TimeUS))
   
   if(!c('PL.R', 'RebatesS') %in% names(mbase)) {
     mbase <- mbase[order(mbase$No.x),] %>% mutate(PL.R = PL / Stakes, RebatesS = Stakes * Rebates)
@@ -193,7 +191,6 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
   
   rm(ccal, cch1, cchf, cclh, levl, tklh, tkhf, tkh1, tkal)
   
-  
   if(type == 'flat' | type == 'W1' | type == 'W2' | type == 'WS1' | type == 'WS2' | 
      type == 'W1WS1' | type == 'W1WS2' | type == 'W2WS1' | type == 'W2WS2') {
     
@@ -234,36 +231,6 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
       
     } else {
       
-      #'@ mbase$theta <- rep(as.numeric(str_replace_na(lag(as.numeric(m$theta)), 0)), ## theta value will be W1, exp(theta)
-      #'@                    ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      #'@ mbase$dWin <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dWin)), 0)), 
-      #'@                   ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      #'@ mbase$dwhf <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dwhf)), 0)), 
-      #'@                   ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      #'@ mbase$dpus <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dpus)), 0)), 
-      #'@                   ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      #'@ mbase$dlhf <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dlhf)), 0)), 
-      #'@                   ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      #'@ mbase$dlos <- rep(as.numeric(str_replace_na(lag(as.numeric(m$dlos)), 0)), 
-      #'@                   ddply(mbase, .(Sess), summarise, n = length(Sess))$n)
-      
-      ## 
-      ## dres parameter is wrong due to we cannot foresee the in-win-hlf-push, loss-hlaf, loss before 
-      ##   a match kick-off. Therefore I rewrite in leagueRiskProf() and call the function within below 
-      ##   conditional elements.
-      ## 
-      ## 
-      #'@ mbase %<>% 
-      #'@   mutate(dres = suppressAll(
-      #'@            ifelse(Result == 'Win', dWin, ## dres value will be W2
-      #'@            ifelse(Result == 'Half Win', dwhf, 
-      #'@            ifelse(Result == 'Push'|Result == 'Cancelled', dpus, 
-      #'@            ifelse(Result == 'Half Loss', dlhf, 
-      #'@            ifelse(Result == 'Loss', dlos, NA)))))))
-               #'@ dres = plyr::mapvalues(Result, 
-               #'@        c('Win', 'Half Win', 'Push', 'Cancelled', 'Half Loss', 'Loss'), 
-               #'@        c(dWin, dwhf, dpus, dpus, dlhf, dlos)))
-      
       ## --------------------- weight parameters ---------------------------------
       if(type == 'W1') {
         
@@ -281,7 +248,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             filter(Sess < max(Sess))
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.theta %>% 
           str_replace_na(1) %>% as.numeric
@@ -304,7 +272,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             filter(Sess < max(Sess))
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.hdpW %>% 
           str_replace_na(1) %>% as.numeric
@@ -327,7 +296,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             filter(Sess < max(Sess))
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- 1
         wt$weight.stakes <- suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.1 %>% 
@@ -350,7 +320,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             filter(Sess < max(Sess))
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- 1
         wt$weight.stakes <- suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.2 %>% 
@@ -387,7 +358,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             filter(Sess < max(Sess))
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.theta %>% 
           str_replace_na(1) %>% as.numeric
@@ -425,7 +397,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             filter(Sess < max(Sess))
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.theta %>% 
           str_replace_na(1) %>% as.numeric
@@ -463,7 +436,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             filter(Sess < max(Sess))
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.hdpW %>% 
           str_replace_na(1) %>% as.numeric
@@ -501,7 +475,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             filter(Sess < max(Sess))
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.hdpW %>% 
           str_replace_na(1) %>% as.numeric
@@ -529,83 +504,10 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
     ## --------------------- dynamic parameters ---------------------------------
     if(type == 'D1'){
       
-      ## ========================= start wrong ========================================
-      ## due to ddply(, (.TimeUS)) function just split the data base on specific time
-      ## 
-      #'@ dw <- ddply(mbase, .(TimeUS), summarise, 
-      #'@             thetac = sum(theta), thetan = length(theta),
-      #'@             dWinc = sum(dWin), dWinn = length(dWin), 
-      #'@             dwhfc = sum(dwhf), dwhfn = length(dwhf), 
-      #'@             dpusc = sum(dpus), dpusn = length(dpus), 
-      #'@             dlhfc = sum(dlhf), dlhfn = length(dlhf), 
-      #'@             dlosc = sum(dlos), dlosn = length(dlos), 
-      #'@             .parallel = parallel) %>% tbl_df %>% 
-      #'@   mutate(lagTimeUS = c(0, lag(TimeUS)[-1])) %>% .[-1] %>% # drop the TimeUS to 
-      #'@   mutate(thetas = cumsum(thetac)/cumsum(thetan),          #  avoid duplicate column
-      #'@          dWins = cumsum(dWinc)/cumsum(dWinn),             #  TimeUS after join()
-      #'@          dwhfs = cumsum(dwhfc)/cumsum(dwhfn), 
-      #'@          dpuss = cumsum(dpusc)/cumsum(dpusn), 
-      #'@          dlhfs = cumsum(dlhfc)/cumsum(dlhfn), 
-      #'@          dloss = cumsum(dlosc)/cumsum(dlosn))     
-      
-      ## Below codes took more than an hour. Therefore use below lag() and 
-      ##  join() will be solved. 
-      #'@ timeID <- dw$TimeUS
-      #'@ mbase$thetas <- rep(0, nrow(mbase))
-      #'@ mbase$dWins <- rep(0, nrow(mbase))
-      #'@ mbase$dwhfs <- rep(0, nrow(mbase))
-      #'@ mbase$dpuss <- rep(0, nrow(mbase))
-      #'@ mbase$dlhfs <- rep(0, nrow(mbase))
-      #'@ mbase$dloss <- rep(0, nrow(mbase))
-      #'@ 
-      #'@ for(i in 1:length(timeID)){
-      #'@   if(i == 1) {
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$thetas <- 0
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dWins <- 0
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dwhfs <- 0
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dpuss <- 0
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlhfs <- 0
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dloss <- 0
-      #'@     
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$thetan <- 1
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dWinn <- 1
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dwhfn <- 1
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dpusn <- 1
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlhfn <- 1
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlosn <- 1
-      #'@     
-      #'@   } else {
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$thetas <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$thetac)
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dWins <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dWinc)
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dwhfs <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dwhfc)
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dpuss <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dpusc)
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlhfs <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dlhfc)
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dloss <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dlosc)
-      #'@     
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$thetan <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$thetan)
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dWinn <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dWinn)
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dwhfn <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dwhfn)
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dpusn <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dpusn)
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlhfn <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dlhfn)
-      #'@     mbase[mbase$TimeUS == timeID[i], ]$dlosn <- suppressAll(dw[dw$TimeUS == timeID[i - 1], ]$dlosn)
-      #'@   }
-      #'@ }; rm(timeID, i)
-      
-      #'@ mbase %<>% mutate(lagTimeUS = c(0, lag(TimeUS)[-1]))
-      #'@ mbase %<>% join(dw, by = 'lagTimeUS') %>% tbl_df %>% 
-      #'@   mutate(dres = suppressAll(
-      #'@     ifelse(Result == 'Win', dWins, ## dres value will be W2
-      #'@     ifelse(Result == 'Half Win', dwhfs, 
-      #'@     ifelse(Result == 'Push'|Result == 'Cancelled', dpuss, 
-      #'@     ifelse(Result == 'Half Loss', dlhfs, 
-      #'@     ifelse(Result == 'Loss', dloss, NA)))))))
-      
-      #'@ mbase %<>% filter(Sess != unique(Sess)[1])
-      #'@ wt <- data_frame(No = seq(nrow(mbase)))
-      #'@ wt$weight <- exp(mbase$thetas)
-      #'@ wt$weight.stakes <- weight.stakes ## not yet found the way to weight the staking.
-      ## 
-      ## ============================ end wrong ============================
+      if(!any(grepl('obs', names(mbase)))) {
+        ## observation based for dynamic simulation use.
+        mbase %<>% mutate(obs = seq(1, nrow(.)))
+      }
       
       if(dynamic.type == 'daily') {
         
@@ -616,6 +518,17 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             ## weighted value lag one day since use today's weighted
             ##   parameter to predict tomorrow's matches.
             
+            ################## need to modify as survSplit() event panel dataset ####################
+            ## create a markov chain data set for event analysis
+            wp <- data_frame(DateUS = rep(unique(wp$DateUS), each = length(factor(unique(wp$Result))))) %>% 
+              mutate(Result = rep(sort(factor(unique(wp$Result))), times = length(unique(wp$DateUS)))) %>% 
+              join(wp) %>% tbl_df %>% mutate(daily.theta = as.numeric(str_replace_na(daily.theta, 1)))
+            ##################
+            #'@ data_frame(DateUS = rep(unique(wp$DateUS), each = length(factor(unique(wp$Result))))) %>% 
+            #'@ mutate(Result = rep(sort(factor(unique(wp$Result))), times = length(unique(wp$DateUS)))) %>% 
+            #'@   mutate(.id = mapvalues(wp$DateUS, from = dateUSID, to = as.numeric(dateUSID)))
+            ###################
+            
           } else {
             stop('Kindly use default preset data set.')
           }
@@ -624,9 +537,22 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             mutate(DateUS = DateUS + 1) %>% filter(DateUS < max(DateUS))
           ## weighted value lag one day since use today's weighted
           ##   parameter to predict tomorrow's matches.
+          
+          ################## need to modify as survSplit() event panel dataset ####################
+          ## create a markov chain data set for event analysis
+          wp <- data_frame(DateUS = rep(unique(wp$DateUS), each = length(factor(unique(wp$Result))))) %>% 
+            mutate(Result = rep(sort(factor(unique(wp$Result))), times = length(unique(wp$DateUS)))) %>% 
+            mutate(.id = mapvalues(DateUS, unique(DateUS), seq(unique(DateUS))), .) %>% 
+            join(wp) %>% tbl_df %>% mutate(daily.theta = as.numeric(str_replace_na(daily.theta, 1)))
+          ##################
+          #'@ data_frame(DateUS = rep(unique(wp$DateUS), each = length(factor(unique(wp$Result))))) %>% 
+          #'@ mutate(Result = rep(sort(factor(unique(wp$Result))), times = length(unique(wp$DateUS)))) %>% 
+          #'@   mutate(.id = mapvalues(wp$DateUS, from = dateUSID, to = as.numeric(dateUSID)))
+          ###################
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.theta %>% 
           str_replace_na(1) %>% as.numeric #### need to review since the join() sounds unable get desired result but all NA values.
@@ -660,7 +586,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
           ##   parameter to predict tomorrow matches.
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
           str_replace_na(1) %>% as.numeric
@@ -669,14 +596,19 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
         
       } else if (dynamic.type == 'dynamic') {
         
+        if(!any(grepl('obs', names(mbase)))) {
+          ## observation based for dynamic simulation use.
+          mbase %<>% mutate(obs = seq(1, nrow(.)))
+        }
+        
         if(file.exists('./data/wProf5A.rds')) {
           if(readRDS('./data/wProf5A.rds') %>% names %>% grepl('dym.theta', .) %>% any) {
             wp <- readRDS('./data/wProf5A.rds')
-            dt1 <- unique(wp$No.x)
-            dt2 <- lead(unique(wp$No.x))
-            wp %<>% mutate(No.x = mapvalues(No.x, from = unique(No.x), 
-                                              to = as.character(lead(unique(No.x))), 
-                                            warn_missing = FALSE)) %>% na.omit
+            dt1 <- unique(wp$obs)
+            dt2 <- lead(unique(wp$obs))
+            wp %<>% mutate(obs = mapvalues(obs, from = unique(obs), 
+                                           to = as.character(lead(unique(obs))), 
+                                           warn_missing = FALSE)) %>% na.omit
             ## weighted value lag one kick-off time since use current 
             ##   kick-off time weighted parameter to predict next kick-off time matches.
             
@@ -685,16 +617,17 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
           }
         } else {
           wp <- leagueRiskProf(mbase, type = 'weight', weight.type = 'time')
-          dt1 <- unique(wp$No.x)
-          dt2 <- lead(unique(wp$No.x))
-          wp %<>% mutate(No.x = mapvalues(No.x, from = unique(No.x), 
-                                            to = as.character(lead(unique(No.x))), 
-                                          warn_missing = FALSE)) %>% na.omit
+          dt1 <- unique(wp$obs)
+          dt2 <- lead(unique(wp$obs))
+          wp %<>% mutate(obs = mapvalues(obs, from = unique(obs), 
+                                         to = as.character(lead(unique(obs))), 
+                                         warn_missing = FALSE)) %>% na.omit
           ## weighted value lag one day since use today's weighted
           ##   parameter to predict tomorrow matches.
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
           str_replace_na(1) %>% as.numeric
@@ -742,6 +675,11 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
       #'@ wt$weight.stakes <- weight.stakes
       ## ============================ end wrong ============================
       
+      if(!any(grepl('obs', names(mbase)))) {
+        ## observation based for dynamic simulation use.
+        mbase %<>% mutate(obs = seq(1, nrow(.)))
+      }
+      
       if(dynamic.type == 'daily') {
         
         if(file.exists('./data/wProf3B.rds')) {
@@ -761,7 +699,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             ##   parameter to predict tomorrow's matches.
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.hdpC %>% 
           str_replace_na(1) %>% as.numeric
@@ -797,7 +736,8 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             ##   parameter to predict tomorrow matches.
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.hdpC %>% 
           str_replace_na(1) %>% as.numeric
@@ -806,15 +746,20 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
         
       } else if (dynamic.type == 'dynamic') {
         
+        if(!any(grepl('obs', names(mbase)))) {
+          ## observation based for dynamic simulation use.
+          mbase %<>% mutate(obs = seq(1, nrow(.)))
+        }
+        
         if(file.exists('./data/wProf5B.rds')) {
           if(readRDS('./data/wProf5B.rds') %>% names %>% grepl('dym.hdpC', .) %>% any) {
             wp <- readRDS('./data/wProf5B.rds')
-            dt1 <- unique(wp$No.x)
-            dt2 <- lead(unique(wp$No.x))
+            dt1 <- unique(wp$obs)
+            dt2 <- lead(unique(wp$obs))
             wp %<>% mutate(
-              No.x = mapvalues(No.x, from = unique(No.x), 
-                               to = as.character(lead(unique(No.x))), 
-                               warn_missing = FALSE)) %>% na.omit
+              obs = mapvalues(obs, from = unique(obs), 
+                              to = as.character(lead(unique(obs))), 
+                              warn_missing = FALSE)) %>% na.omit
               ## weighted value lag one kick-off time since use current 
               ##   kick-off time weighted parameter to predict next kick-off time matches.
             
@@ -823,17 +768,18 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
           }
         } else {
           wp <- leagueRiskProf(mbase, type = 'weight', breakdown = TRUE, weight.type = 'time')
-          dt1 <- unique(wp$No.x)
-          dt2 <- lead(unique(wp$No.x))
+          dt1 <- unique(wp$obs)
+          dt2 <- lead(unique(wp$obs))
           wp %<>% mutate(
-            No.x = mapvalues(No.x, from = unique(No.x), 
-                             to = as.character(lead(unique(No.x))), 
-                             warn_missing = FALSE)) %>% na.omit
+            obs = mapvalues(obs, from = unique(obs), 
+                            to = as.character(lead(unique(obs))), 
+                            warn_missing = FALSE)) %>% na.omit
             ## weighted value lag one day since use today's weighted
             ##   parameter to predict tomorrow matches.
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.hdpC %>% 
           str_replace_na(1) %>% as.numeric
@@ -846,6 +792,11 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
       }
       
     } else if(type == 'D1WS1'){
+      
+      if(!any(grepl('obs', names(mbase)))) {
+        ## observation based for dynamic simulation use.
+        mbase %<>% mutate(obs = seq(1, nrow(.)))
+      }
       
       if(file.exists('./data/lRProf2A.rds')) {
         if(readRDS('./data/lRProf2A.rds') %>% names %>% grepl('annual.1', .) %>% any) {
@@ -885,10 +836,11 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
             ##   parameter to predict tomorrow's matches.
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.theta %>% 
-          str_replace_na(1) %>% as.numeric
+          str_replace_na(1) %>% as.numeric ##
         rm(wp)
         
       } else if (dynamic.type == 'time') {
@@ -918,20 +870,26 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
           ##   parameter to predict tomorrow matches.
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
           str_replace_na(1) %>% as.numeric
         rm(dt1, dt2, wp)
         
       } else if (dynamic.type == 'dynamic') {
         
+        if(!any(grepl('obs', names(mbase)))) {
+          ## observation based for dynamic simulation use.
+          mbase %<>% mutate(obs = seq(1, nrow(.)))
+        }
+        
         if(file.exists('./data/wProf5A.rds')) {
           if(readRDS('./data/wProf5A.rds') %>% names %>% grepl('dym.theta', .) %>% any) {
             wp <- readRDS('./data/wProf5A.rds')
-            dt1 <- unique(wp$No.x)
-            dt2 <- lead(unique(wp$No.x))
-            wp %<>% mutate(No.x = mapvalues(No.x, from = unique(No.x), 
-                                            to = as.character(lead(unique(No.x))), 
+            dt1 <- unique(wp$obs)
+            dt2 <- lead(unique(wp$obs))
+            wp %<>% mutate(obs = mapvalues(obs, from = unique(obs), 
+                                            to = as.character(lead(unique(obs))), 
                                             warn_missing = FALSE)) %>% na.omit
             ## weighted value lag one kick-off time since use current 
             ##   kick-off time weighted parameter to predict next kick-off time matches.
@@ -941,16 +899,17 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
           }
         } else {
           wp <- leagueRiskProf(mbase, type = 'weight', weight.type = 'time')
-          dt1 <- unique(wp$No.x)
-          dt2 <- lead(unique(wp$No.x))
-          wp %<>% mutate(No.x = mapvalues(No.x, from = unique(No.x), 
-                                          to = as.character(lead(unique(No.x))), 
-                                          warn_missing = FALSE)) %>% na.omit
+          dt1 <- unique(wp$obs)
+          dt2 <- lead(unique(wp$obs))
+          wp %<>% mutate(obs = mapvalues(obs, from = unique(obs), 
+                                         to = as.character(lead(unique(obs))), 
+                                         warn_missing = FALSE)) %>% na.omit
           ## weighted value lag one day since use today's weighted
           ##   parameter to predict tomorrow matches.
         }
         
-        mbase %<>% filter(Sess != unique(Sess)[1])
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                       #   the growth rate from same initial fund size.
         wt$weight <- suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
           str_replace_na(1) %>% as.numeric
         rm(dt1, dt2, wp)
@@ -961,6 +920,11 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
       }
       
     } else if(type == 'D1WS2'){
+      
+      if(!any(grepl('obs', names(mbase)))) {
+        ## observation based for dynamic simulation use.
+        mbase %<>% mutate(obs = seq(1, nrow(.)))
+      }
       
       if(file.exists('./data/lRProf2B.rds')) {
         if(readRDS('./data/lRProf2B.rds') %>% names %>% grepl('annual.2', .) %>% any) {
@@ -976,10 +940,10 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.
           filter(Sess < max(Sess))
       }
       
-      mbase %<>% filter(Sess != unique(Sess)[1])
-      wt <- data_frame(No = seq(nrow(mbase %>% filter(Sess != unique(Sess)[1]))))
-      wt$weight.stakes <- suppressAll(
-        join(mbase, lrp) %>% tbl_df %>% filter(Sess != unique(Sess)[1])) %>% .$annual.2 %>% 
+      #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+                                                     #   the growth rate from same initial fund size.
+      wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+      wt$weight.stakes <- suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.2 %>% 
         str_replace_na(1) %>% as.numeric
       rm(lrp)
       

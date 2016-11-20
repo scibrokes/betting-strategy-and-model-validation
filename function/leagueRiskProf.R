@@ -4,7 +4,8 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
   ## mbase is a dataset readfirmData() and follow by arrfirmData().
   ## type = 'summary', type = 'weight.stakes' or type = 'weight'. Once you select type = 'weight', you 
   ##   need to choose either all, annual, daily, time or dynamic.
-  ## weight.type = 'all', weight.type = 'annual', weight.type = 'daily', weight.type = 'time' or 
+  ## weight.type = 'all', weight.type = 'annual', weight.type = 'daily', weight.type = 'time', 
+  ##   weight.type = 'dynamic' or weight.type = 'ts'.
   ##   weight.type = 'time' is kick-off time based, weight.type = 'dynamic' will evaluate the match 
   ##   up to latest observation by same league.
   ## breakdown = TRUE or breakdown = FALSE, you can breakdown the result of staking. It is works on 
@@ -27,6 +28,7 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
     #'@ registerDoParallel(cores = detectCores())
     registerDoParallel(cores = 3)
   }
+  
   ## --------------------- Data validation --------------------------------------
   breakdown <- as.logical(breakdown)
   
@@ -38,13 +40,19 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
   ##   therefore I follow the kick-off time of the firm A.
   
   if(!c('DateUS', 'TimeUS') %in% names(mbase)) {
-    mbase <- mbase[order(mbase$No.x),] %>% mutate(
-      TimeUS = format(DateUK, tz = 'EST', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S'), 
+    mbase <- mbase %>% mutate(
+      TimeUS = ymd_hms(format(DateUK, tz = 'EST', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S')), 
       DateUS = as.Date(TimeUS))
+    mbase <- mbase[order(mbase$TimeUS, mbase$No.x, decreasing = FALSE),]
   }
   
-  dateUSID <- unique(mbase$DateUS)
-  timeUSID <- unique(mbase$TimeUS)
+  if(!any(grepl('obs', names(mbase)))) {
+    ## observation based for dynamic simulation use.
+    mbase %<>% mutate(obs = seq(1, nrow(.)))
+  }
+  
+  dateUSID <- sort(unique(mbase$DateUS)) %>% ymd
+  timeUSID <- sort(unique(mbase$TimeUS)) %>% ymd_hms
   
   ## --------------------- Summary --------------------------------------
   if(type == 'summary') {
@@ -98,33 +106,11 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
                            summarise, annual.2 = exp(mean(PL / Stakes)), .parallel = parallel) %>% tbl_df %>% 
           mutate(League = factor(League))
         
-        ## in order to save execute time, here I omit below join() coding since NA value doesn't help but 
-        ##   ocuppy spaces and waste execute time for looping to get the result.
-        ## 
-        ## build a listing of all leagues to every single year.
-        #'@ lProf = data_frame(Sess = rep(unique(mbase$Sess), each = length(factor(unique(mbase$League))))) %>% 
-        #'@   mutate(League = rep(sort(factor(unique(mbase$League))), times = length(unique(mbase$Sess))))
-        
-        ## join data to be a complete league listing risk profile.
-        #'@ lRiskProf <- suppressMessages(join(lProf, lRiskProf)) %>% tbl_df %>% 
-        #'@   mutate(annual.2 = as.numeric(str_replace_na(annual.2, 1)))
-        
       } else if(breakdown == FALSE) {
         ## constant annual weight stakes parameter across the leagues.
         lRiskProf <- ddply(mbase[c('Sess', 'League', 'Result', 'Stakes', 'PL')], .(Sess, League), summarise, 
                            annual.1 = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
           tbl_df %>% mutate(League = factor(League))
-        
-        ## in order to save execute time, here I omit below join() coding since NA value doesn't help but 
-        ##   ocuppy spaces and waste execute time for looping to get the result.
-        ## 
-        ## build a listing of all leagues to every single year.
-        #'@ lProf = data_frame(Sess = rep(unique(mbase$Sess), each = length(factor(unique(mbase$League))))) %>% 
-        #'@   mutate(League = rep(sort(factor(unique(mbase$League))), times = length(unique(mbase$Sess))))
-        
-        ## join data to be a complete league listing risk profile.
-        lRiskProf <- suppressMessages(join(lProf, lRiskProf)) %>% tbl_df %>% 
-          mutate(annual.1 = as.numeric(str_replace_na(annual.1, 1)))
         
       } else {
         stop('Kindly assign breakdown = TRUE, breakdown = FALSE or breakdown = 1, breakdown = 0 as logical value required by system.')
@@ -133,6 +119,15 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
     } else if(weight.type == 'daily') {
       
       if(breakdown == TRUE) {
+        
+        ## build a listing of all leagues to every single year.
+        n1 <- length(unique(mbase$Result))
+        n2 <- n1 * length(unique(mbase$League))
+        lProf <- data.frame(DateUS = rep(unique(mbase$DateUS), each = n2), 
+                            League = rep(sort(factor(unique(mbase$League))), each = n1), 
+                            Result = sort(factor(unique(mbase$Result)))) %>% tbl_df
+        rm(n1, n2)
+        
         ## constant daily weight stakes parameter across the leagues by result.
         lRiskProf <- suppressAll(ldply(dateUSID, function(x) {
           
@@ -142,25 +137,26 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
           Sessb <- unique(filter(mbase, DateUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'DateUS', 'League', 'Result', 'Stakes', 'PL')] %>% 
             filter(DateUS <= x & Sess %in% Sessb)
-          dt1 <- mb$DateUS[length(mb$DateUS)]
-          mb1 <- ddply(mb, .(League, Result), summarise, daily.1 = exp(mean(PL / Stakes)), 
+          dt1 <- lProf %>% filter(DateUS == x)
+          mb1 <- ddply(mb, .(League, Result), summarise, daily.2 = exp(mean(PL / Stakes)), 
                        .parallel = parallel) %>% tbl_df %>% mutate(League = factor(League))
           
-          data.frame(DateUS = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
           }, .parallel = parallel)) %>% tbl_df
         
-        ## in order to save execute time, here I omit below join() coding since NA value doesn't help but 
-        ##   ocuppy spaces and waste execute time for looping to get the result.
-        ## 
-        ## build a listing of all leagues to every single year.
-        #'@ lProf = data_frame(DateUS = rep(unique(mbase$DateUS), each = length(factor(unique(mbase$League))))) %>% 
-        #'@   mutate(League = rep(sort(factor(unique(mbase$League))), times = length(unique(mbase$DateUS))))
-        
-        ## join data to be a complete league listing risk profile.
-        #'@ lRiskProf <- suppressMessages(join(lProf, lRiskProf)) %>% tbl_df %>% 
-        #'@   mutate(daily.1 = as.numeric(str_replace_na(daily.1, 1)))
+        ## convert data to be a complete league listing risk profile in panel data format.
+        lRiskProf %<>% mutate(daily.2 = ifelse(is.na(daily.2) & DateUS == dateUSID[1], 1, daily.2)) %>% 
+          transform(., na.locf(daily.2)) %>% 
+          mutate(daily.2 = as.numeric(str_replace_na(daily.2, 1)))
         
       } else if(breakdown == FALSE) {
+        
+        ## build a listing of all leagues to every single year.
+        n <- length(unique(mbase$League))
+        lProf <- data.frame(DateUS = rep(unique(mbase$DateUS), each = n), 
+                            League = sort(factor(unique(mbase$League)))) %>% tbl_df
+        rm(n)
+        
         ## constant daily weight stakes parameter across the leagues.
         lRiskProf <- suppressAll(ldply(dateUSID, function(x) {
           
@@ -168,25 +164,19 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
           suppressMessages(library('tidyverse'))
           
           Sessb <- unique(filter(mbase, DateUS <= x)$Sess) %>% tail(2)
-          mb <- mbase[c('Sess', 'DateUS', 'League', 'Result', 'Stakes', 'PL')] %>% 
+          mb <- mbase[c('Sess', 'DateUS', 'League', 'Stakes', 'PL')] %>% 
             filter(DateUS <= x & Sess %in% Sessb)
-          dt1 <- mb$DateUS[length(mb$DateUS)] 
-          mb1 <- ddply(mb, .(League), summarise, daily.2 = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
-            tbl_df %>% mutate(League = factor(League))
+          dt1 <- lProf %>% filter(DateUS == x)
+          mb1 <- ddply(mb, .(League), summarise, daily.1 = exp(mean(PL / Stakes)), 
+                       .parallel = parallel) %>% tbl_df %>% mutate(League = factor(League))
           
-          data.frame(DateUS = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
         
-        ## in order to save execute time, here I omit below join() coding since NA value doesn't help but 
-        ##   ocuppy spaces and waste execute time for looping to get the result.
-        ## 
-        ## build a listing of all leagues to every single year.
-        #'@ lProf = data_frame(DateUS = rep(unique(mbase$DateUS), each = length(factor(unique(mbase$League))))) %>% 
-        #'@   mutate(League = rep(sort(factor(unique(mbase$League))), times = length(unique(mbase$DateUS))))
-        
-        ## join data to be a complete league listing risk profile.
-        #'@ lRiskProf <- suppressMessages(join(lProf, lRiskProf)) %>% tbl_df %>% 
-        #'@   mutate(daily.2 = as.numeric(str_replace_na(daily.2, 1)))
+        ## convert data to be a complete league listing risk profile in panel data format.
+        lRiskProf %<>% mutate(daily.1 = ifelse(is.na(daily.1) & DateUS == dateUSID[1], 1, daily.1)) %>% 
+          transform(., na.locf(daily.1)) %>% 
+          mutate(daily.1 = as.numeric(str_replace_na(daily.1, 1)))
         
       } else {
         stop('Kindly assign breakdown = TRUE, breakdown = FALSE or breakdown = 1, breakdown = 0 as logical value required by system.')
@@ -195,6 +185,15 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
     }else if(weight.type == 'time') {
       
       if(breakdown == TRUE) {
+        
+        ## build a listing of all leagues to every single year.
+        n1 <- length(unique(mbase$Result))
+        n2 <- n1 * length(unique(mbase$League))
+        lProf <- data.frame(TimeUS = rep(unique(mbase$TimeUS), each = n2), 
+                            League = rep(sort(factor(unique(mbase$League))), each = n1), 
+                            Result = sort(factor(unique(mbase$Result)))) %>% tbl_df
+        rm(n1, n2)
+        
         ## kick-off-time based constant weight stakes parameter across the leagues by result.
         lRiskProf <- suppressAll(ldply(timeUSID, function(x) {
           
@@ -204,25 +203,26 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
           Sessb <- unique(filter(mbase, TimeUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'TimeUS', 'League', 'Result', 'Stakes', 'PL')] %>% 
             filter(TimeUS <= x & Sess %in% Sessb)
-          dt1 <- mb$TimeUS[length(mb$TimeUS)]
+          dt1 <- lProf %>% filter(TimeUS == x)
           mb1 <- ddply(mb, .(League, Result), summarise, time.2 = exp(mean(PL / Stakes)), 
                        .parallel = parallel) %>% tbl_df %>% mutate(League = factor(League))
           
-          data.frame(TimeUS = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
         
-        ## in order to save execute time, here I omit below join() coding since NA value doesn't help but 
-        ##   ocuppy spaces and waste execute time for looping to get the result.
-        ## 
-        ## build a listing of all leagues to every single year.
-        #'@ lProf = data_frame(TimeUS = rep(unique(mbase$TimeUS), each = length(factor(unique(mbase$League))))) %>% 
-        #'@   mutate(League = rep(sort(factor(unique(mbase$League))), times = length(unique(mbase$TimeUS))))
-        
-        ## join data to be a complete league listing risk profile.
-        #'@ lRiskProf <- suppressMessages(join(lProf, lRiskProf)) %>% tbl_df %>% 
-        #'@   mutate(time.2 = as.numeric(str_replace_na(time.2, 1)))
+        ## convert data to be a complete league listing risk profile in panel data format.
+        lRiskProf %<>% mutate(time.2 = ifelse(is.na(time.2) & TimeUS == timeUSID[1], 1, time.2)) %>% 
+          transform(., na.locf(time.2)) %>% 
+          mutate(time.2 = as.numeric(str_replace_na(time.2, 1)))
         
       } else if(breakdown == FALSE) {
+        
+        ## build a listing of all leagues to every single year.
+        n <- length(unique(mbase$League))
+        lProf <- data.frame(TimeUS = rep(unique(mbase$TimeUS), each = n), 
+                            League = sort(factor(unique(mbase$League)))) %>% tbl_df
+        rm(n)
+        
         ## kick-off-time based constant weight stakes parameter across the leagues.
         lRiskProf <- suppressAll(ldply(timeUSID, function(x) {
           
@@ -230,25 +230,19 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
           suppressMessages(library('tidyverse'))
           
           Sessb <- unique(filter(mbase, TimeUS <= x)$Sess) %>% tail(2)
-          mb <- mbase[c('Sess', 'TimeUS', 'League', 'Result', 'Stakes', 'PL')] %>% 
+          mb <- mbase[c('Sess', 'TimeUS', 'League', 'Stakes', 'PL')] %>% 
             filter(TimeUS <= x & Sess %in% Sessb)
-          dt1 <- mb$TimeUS[length(mb$TimeUS)] 
-          mb1 <- ddply(mb, .(League), summarise, time.1 = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
-            tbl_df %>% mutate(League = factor(League))
+          dt1 <- lProf %>% filter(TimeUS == x)
+          mb1 <- ddply(mb, .(League), summarise, time.1 = exp(mean(PL / Stakes)), 
+                       .parallel = parallel) %>% tbl_df %>% mutate(League = factor(League))
           
-          data.frame(TimeUS = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
         
-        ## in order to save execute time, here I omit below join() coding since NA value doesn't help but 
-        ##   ocuppy spaces and waste execute time for looping to get the result.
-        ## 
-        ## build a listing of all leagues to every single year.
-        #'@ lProf = data_frame(TimeUS = rep(unique(mbase$TimeUS), each = length(factor(unique(mbase$League))))) %>% 
-        #'@   mutate(League = rep(sort(factor(unique(mbase$League))), times = length(unique(mbase$TimeUS))))
-        
-        ## join data to be a complete league listing risk profile.
-        #'@ lRiskProf <- suppressMessages(join(lProf, lRiskProf)) %>% tbl_df %>% 
-        #'@   mutate(time.1 = as.numeric(str_replace_na(time.1, 1)))
+        ## convert data to be a complete league listing risk profile in panel data format.
+        lRiskProf %<>% mutate(time.1 = ifelse(is.na(time.1) & TimeUS == timeUSID[1], 1, time.1)) %>% 
+          transform(., na.locf(time.1)) %>% 
+          mutate(time.1 = as.numeric(str_replace_na(time.1, 1)))
         
       } else {
         stop('Kindly assign breakdown = TRUE, breakdown = FALSE or breakdown = 1, breakdown = 0 as logical value required by system.')
@@ -256,61 +250,70 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       
     }else if(weight.type == 'dynamic') {
       
+      if(!any(grepl('obs', names(mbase)))) {
+        ## observation based for dynamic simulation use.
+        mbase %<>% mutate(obs = seq(1, nrow(.)))
+      }
+      
       if(breakdown == TRUE) {
+        
+        ## build a listing of all leagues to every single year.
+        n1 <- length(unique(mbase$Result))
+        n2 <- n1 * length(unique(mbase$League))
+        lProf <- data.frame(obs = rep(unique(mbase$obs), each = n2), 
+                            League = rep(sort(factor(unique(mbase$League))), each = n1), 
+                            Result = sort(factor(unique(mbase$Result)))) %>% tbl_df
+        rm(n1, n2)
+        
         ## observation based constant weight stakes parameter across the leagues by result.
-        lRiskProf <- suppressAll(ldply(mbase$No.x, function(x) {
+        lRiskProf <- suppressAll(ldply(mbase$obs, function(x) {
           
           suppressMessages(library('plyr'))
           suppressMessages(library('tidyverse'))
           
-          Sessb <- unique(filter(mbase, No.x <= x)$Sess) %>% tail(2)
-          mb <- mbase[c('Sess', 'No.x', 'League', 'Result', 'Stakes', 'PL')] %>% 
-            filter(No.x <= x & Sess %in% Sessb)
-          dt1 <- mb$No.x[length(mb$No.x)]
+          Sessb <- unique(filter(mbase, obs <= x)$Sess) %>% tail(2)
+          mb <- mbase[c('Sess', 'obs', 'League', 'Result', 'Stakes', 'PL')] %>% 
+            filter(obs <= x & Sess %in% Sessb)
+          dt1 <- lProf %>% filter(obs == x)
           mb1 <- ddply(mb, .(League, Result), summarise, dym.2 = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
             tbl_df %>% mutate(League = factor(League))
           
-          data.frame(No.x = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
         
-        ## in order to save execute time, here I omit below join() coding since NA value doesn't help but 
-        ##   ocuppy spaces and waste execute time for looping to get the result.
-        ## 
-        ## build a listing of all leagues to every single year.
-        #'@ lProf = data_frame(No.x = rep(unique(mbase$No.x), each = length(factor(unique(mbase$League))))) %>% 
-        #'@   mutate(League = rep(sort(factor(unique(mbase$League))), times = length(unique(mbase$No.x))))
-        
-        ## join data to be a complete league listing risk profile.
-        #'@ lRiskProf <- suppressMessages(join(lProf, lRiskProf)) %>% tbl_df %>% 
-        #'@   mutate(dym.2 = as.numeric(str_replace_na(dym.2, 1)))
+        ## convert data to be a complete league listing risk profile in panel data format.
+        lRiskProf %<>% mutate(dym.2 = ifelse(is.na(dym.2) & obs == obs[1], 1, dym.2)) %>% 
+          transform(., na.locf(dym.2)) %>% 
+          mutate(dym.2 = as.numeric(str_replace_na(dym.2, 1)))
         
       } else if(breakdown == FALSE) {
+        
+        ## build a listing of all leagues to every single year.
+        n <- length(unique(mbase$League))
+        lProf <- data.frame(obs = rep(unique(mbase$obs), each = n), 
+                            League = sort(factor(unique(mbase$League)))) %>% tbl_df
+        rm(n)
+        
         ## observation based constant weight stakes parameter across the leagues.
-        lRiskProf <- suppressAll(ldply(mbase$No.x, function(x) {
+        lRiskProf <- suppressAll(ldply(mbase$obs, function(x) {
           
           suppressMessages(library('plyr'))
           suppressMessages(library('tidyverse'))
           
-          Sessb <- unique(filter(mbase, No.x <= x)$Sess) %>% tail(2)
-          mb <- mbase[c('Sess', 'No.x', 'League', 'Result', 'Stakes', 'PL')] %>% 
-            filter(No.x <= x & Sess %in% Sessb)
-          dt1 <- mb$No.x[length(mb$No.x)] 
+          Sessb <- unique(filter(mbase, obs <= x)$Sess) %>% tail(2)
+          mb <- mbase[c('Sess', 'obs', 'League', 'Stakes', 'PL')] %>% 
+            filter(obs <= x & Sess %in% Sessb)
+          dt1 <- lProf %>% filter(obs == x)
           mb1 <- ddply(mb, .(League), summarise, dym.1 = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
             tbl_df %>% mutate(League = factor(League))
           
-          data.frame(No.x = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
         
-        ## in order to save execute time, here I omit below join() coding since NA value doesn't help but 
-        ##   ocuppy spaces and waste execute time for looping to get the result.
-        ## 
-        ## build a listing of all leagues to every single year.
-        #'@ lProf = data_frame(No.x = rep(unique(mbase$No.x), each = length(factor(unique(mbase$League))))) %>% 
-        #'@   mutate(League = rep(sort(factor(unique(mbase$League))), times = length(unique(mbase$No.x))))
-        
-        ## join data to be a complete league listing risk profile.
-        #'@ lRiskProf <- suppressMessages(join(lProf, lRiskProf)) %>% tbl_df %>% 
-        #'@   mutate(dym.1 = as.numeric(str_replace_na(dym.1, 1)))
+        ## convert data to be a complete league listing risk profile in panel data format.
+        lRiskProf %<>% mutate(dym.1 = ifelse(is.na(dym.1) & obs == obs[1], 1, dym.1)) %>% 
+          transform(., na.locf(dym.1)) %>% 
+          mutate(dym.1 = as.numeric(str_replace_na(dym.1, 1)))
         
       } else {
         stop('Kindly assign breakdown = TRUE, breakdown = FALSE or breakdown = 1, breakdown = 0 as logical value required by system.')
@@ -427,6 +430,13 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
     } else if(weight.type == 'daily') {
       
       if(breakdown == FALSE) {
+        
+        ## build a listing of all leagues to every single year.
+        n <- length(unique(mbase$Result))
+        wProf <- data.frame(DateUS = rep(unique(mbase$DateUS), each = n), 
+                            Result = sort(factor(unique(mbase$Result)))) %>% tbl_df
+        rm(n)
+        
         ## summarise the min, mean, median, sd, max of every leagues with Win-Draw-Loss result breakdown 
         ##   across the years.
         weightProf <- suppressAll(ldply(dateUSID, function(x) {
@@ -436,14 +446,28 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
           
           Sessb <- unique(filter(mbase, DateUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'DateUS', 'Result', 'theta')] %>% filter(DateUS <= x & Sess %in% Sessb)
-          dt1 <- mb$DateUS[length(mb$DateUS)]
+          dt1 <- wProf %>% filter(DateUS == x)
           mb1 <- ddply(mb, .(Result), summarise, daily.theta = exp(mean(theta)), 
                        .parallel = parallel) %>% tbl_df
           
-          data.frame(DateUS = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
         
+        ## convert data to be a complete league listing risk profile in panel data format.
+        weightProf %<>% mutate(daily.theta = ifelse(is.na(daily.theta) & DateUS == dateUSID[1], 1, daily.theta)) %>% 
+          transform(., na.locf(daily.theta)) %>% 
+          mutate(daily.theta = as.numeric(str_replace_na(daily.theta, 1)))
+        
       } else if(breakdown == TRUE) {
+        
+        ## build a listing of all leagues to every single year.
+        n1 <- length(unique(mbase$Result))
+        n2 <- n1 * length(unique(mbase$hdpC))
+        wProf <- data.frame(DateUS = rep(unique(mbase$DateUS), each = n2), 
+                            hdpC = rep(sort(factor(unique(mbase$hdpC))), each = n1), 
+                            Result = sort(factor(unique(mbase$Result)))) %>% tbl_df
+        rm(n1, n2)
+        
         ## summarise the min, mean, median, sd, max of every leagues across the years.
         weightProf <- suppressAll(ldply(dateUSID, function(x) {
           
@@ -452,12 +476,17 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
           
           Sessb <- unique(filter(mbase, DateUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'DateUS', 'hdpC', 'Stakes', 'PL')] %>% filter(DateUS <= x & Sess %in% Sessb)
-          dt1 <- mb$DateUS[length(mb$DateUS)]
-          mb1 <- ddply(mb, .(hdpC), summarise, daily.hdpC = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
+          dt1 <- wProf %>% filter(DateUS == x)
+          mb1 <- ddply(mb, .(hdpC), summarise, daily.hdpW = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
             tbl_df
           
-          data.frame(DateUS = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
+        
+        ## convert data to be a complete league listing risk profile in panel data format.
+        weightProf %<>% mutate(daily.hdpW = ifelse(is.na(daily.hdpW) & DateUS == dateUSID[1], 1, daily.hdpW)) %>% 
+          transform(., na.locf(daily.hdpW)) %>% 
+          mutate(daily.hdpW = as.numeric(str_replace_na(daily.hdpW, 1)))
         
       } else {
         stop('Kindly assign breakdown = TRUE, breakdown = FALSE or breakdown = 1, breakdown = 0 as logical value required by system.')
@@ -466,6 +495,13 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
     }else if(weight.type == 'time') {
       
       if(breakdown == FALSE) {
+        
+        ## build a listing of all leagues to every single year.
+        n <- length(unique(mbase$Result))
+        wProf <- data.frame(TimeUS = rep(unique(mbase$TimeUS), each = n), 
+                            Result = sort(factor(unique(mbase$Result)))) %>% tbl_df
+        rm(n)
+        
         ## summarise the min, mean, median, sd, max of every leagues with Win-Draw-Loss result breakdown 
         ##   across the years.
         weightProf <- suppressAll(ldply(timeUSID, function(x) {
@@ -475,14 +511,28 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
           
           Sessb <- unique(filter(mbase, TimeUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'TimeUS', 'Result', 'theta')] %>% filter(TimeUS <= x & Sess %in% Sessb)
-          dt1 <- mb$TimeUS[length(mb$TimeUS)]
+          dt1 <- wProf %>% filter(TimeUS == x)
           mb1 <- ddply(mb, .(Result), summarise, time.theta = exp(mean(theta)), 
                        .parallel = parallel) %>% tbl_df
           
-          data.frame(TimeUS = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
         
+        ## convert data to be a complete league listing risk profile in panel data format.
+        weightProf %<>% mutate(time.theta = ifelse(is.na(time.theta) & TimeUS == timeUSID[1], 1, time.theta)) %>% 
+          transform(., na.locf(time.theta)) %>% 
+          mutate(time.theta = as.numeric(str_replace_na(time.theta, 1)))
+        
       } else if(breakdown == TRUE) {
+        
+        ## build a listing of all leagues to every single year.
+        n1 <- length(unique(mbase$Result))
+        n2 <- n1 * length(unique(mbase$hdpC))
+        wProf <- data.frame(TimeUS = rep(unique(mbase$TimeUS), each = n2), 
+                            hdpC = rep(sort(factor(unique(mbase$hdpC))), each = n1), 
+                            Result = sort(factor(unique(mbase$Result)))) %>% tbl_df
+        rm(n1, n2)
+        
         ## summarise the min, mean, median, sd, max of every leagues across the years.
         weightProf <- suppressAll(ldply(timeUSID, function(x) {
           
@@ -491,12 +541,16 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
           
           Sessb <- unique(filter(mbase, TimeUS <= x)$Sess) %>% tail(2)
           mb <- mbase[c('Sess', 'TimeUS', 'hdpC', 'Stakes', 'PL')] %>% filter(TimeUS <= x & Sess %in% Sessb)
-          dt1 <- mb$TimeUS[length(mb$TimeUS)] 
-          mb1 <- ddply(mb, .(hdpC), summarise, time.hdpC = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
+          dt1 <- wProf %>% filter(TimeUS == x)
+          mb1 <- ddply(mb, .(hdpC), summarise, time.hdpW = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
             tbl_df
           
-          data.frame(TimeUS = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
+        
+        ## convert data to be a complete league listing risk profile in panel data format.
+        weightProf %<>% mutate(time.hdpW = ifelse(is.na(time.hdpW) & TimeUS == timeUSID[1], 1, time.hdpW)) %>% 
+          transform(., na.locf(time.hdpW)) %>% mutate(time.hdpW = as.numeric(str_replace_na(time.hdpW, 1)))
         
       } else {
         stop('Kindly assign breakdown = TRUE, breakdown = FALSE or breakdown = 1, breakdown = 0 as logical value required by system.')
@@ -504,38 +558,68 @@ leagueRiskProf <- function(mbase, type = 'summary', breakdown = FALSE, weight.ty
       
     }else if(weight.type == 'dynamic') {
       
+      if(!any(grepl('obs', names(mbase)))) {
+        ## observation based for dynamic simulation use.
+        mbase %<>% mutate(obs = seq(1, nrow(.)))
+      }
+      
       if(breakdown == FALSE) {
+        
+        ## build a listing of all leagues to every single year.
+        n <- length(unique(mbase$Result))
+        wProf <- data.frame(obs = rep(unique(mbase$obs), each = n), 
+                            Result = sort(factor(unique(mbase$Result)))) %>% tbl_df
+        rm(n)
+        
         ## summarise the min, mean, median, sd, max of every leagues with Win-Draw-Loss result breakdown 
         ##   across the years.
-        weightProf <- suppressAll(ldply(mbase$No.x, function(x) {
+        weightProf <- suppressAll(ldply(mbase$obs, function(x) {
           
           suppressMessages(library('plyr'))
           suppressMessages(library('tidyverse'))
           
-          Sessb <- unique(filter(mbase, No.x <= x)$Sess) %>% tail(2)
-          mb <- mbase[c('Sess', 'No.x', 'Result', 'theta')] %>% filter(No.x <= x & Sess %in% Sessb)
-          dt1 <- mb$No.x[length(mb$No.x)]
+          Sessb <- unique(filter(mbase, obs <= x)$Sess) %>% tail(2)
+          mb <- mbase[c('Sess', 'obs', 'Result', 'theta')] %>% filter(obs <= x & Sess %in% Sessb)
+          dt1 <- wProf %>% filter(obs == x)
           mb1 <- ddply(mb, .(Result), summarise, dym.theta = exp(mean(theta)), .parallel = parallel) %>% 
             tbl_df
           
-          data.frame(No.x = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
         
+        ## convert data to be a complete league listing risk profile in panel data format.
+        weightProf %<>% mutate(dym.theta = ifelse(is.na(dym.theta) & obs == obs[1], 1, dym.theta)) %>% 
+          transform(., na.locf(dym.theta)) %>% mutate(dym.theta = as.numeric(str_replace_na(dym.theta, 1)))
+        
       } else if(breakdown == TRUE) {
+        
+        ## build a listing of all leagues to every single year.
+        n1 <- length(unique(mbase$Result))
+        n2 <- n1 * length(unique(mbase$hdpC))
+        wProf <- data.frame(obs = rep(unique(mbase$obs), each = n2), 
+                            hdpC = rep(sort(factor(unique(mbase$hdpC))), each = n1), 
+                            Result = sort(factor(unique(mbase$Result)))) %>% tbl_df
+        rm(n1, n2)
+        
         ## summarise the min, mean, median, sd, max of every leagues across the years.
-        weightProf <- suppressAll(ldply(mbase$No.x, function(x) {
+        weightProf <- suppressAll(ldply(mbase$obs, function(x) {
           
           suppressMessages(library('plyr'))
           suppressMessages(library('tidyverse'))
           
-          Sessb <- unique(filter(mbase, No.x <= x)$Sess) %>% tail(2)
-          mb <- mbase[c('Sess', 'No.x', 'hdpC', 'Stakes', 'PL')] %>% filter(No.x <= x & Sess %in% Sessb)
-          dt1 <- mb$No.x[length(mb$No.x)] 
-          mb1 <- ddply(mb, .(hdpC), summarise, dym.hdpC = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
+          Sessb <- unique(filter(mbase, obs <= x)$Sess) %>% tail(2)
+          mb <- mbase[c('Sess', 'obs', 'hdpC', 'Stakes', 'PL')] %>% filter(obs <= x & Sess %in% Sessb)
+          dt1 <- wProf %>% filter(obs == x)
+          mb1 <- ddply(mb, .(hdpC), summarise, dym.hdpW = exp(mean(PL / Stakes)), .parallel = parallel) %>% 
             tbl_df
           
-          data.frame(No.x = dt1, mb1) %>% tbl_df
+          suppressAll(join(dt1, mb1)) %>% tbl_df
         }, .parallel = parallel)) %>% tbl_df
+        
+        ## convert data to be a complete league listing risk profile in panel data format.
+        weightProf %<>% mutate(dym.hdpW = ifelse(is.na(dym.hdpW) & obs == obs[1], 1, dym.hdpW)) %>% 
+          transform(., na.locf(dym.hdpW)) %>% 
+          mutate(dym.hdpW = as.numeric(str_replace_na(dym.hdpW, 1)))
         
       } else {
         stop('Kindly assign breakdown = TRUE, breakdown = FALSE or breakdown = 1, breakdown = 0 as logical value required by system.')
