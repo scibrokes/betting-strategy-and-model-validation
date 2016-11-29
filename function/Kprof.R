@@ -15,7 +15,6 @@ Kprof <- function(K, summarisev = subsitute(summarisev)) {
   suppressMessages(library('plyr'))
   suppressMessages(library('tidyverse'))
   suppressMessages(library('BBmisc'))
-  suppresAll(source('./function/decode.R'))
   
   ## load various Kelly function to measure the staking methods and return.
   #'@ source('./function/vKelly.R') #kindly refer to the function.

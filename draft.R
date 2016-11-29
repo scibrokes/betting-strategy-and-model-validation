@@ -164,8 +164,3 @@ ggplot(sim_data, aes(Month,'HKD 0000')) + geom_line(aes(colour = Series)) +
 ## https://stat.ethz.ch/R-manual/R-devel/library/mgcv/html/gam.models.html
 ## http://doc.qkzz.net/article/e6f33685-e220-4803-8c89-3228501b9412.htm
 
-
-
-
-
-

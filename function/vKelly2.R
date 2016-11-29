@@ -1,4 +1,4 @@
-vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic.type = 'time', 
+vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dym.weight = 'time', 
                     dym.weight.stakes = 'daily', adjusted = 1, parallel = FALSE) {
   ## Comparison of various fractional Kelly models
   ## 
@@ -55,8 +55,8 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
   suppressMessages(library('doParallel'))
   suppressMessages(library('quantmod'))
   
-  suppressMessages(source('./function/leagueRiskProf.R'))
-  suppressMessages(source('./function/KellyPL.R'))
+  suppressMessages(source('./function/leagueRiskProf.R', local = TRUE))
+  suppressMessages(source('./function/KellyPL.R', local = TRUE))
   
   if(parallel == TRUE) {
     #'@ registerDoParallel(cores = detectCores())
@@ -68,8 +68,33 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
     stop('Kindly apply the readfirmData() and arrfirmData() in order to turn the data into a fittable data frame.')
   }
   
-  wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
-  if(!is.numeric(adjusted)) stop('Kindly insert a vector of numeric values.')
+  if(!is.numeric(adjusted)) {
+    stop('Kindly insert a vector of numeric values.')
+  } else {
+    adjusted = adjusted
+  }
+  
+  wt <- data_frame(No = seq(nrow(mbase)))
+  if(!is.numeric(weight.stakes)) {
+    wt$weight.stakes <- 1 # exp(0) = 1; log(1) = 0
+  } else {
+    if(!is.vector(weight.stakes)) {
+      stop('Kindly insert a range of vector or single numeric value as weight.stakes parameter.')
+    } else {
+      if(is.vector(weight.stakes)) wt$weight.stakes <- weight.stakes # exp(0) = 1; log(1) = 0
+    }
+  }
+  
+  if(!is.numeric(weight)) {
+    wt$weight <- 1 # exp(0) = 1; log(1) = 0
+  } else {
+    if(!is.vector(weight)) {
+      stop('Kindly insert a range of vector or single numeric value as weight parameter.')
+    } else {
+      if(is.vector(weight)) wt$weight <- weight # exp(0) = 1; log(1) = 0
+    }
+  }
+  rm(weight, weight.stakes)
   
   ## Re-categorise the soccer financial settlement date. Due to I have no the 
   ##   history matches dataset from bookmakers. The scrapped spbo time is not 
@@ -87,6 +112,9 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
   ## observation based for dynamic simulation use.
   mbase <- mbase[order(mbase$TimeUS, mbase$No.x, decreasing = FALSE),]
   mbase %<>% mutate(obs = seq(1, nrow(.)))
+  dym.weight = dym.weight
+  dym.weight.stakes = dym.weight.stakes
+  adjusted = adjusted
   
   dateUSID <- sort(unique(mbase$DateUS)) %>% ymd
   timeUSID <- sort(unique(mbase$TimeUS)) %>% ymd_hms
@@ -209,23 +237,23 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
     ## --------------------- flat parameters ---------------------------------
     if(type == 'flat') {
       
-      if(!is.numeric(weight.stakes)) {
+      if(!is.numeric(wt$weight.stakes)) {
         wt$weight.stakes <- 1 # exp(0) = 1; log(1) = 0
       } else {
-        if(!is.vector(weight.stakes)) {
+        if(!is.vector(wt$weight.stakes)) {
           stop('Kindly insert a range of vector or single numeric value as weight.stakes parameter.')
         } else {
-          if(is.vector(weight.stakes)) wt$weight.stakes <- weight.stakes # exp(0) = 1; log(1) = 0
+          if(is.vector(wt$weight.stakes)) wt$weight.stakes <- wt$weight.stakes # exp(0) = 1; log(1) = 0
         }
       }
       
-      if(!is.numeric(weight)) {
+      if(!is.numeric(wt$weight)) {
         wt$weight <- 1 # exp(0) = 1; log(1) = 0
       } else {
-        if(!is.vector(weight)) {
+        if(!is.vector(wt$weight)) {
           stop('Kindly insert a range of vector or single numeric value as weight parameter.')
         } else {
-          if(is.vector(weight)) wt$weight <- weight # exp(0) = 1; log(1) = 0
+          if(is.vector(wt$weight)) wt$weight <- wt$weight # exp(0) = 1; log(1) = 0
         }
       }
       
@@ -252,7 +280,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -276,7 +304,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -300,7 +328,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -324,7 +352,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -334,7 +362,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         ## Section --- W1 ------
         if(file.exists('./data/wProf2A.rds')) {
-          if(readRDS('./data/wProf2A.rds') %>% names %>% grepl('annual.lg', .) %>% any) {
+          if(readRDS('./data/wProf2A.rds') %>% names %>% grepl('annual.theta', .) %>% any) {
             wp <- readRDS('./data/wProf2A.rds') %>% 
               mutate(Sess = as.numeric(mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))) %>% 
               filter(Sess < max(Sess))
@@ -364,7 +392,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.theta %>% 
                          str_replace_na(1) %>% as.numeric, 
                        weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lg %>% 
@@ -406,7 +434,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.theta %>% 
                          str_replace_na(1) %>% as.numeric, 
                        weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lhdp %>% 
@@ -447,11 +475,11 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         }
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
-        #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+                                                       #   the growth rate from same initial fund size.
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.hdpW %>% 
                          str_replace_na(1) %>% as.numeric, 
-                       weight.stakes <- suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lg %>% 
+                       weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp, lrp)
         
@@ -490,7 +518,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.hdpW %>% 
                          str_replace_na(1) %>% as.numeric, 
                        weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lhdp %>% 
@@ -539,7 +567,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -571,7 +599,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -603,7 +631,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$dym.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -636,7 +664,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -668,7 +696,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -700,7 +728,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$dym.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -732,7 +760,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$daily.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -764,7 +792,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$time.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -796,7 +824,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$dym.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -828,7 +856,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$daily.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -860,7 +888,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$time.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -892,7 +920,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$dym.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -926,124 +954,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
-        wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.theta %>% 
-                         str_replace_na(1) %>% as.numeric)
-        rm(wp)
         
-      } else if (dym.weight == 'time') {
-        
-        if(file.exists('./data/wProf4A.rds')) {
-          if(readRDS('./data/wProf4A.rds') %>% names %>% grepl('time.theta', .) %>% any) {
-            wp <- readRDS('./data/wProf4A.rds')
-            dt1 <- sort(unique(wp$TimeUS))
-            dt2 <- lead(sort(unique(wp$TimeUS)))
-            wp %<>% mutate(TimeUS = as.numeric(
-              mapvalues(TimeUS, from = dt1, to = dt2, warn_missing = FALSE))) %>% na.omit
-            ## weighted value lag one kick-off time since use current 
-            ##   kick-off time weighted parameter to predict next kick-off time matches.
-            
-          } else {
-            stop('Kindly use default preset data set.')
-          }
-        } else {
-          wp <- leagueRiskProf(mbase, type = 'weight', weight.type = 'time')
-          dt1 <- sort(unique(wp$TimeUS))
-          dt2 <- lead(sort(unique(wp$TimeUS)))
-          wp %<>% mutate(TimeUS = as.numeric(
-            mapvalues(TimeUS, from = dt1, to = dt2, warn_missing = FALSE))) %>% na.omit
-          ## weighted value lag one day since use today's weighted
-          ##   parameter to predict tomorrow matches.
-        }
-        
-        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
-        #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
-        wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
-                         str_replace_na(1) %>% as.numeric)
-        rm(dt1, dt2, wp)
-        
-      } else if (dym.weight == 'dynamic') {
-        
-        if(file.exists('./data/wProf5A.rds')) {
-          if(readRDS('./data/wProf5A.rds') %>% names %>% grepl('dym.theta', .) %>% any) {
-            wp <- readRDS('./data/wProf5A.rds')
-            dt1 <- sort(unique(wp$obs))
-            dt2 <- lead(sort(unique(wp$obs)))
-            wp %<>% mutate(obs = as.numeric(
-              mapvalues(obs, from = dt1, to = dt2, warn_missing = FALSE))) %>% na.omit
-            ## weighted value lag one kick-off time since use current 
-            ##   kick-off time weighted parameter to predict next kick-off time matches.
-            
-          } else {
-            stop('Kindly use default preset data set.')
-          }
-        } else {
-          wp <- leagueRiskProf(mbase, type = 'weight', weight.type = 'time')
-          dt1 <- sort(unique(wp$obs))
-          dt2 <- lead(sort(unique(wp$obs)))
-          wp %<>% mutate(obs = as.numeric(
-            mapvalues(obs, from = dt1, to = dt2, warn_missing = FALSE))) %>% na.omit
-          ## weighted value lag one day since use today's weighted
-          ##   parameter to predict tomorrow matches.
-        }
-        
-        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
-        #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
-        wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
-                         str_replace_na(1) %>% as.numeric)
-        rm(dt1, dt2, wp)
-        
-      } else {
-        stop('Kindly select dym.weight = "daily", dym.weight = "time" or dym.weight = "dynamic".')
-      }
-      
-      ## Section --- WS1 ------
-      if(file.exists('./data/lRProf2A.rds')) {
-        if(readRDS('./data/lRProf2A.rds') %>% names %>% grepl('annual.lg', .) %>% any) {
-          lrp <- readRDS('./data/lRProf2A.rds') %>% 
-            mutate(Sess = as.numeric(mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))) %>% 
-            filter(Sess < max(Sess))
-        } else {
-          stop('Kindly use default preset data set.')
-        }
-      } else {
-        lrp <- leagueRiskProf(mbase, type = 'weight.stakes', weight.type = 'annual') %>% 
-          mutate(Sess = as.numeric(mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))) %>% 
-          filter(Sess < max(Sess))
-      }
-      
-      wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
-      wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lg %>% 
-                       str_replace_na(1) %>% as.numeric)
-      rm(lrp)
-      
-    } else if(type == 'D1WS2'){
-      ## --------------------- D1WS2 ---------------------------------
-      
-      ## Section --- D1 ------
-      if(dym.weight == 'daily') {
-        
-        if(file.exists('./data/wProf3A.rds')) {
-          if(readRDS('./data/wProf3A.rds') %>% names %>% grepl('daily.theta', .) %>% any) {
-            wp <- readRDS('./data/wProf3A.rds') %>% 
-              mutate(DateUS = DateUS + 1) %>% filter(DateUS < max(DateUS))
-            ## weighted value lag one day since use today's weighted
-            ##   parameter to predict tomorrow's matches.
-          } else {
-            stop('Kindly use default preset data set.')
-          }
-        } else {
-          wp <- leagueRiskProf(mbase, type = 'weight', weight.type = 'daily') %>% 
-            mutate(DateUS = DateUS + 1) %>% filter(DateUS < max(DateUS))
-          ## weighted value lag one day since use today's weighted
-          ##   parameter to predict tomorrow's matches.
-        }
-        
-        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
-        #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -1075,7 +986,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -1107,7 +1018,124 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
+        wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
+                         str_replace_na(1) %>% as.numeric)
+        rm(dt1, dt2, wp)
+        
+      } else {
+        stop('Kindly select dym.weight = "daily", dym.weight = "time" or dym.weight = "dynamic".')
+      }
+      
+      ## Section --- WS1 ------
+      if(file.exists('./data/lRProf2A.rds')) {
+        if(readRDS('./data/lRProf2A.rds') %>% names %>% grepl('annual.lg', .) %>% any) {
+          lrp <- readRDS('./data/lRProf2A.rds') %>% 
+            mutate(Sess = as.numeric(mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))) %>% 
+            filter(Sess < max(Sess))
+        } else {
+          stop('Kindly use default preset data set.')
+        }
+      } else {
+        lrp <- leagueRiskProf(mbase, type = 'weight.stakes', weight.type = 'annual') %>% 
+          mutate(Sess = as.numeric(mapvalues(Sess, from = Sess, to = Sess + 1, warn_missing = FALSE))) %>% 
+          filter(Sess < max(Sess))
+      }
+      
+      
+      wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lg %>% 
+                       str_replace_na(1) %>% as.numeric)
+      rm(lrp)
+      
+    } else if(type == 'D1WS2'){
+      ## --------------------- D1WS2 ---------------------------------
+      
+      ## Section --- D1 ------
+      if(dym.weight == 'daily') {
+        
+        if(file.exists('./data/wProf3A.rds')) {
+          if(readRDS('./data/wProf3A.rds') %>% names %>% grepl('daily.theta', .) %>% any) {
+            wp <- readRDS('./data/wProf3A.rds') %>% 
+              mutate(DateUS = DateUS + 1) %>% filter(DateUS < max(DateUS))
+            ## weighted value lag one day since use today's weighted
+            ##   parameter to predict tomorrow's matches.
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          wp <- leagueRiskProf(mbase, type = 'weight', weight.type = 'daily') %>% 
+            mutate(DateUS = DateUS + 1) %>% filter(DateUS < max(DateUS))
+          ## weighted value lag one day since use today's weighted
+          ##   parameter to predict tomorrow's matches.
+        }
+        
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+        #   the growth rate from same initial fund size.
+        
+        wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.theta %>% 
+                         str_replace_na(1) %>% as.numeric)
+        rm(wp)
+        
+      } else if (dym.weight == 'time') {
+        
+        if(file.exists('./data/wProf4A.rds')) {
+          if(readRDS('./data/wProf4A.rds') %>% names %>% grepl('time.theta', .) %>% any) {
+            wp <- readRDS('./data/wProf4A.rds')
+            dt1 <- sort(unique(wp$TimeUS))
+            dt2 <- lead(sort(unique(wp$TimeUS)))
+            wp %<>% mutate(TimeUS = ymd_hms(
+              mapvalues(TimeUS, from = dt1, to = dt2, warn_missing = FALSE))) %>% na.omit
+            ## weighted value lag one kick-off time since use current 
+            ##   kick-off time weighted parameter to predict next kick-off time matches.
+            
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          wp <- leagueRiskProf(mbase, type = 'weight', weight.type = 'time')
+          dt1 <- sort(unique(wp$TimeUS))
+          dt2 <- lead(sort(unique(wp$TimeUS)))
+          wp %<>% mutate(TimeUS = ymd_hms(
+            mapvalues(TimeUS, from = dt1, to = dt2, warn_missing = FALSE))) %>% na.omit
+          ## weighted value lag one day since use today's weighted
+          ##   parameter to predict tomorrow matches.
+        }
+        
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+        #   the growth rate from same initial fund size.
+        
+        wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
+                         str_replace_na(1) %>% as.numeric)
+        rm(dt1, dt2, wp)
+        
+      } else if (dym.weight == 'dynamic') {
+        
+        if(file.exists('./data/wProf5A.rds')) {
+          if(readRDS('./data/wProf5A.rds') %>% names %>% grepl('dym.theta', .) %>% any) {
+            wp <- readRDS('./data/wProf5A.rds')
+            dt1 <- sort(unique(wp$obs))
+            dt2 <- lead(sort(unique(wp$obs)))
+            wp %<>% mutate(obs = as.numeric(
+              mapvalues(obs, from = dt1, to = dt2, warn_missing = FALSE))) %>% na.omit
+            ## weighted value lag one kick-off time since use current 
+            ##   kick-off time weighted parameter to predict next kick-off time matches.
+            
+          } else {
+            stop('Kindly use default preset data set.')
+          }
+        } else {
+          wp <- leagueRiskProf(mbase, type = 'weight', weight.type = 'time')
+          dt1 <- sort(unique(wp$obs))
+          dt2 <- lead(sort(unique(wp$obs)))
+          wp %<>% mutate(obs = as.numeric(
+            mapvalues(obs, from = dt1, to = dt2, warn_missing = FALSE))) %>% na.omit
+          ## weighted value lag one day since use today's weighted
+          ##   parameter to predict tomorrow matches.
+        }
+        
+        #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
+        #   the growth rate from same initial fund size.
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$dym.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -1137,7 +1165,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$daily.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -1169,7 +1197,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$time.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -1201,7 +1229,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$dym.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -1235,7 +1263,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -1267,7 +1295,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -1299,7 +1327,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$dym.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -1323,7 +1351,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
           filter(Sess < max(Sess))
       }
       
-      wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+      
       wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lg %>% 
                        str_replace_na(1) %>% as.numeric)
       rm(lrp)
@@ -1353,7 +1381,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -1385,7 +1413,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -1417,7 +1445,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$dym.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -1443,7 +1471,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
       
       #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
       #   the growth rate from same initial fund size.
-      wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+      
       wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$annual.lhdp %>% 
                        str_replace_na(1) %>% as.numeric)
       rm(lrp)
@@ -1468,7 +1496,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
       
       #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
       #   the growth rate from same initial fund size.
-      wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+      
       wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.theta %>% 
                        str_replace_na(1) %>% as.numeric)
       rm(wp)
@@ -1494,7 +1522,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$daily.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -1526,7 +1554,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$time.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -1558,7 +1586,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$dym.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -1587,7 +1615,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
       
       #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
       #   the growth rate from same initial fund size.
-      wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+      
       wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.theta %>% 
                        str_replace_na(1) %>% as.numeric)
       rm(wp)
@@ -1613,7 +1641,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$daily.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -1645,7 +1673,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$time.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -1677,7 +1705,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$dym.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -1706,7 +1734,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
       
       #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
       #   the growth rate from same initial fund size.
-      wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+      
       wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.hdpW %>% 
                        str_replace_na(1) %>% as.numeric)
       rm(wp)
@@ -1733,7 +1761,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
       
       #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
       #   the growth rate from same initial fund size.
-      wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+      
       wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$annual.hdpW %>% 
                        str_replace_na(1) %>% as.numeric)
       rm(wp)
@@ -1759,7 +1787,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$daily.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -1791,7 +1819,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$time.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -1823,7 +1851,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$dym.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -1856,7 +1884,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -1888,7 +1916,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -1920,7 +1948,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$dym.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -1950,7 +1978,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$daily.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -1982,7 +2010,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$time.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -2014,7 +2042,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$dym.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -2047,7 +2075,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -2079,7 +2107,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -2111,7 +2139,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$dym.theta %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -2141,7 +2169,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$daily.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -2173,7 +2201,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$time.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -2205,7 +2233,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$dym.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -2239,7 +2267,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -2271,7 +2299,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -2303,7 +2331,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$dym.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -2333,7 +2361,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$daily.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -2365,7 +2393,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$time.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -2397,7 +2425,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$dym.lg %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -2431,7 +2459,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$daily.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(wp)
@@ -2463,7 +2491,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$time.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -2495,7 +2523,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight = suppressAll(join(mbase, wp)) %>% tbl_df %>% .$dym.hdpW %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, wp)
@@ -2525,7 +2553,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$daily.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(lrp)
@@ -2557,7 +2585,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$time.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -2589,7 +2617,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
         
         #'@ mbase %<>% filter(Sess != unique(Sess)[1]) # keep the initial year as flat model to compare
         #   the growth rate from same initial fund size.
-        wt <- data_frame(No = seq(nrow(mbase)), weight = weight, weight.stakes = weight.stakes)
+        
         wt %<>% mutate(weight.stakes = suppressAll(join(mbase, lrp)) %>% tbl_df %>% .$dym.lhdp %>% 
                          str_replace_na(1) %>% as.numeric)
         rm(dt1, dt2, lrp)
@@ -2688,8 +2716,7 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
   ## Weight for probabilities applied within fraction but weight.stakes for stakes 
   ##   adjustment applied outside the fraction.
   ## 
-  if((all(wt$weight.stakes != 1) | all(wt$weight != 1)) | 
-     type == 'W1' | type == 'W2' | type == 'D1' | type == 'D2') {
+  if(any(wt$weight.stakes != 1) | any(wt$weight != 1)) {
     K2 <- mbase %>% select(TimeUS, DateUS, Sess, League, Stakes, HCap, HKPrice, EUPrice, 
                            Result, Return, PL, PL.R, Rebates, RebatesS, rRates, netEMEdge, netProbB, 
                            netProbL, rEMProbB, rEMProbL) %>% cbind(wt) %>% select(-No)
@@ -2760,15 +2787,15 @@ vKelly2 <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dynamic
   
   ## ==================== Return function ========================================
   
-  if(all(wt$weight.stakes != 1) | all(wt$weight != 1)) {
-    tmp <- list(data = mbase, Kelly1 = KellyPL(K1, adjusted = adjusted), 
-                Kelly2 = KellyPL(K2, adjusted = adjusted), 
+  if(any(wt$weight.stakes != 1) | any(wt$weight != 1)) {
+    tmp <- list(data = mbase, Kelly1 = KellyPL(K1, type = 'vKelly2', adjusted = adjusted), 
+                Kelly2 = KellyPL(K2, type = 'vKelly2', adjusted = adjusted), 
                 weight.stakes = wt$weight.stakes, weight = wt$weight)
     options(warn = 0)
     return(tmp)
     
   } else {
-    tmp <- list(data = mbase, Kelly1 = KellyPL(K1, adjusted = adjusted), 
+    tmp <- list(data = mbase, Kelly1 = KellyPL(K1, type = 'vKelly2', adjusted = adjusted), 
                 weight.stakes = wt$weight.stakes, weight = wt$weight)
     options(warn = 0)
     return(tmp)

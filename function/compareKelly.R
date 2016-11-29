@@ -161,7 +161,6 @@ compareKelly <- function(K, initial = NULL, parallel = FALSE, by = 'daily', by.l
     }
   }
   
-  
   ## --------------------- Data Visualization -------------------------------------
   
   if(chart == TRUE) {
