@@ -237,7 +237,7 @@ KModels <- function(action = 'load', rm.files = as.logical(TRUE),
         if(overwrite == FALSE) {
           stop('The file has exist in the directory.')
         } else {
-          K1W2WS2 <- vKelly2(dat, type = 'W2WS2')
+          K1W2WS2 <- vKelly(dat, type = 'W2WS2')
           saveRDS(K1W2WS2, file = './data/K1W2WS2.rds')
           if(rm.files == TRUE) rm(K1W2WS2)
         }
@@ -245,7 +245,7 @@ KModels <- function(action = 'load', rm.files = as.logical(TRUE),
         stop('Kindly apply K1W2WS2 <- vKelly2(dat, type = "W2WS2") to measure the Kelly model.')
       }
     } else {
-      K1W2WS2 <- vKelly2(dat, type = 'W2WS2')
+      K1W2WS2 <- vKelly(dat, type = 'W2WS2')
       saveRDS(K1W2WS2, file = './data/K1W2WS2.rds')
       if(rm.files == TRUE) rm(K1W2WS2)
     }

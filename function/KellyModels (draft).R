@@ -234,10 +234,10 @@ if(exists('K1W2WS2')) {
   if(all(c('data', 'Kelly1', 'weight', 'weight.stakes') %in% names(K1W2WS2))) {
     saveRDS(K1W2WS2, file = './data/K1W2WS2.rds'); rm(K1W2WS2)
   } else {
-    stop('Kindly apply K1W2WS2 <- vKelly2(dat, type = "W2WS2") to measure the Kelly model.')
+    stop('Kindly apply K1W2WS2 <- vKelly(dat, type = "W2WS2") to measure the Kelly model.')
   }
 } else {
-  K1W2WS2 <- vKelly2(dat, type = 'W2WS2')
+  K1W2WS2 <- vKelly(dat, type = 'W2WS2')
   saveRDS(K1W2WS2, file = './data/K1W2WS2.rds'); rm(K1W2WS2)
 }
 
