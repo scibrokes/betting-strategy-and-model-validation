@@ -1,5 +1,6 @@
-compareKelly <- function(K, initial = NULL, parallel = FALSE, by = 'daily', by.league = FALSE, 
-                         adjusted = 1, chart = FALSE) {
+compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = 'daily', 
+                         by.league = as.logical(FALSE), adjusted = 1, chart = as.logical(FALSE), 
+                         type = NULL, event = NULL, event.dates = NULL, chart.type = NULL) {
   ## A function which compare the staking, P&L result as well as the risk (sd and var)
   ##   of vKelly() and also vKelly2() models. Set an initial fund and simulate a moving
   ##   average or so call bollinger bands for risk control and avoid the bankruptcy while 
@@ -10,10 +11,11 @@ compareKelly <- function(K, initial = NULL, parallel = FALSE, by = 'daily', by.l
   ## K is a dataset after apply vKelly() or vKelly2().
   ## initial = NULL or any numeric value. You can set an initial fund size.
   ## parallel = FALSE or parallel = TRUE if you want to set parallel computing.
-  ## by = 'date' or by = 'time' is summarise the data by daily or TimeUS (Kick-Off Time).
+  ## by = 'daily' or by = 'time' is summarise the data by daily or TimeUS (Kick-Off Time).
   ## by.league = TRUE or by.league = FALSE if you want to breakdown the league or not.
-  ## chart = FALSE or chart = TRUE.
-  ## 
+  ## chart = FALSE or chart = TRUE and sub-option type = 'single' or type = 'multiple'.
+  ## event = NULL, you can set a vector of event contain and event.dates.
+  ## chart.type = 'Cl', you can choose open, high, low or close daily fund size data for 'multiple'.
   
   ## --------------------- Load packages ------------------------------------------
   options(warn = -1)
@@ -57,7 +59,7 @@ compareKelly <- function(K, initial = NULL, parallel = FALSE, by = 'daily', by.l
   
   ## --------------------- Data Manipulation --------------------------------------
   
-  if(by == 'date') {
+  if(by == 'daily') {
     if(as.logical(by.league) == TRUE) {
       Kbase <- llply(Kbase, function(x) {
         suppressAll(llply(list('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted'), function(y) {
@@ -165,8 +167,8 @@ compareKelly <- function(K, initial = NULL, parallel = FALSE, by = 'daily', by.l
   
   if(chart == TRUE) {
     
-    plotChart <- function(Fund = substitute(Fund), type = 'single', Kb = NULL, 
-                          chart.type = 'Cl') {
+    plotChart <- function(Fund = substitute(Fund), type = 'single', event = NULL, 
+                          event.dates = NULL, chart.type = NULL) {
       ## http://jkunst.com/highcharter/highstock.html
       ## type = 'single' or type = 'multiple'. Plot comparison graph or single fund details.
       ## chart.type = 'Op', chart.type = 'Hi', chart.type = 'Lo', chart.type = 'Cl'. Use 
@@ -186,52 +188,75 @@ compareKelly <- function(K, initial = NULL, parallel = FALSE, by = 'daily', by.l
         plotc <- highchart() %>% 
           # create axis :)
           hc_yAxis_multiples(
-            list(title = list(text = NULL), height = "45%", top = "0%"),
-            list(title = list(text = NULL), height = "25%", top = "47.5%", opposite = TRUE),
-            list(title = list(text = NULL), height = "25%", top = "75%")
+            list(title = list(text = NULL), height = '45%', top = '0%'),
+            list(title = list(text = NULL), height = '25%', top = '47.5%', opposite = TRUE),
+            list(title = list(text = NULL), height = '25%', top = '75%')
             ) %>% 
           # series :D
           hc_add_series_ohlc(Fund, yAxis = 0, name = Fund) %>% 
-          hc_add_series_xts(FUND.SMA.10,  yAxis = 0, name = "Fast MA") %>% 
-          hc_add_series_xts(FUND.SMA.200, yAxis = 0, name = "Slow MA") %>% 
-          hc_add_series_xts(Fund$Fund.Volume, color = "gray", yAxis = 1, name = "Volume", 
-                            type = "column") %>% 
-          hc_add_series_xts(FUND.RSI.14, yAxis = 2, name = "Osciallator") %>% 
-          hc_add_series_xts(FUND.RSI.SellLevel, color = "red", yAxis = 2, 
-                            name = "Sell level", enableMouseTracking = FALSE) %>% 
-          hc_add_series_xts(FUND.RSI.BuyLevel, color = "blue", yAxis = 2, 
-                            name = "Buy level", enableMouseTracking = FALSE) %>% 
+          hc_add_series_xts(FUND.SMA.10,  yAxis = 0, name = 'Fast MA') %>% 
+          hc_add_series_xts(FUND.SMA.200, yAxis = 0, name = 'Slow MA') %>% 
+          hc_add_series_xts(Fund$Fund.Volume, color = 'gray', yAxis = 1, name = 'Volume', 
+                            type = 'column') %>% 
+          hc_add_series_xts(FUND.RSI.14, yAxis = 2, name = 'Osciallator') %>% 
+          hc_add_series_xts(FUND.RSI.SellLevel, color = 'red', yAxis = 2, 
+                            name = 'Sell level', enableMouseTracking = FALSE) %>% 
+          hc_add_series_xts(FUND.RSI.BuyLevel, color = 'blue', yAxis = 2, 
+                            name = 'Buy level', enableMouseTracking = FALSE) %>% 
           # I <3 themes
           hc_add_theme(hc_theme_smpl())
         
       } else if(type == 'multiple') {
         
-        Fund <- NULL
-        
         ## put remarks on big gap within highest and lowest within a day.
-        event <- Hi(Kb) - Lo(Kb) # need to modify...
+        #'@ event <- Hi(Fund) - Lo(Fund) # need to modify...
+                                     # single chart high-low candle stick might need to 
+                                     # label the reason and event to cause a hight volatility.
         
-        initial <- Op(Kb)[1, ] %>% unique
+        initial <- Op(Fund)[1, ] %>% unique
+        chart.type <- ifelse(is.null(chart.type), 'Cl', chart.type)
         
         ## comparison of fund size and growth of various Kelly models
-        KPnames <- c('netEMEdge', 'PropHKPriceEdge', 'PropnetProbBEdge', 'KProbHKPrice',
-                     'KProbnetProbB', 'KProbFixed', 'KProbFixednetProbB', 'KEMProb',
-                     'KEMProbnetProbB', 'KProbHalf','KProbHalfnetProbB', 'KProbQuarter',
-                     'KProbQuarternetProbB', 'KProbAdj','KProbAdjnetProbB', 'KHalfAdj',
-                     'KHalfAdjnetProbB', 'KEMQuarterAdj', 'KEMQuarterAdjnetProbB')
+        #'@ event <- c('netEMEdge', 'PropHKPriceEdge', 'PropnetProbBEdge', 'KProbHKPrice',
+        #'@              'KProbnetProbB', 'KProbFixed', 'KProbFixednetProbB', 'KEMProb',
+        #'@              'KEMProbnetProbB', 'KProbHalf','KProbHalfnetProbB', 'KProbQuarter',
+        #'@              'KProbQuarternetProbB', 'KProbAdj','KProbAdjnetProbB', 'KHalfAdj',
+        #'@              'KHalfAdjnetProbB', 'KEMQuarterAdj', 'KEMQuarterAdjnetProbB')
         
         ## add dates for event...
-        dates <- as.Date(Kb[, 1] %>% data.frame %>% rownames %>% range, 
-                         format = "%Y-%m-%d")
+        ##   label the high volatility daily event.
+        if(is.null(event.dates)) {
+          event.dates <- as.Date(period.apply(
+            diff(Op(Fund)), INDEX = endpoints(Fund), FUN = max) %>% data.frame %>% 
+              rownames, format = '%Y-%m-%d')
+        } else {
+          event.dates <- as.Date(event.dates)
+        }
+        
+        ## id of event label, event text
+        id <- seq(length(event.dates))
+        
+        if(is.null(event)) {
+          event <- id
+        } else {
+          event <- event
+        }
+        
+        if(length(event) == length(event.dates)) {
+          event <- event
+          event.dates <- event.dates
+        } else {
+          stop('The vector length of event must be same with vector length of event.dates.')
+        }
         
         if(chart.type == 'Op') {
-          Kb <- Op(Kb)
+          Fund <- Op(Fund)
         } else if(chart.type == 'Hi') {
-          Kb <- Hi(Kb)
+          Fund <- Hi(Fund)
         } else if(chart.type == 'Lo') {
-          Kb <- Lo(Kb)
+          Fund <- Lo(Fund)
         } else if(chart.type == 'Cl') {
-          Kb <- Cl(Kb)
+          Fund <- Cl(Fund)
         } else {
           stop('Kindly choose chart.type = "Op", chart.type = "Hi", chart.type = "Lo", chart.type = "Cl".')
         }
@@ -239,44 +264,57 @@ compareKelly <- function(K, initial = NULL, parallel = FALSE, by = 'daily', by.l
         plotc <- highchart(type = "stock") %>% 
           hc_title(text = "Charting some Funds") %>% 
           hc_subtitle(text = paste("Data extracted using various Kelly functions. Initial fund size : $", initial)) %>% 
-          hc_add_series_xts(Kb[, 1], id = names(Kb)[1]) %>% 
-          hc_add_series_xts(Kb[, 2], id = names(Kb)[2]) %>% 
-          hc_add_series_xts(Kb[, 3], id = names(Kb)[3]) %>% 
-          hc_add_series_xts(Kb[, 4], id = names(Kb)[4]) %>% 
-          hc_add_series_xts(Kb[, 5], id = names(Kb)[5]) %>% 
-          hc_add_series_xts(Kb[, 6], id = names(Kb)[6]) %>% 
-          hc_add_series_xts(Kb[, 7], id = names(Kb)[7]) %>% 
-          hc_add_series_xts(Kb[, 8], id = names(Kb)[8]) %>% 
-          hc_add_series_xts(Kb[, 9], id = names(Kb)[9]) %>% 
-          hc_add_series_xts(Kb[,10], id = names(Kb)[10]) %>% 
-          hc_add_series_xts(Kb[,11], id = names(Kb)[11]) %>% 
-          hc_add_series_xts(Kb[,12], id = names(Kb)[12]) %>% 
-          hc_add_series_xts(Kb[,13], id = names(Kb)[13]) %>% 
-          hc_add_series_xts(Kb[,14], id = names(Kb)[14]) %>% 
-          hc_add_series_xts(Kb[,15], id = names(Kb)[15]) %>% 
-          hc_add_series_xts(Kb[,16], id = names(Kb)[16]) %>% 
-          hc_add_series_xts(Kb[,17], id = names(Kb)[17]) %>% 
-          hc_add_series_xts(Kb[,18], id = names(Kb)[18]) %>% 
-          hc_add_series_xts(Kb[,19], id = names(Kb)[19]) %>% 
+          hc_add_series_xts(Fund[, 1], id = names(Fund)[1]) %>% 
+          hc_add_series_xts(Fund[, 2], id = names(Fund)[2]) %>% 
+          hc_add_series_xts(Fund[, 3], id = names(Fund)[3]) %>% 
+          hc_add_series_xts(Fund[, 4], id = names(Fund)[4]) %>% 
+          hc_add_series_xts(Fund[, 5], id = names(Fund)[5]) %>% 
+          hc_add_series_xts(Fund[, 6], id = names(Fund)[6]) %>% 
+          hc_add_series_xts(Fund[, 7], id = names(Fund)[7]) %>% 
+          hc_add_series_xts(Fund[, 8], id = names(Fund)[8]) %>% 
+          hc_add_series_xts(Fund[, 9], id = names(Fund)[9]) %>% 
+          hc_add_series_xts(Fund[,10], id = names(Fund)[10]) %>% 
+          hc_add_series_xts(Fund[,11], id = names(Fund)[11]) %>% 
+          hc_add_series_xts(Fund[,12], id = names(Fund)[12]) %>% 
+          hc_add_series_xts(Fund[,13], id = names(Fund)[13]) %>% 
+          hc_add_series_xts(Fund[,14], id = names(Fund)[14]) %>% 
+          hc_add_series_xts(Fund[,15], id = names(Fund)[15]) %>% 
+          hc_add_series_xts(Fund[,16], id = names(Fund)[16]) %>% 
+          hc_add_series_xts(Fund[,17], id = names(Fund)[17]) %>% 
+          hc_add_series_xts(Fund[,18], id = names(Fund)[18]) %>% 
+          hc_add_series_xts(Fund[,19], id = names(Fund)[19]) %>% 
           
           ## add event remarks onto the chart.
-          hc_add_series_flags(dates, title = paste0('E', 1:2), 
-                              text = paste('Event', 1:19), id = KPnames) %>% 
+          hc_add_series_flags(event.dates, title = paste0('E', event), #label of the event box
+                              text = paste('Event : High volatility ', event), id = id) %>% #text inside the event box
           hc_add_theme(hc_theme_flat())
+        
+        return(plotc)
+        
+      } else {
+        stop('Kindly choose type = "single" or type = "multiple" if you choose chart = TRUE.')
       }
-      
-      return(plotc)
     }
     
-    if()
-    plotfund <- plotChart()
-  }
-  ## --------------------- Return Function ----------------------------------------
-  options(warn = 0)
-  
-  if(chart == TRUE) {
-    return(plotChart())
-  } else {
+    if(type == 'single') {
+      plotFund <- llply(Kbase, plotChart, type = type, event = event, event.dates = event.dates)
+    } else if(type == 'multiple') {
+      plotFund <- llply(Kbase, plotChart, type = type, event = event, event.dates = event.dates, 
+                        chart.type = chart.type)
+    } else {
+      stop('Kindly choose type = "single" or type = "multiple" if you choose chart = TRUE.')
+    }
+    
+    return(plotFund)
+    
+  } else if(chart == FALSE) {
+    ## --------------------- Return Function ----------------------------------------
+    options(warn = 0)
     return(Kbase)
+    
+  } else {
+    options(warn = 0)
+    stop('Kindly choose chart = TRUE or chart = FALSE.')
   }
 }
+

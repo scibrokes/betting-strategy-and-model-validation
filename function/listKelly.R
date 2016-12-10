@@ -1,8 +1,17 @@
-listKelly <- function(filename, type = 'load', overwrite = as.logical(FALSE), rm.files = as.logical(FALSE)) {
+listKelly <- function(filename, type = 'load', load.fast = as.logical(TRUE), kind = 'summary', 
+                      overwrite = as.logical(FALSE), rm.files = as.logical(FALSE)) {
   ## Internal function for KModelslite()
   ## 
   ## type = 'load' or type = 'save'.
-
+  ## load.fast = TRUE or load.fast = FALSE only applicable to type = 'load'. Load fast will only read the 
+  ##   Kelly models inside the list of datasets.
+  ## ================== Load Packages ================================
+  suppressPackageStartupMessages(library('magrittr'))
+  suppressPackageStartupMessages(library('plyr'))
+  suppressPackageStartupMessages(library('tidyverse'))
+  suppressPackageStartupMessages(library('doParallel'))
+  suppressPackageStartupMessages(library('rlist'))
+  
   if(type == 'save') {
     if(paste0(filename, '.rds') %in% dir('./data')) {
       if(overwrite == FALSE) {
@@ -53,8 +62,13 @@ listKelly <- function(filename, type = 'load', overwrite = as.logical(FALSE), rm
     }
     
   } else if(type == 'load') {
+    
     if(paste0(filename, '.rds') %in% dir('./data')) {
-      KM <- readRDS(file = paste0('./data/', filename, '.rds'))
+      if(load.fast == TRUE) {
+        KM <- readRDS(file = paste0('./data/', filename, '.rds'))[c('Kelly1', 'Kelly2', 'Kelly3', 'Kelly4')]
+      } else {
+        KM <- readRDS(file = paste0('./data/', filename, '.rds'))
+      }
       return(KM)
       
     } else {

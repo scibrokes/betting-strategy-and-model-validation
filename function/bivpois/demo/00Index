@@ -1,0 +1,6 @@
+main	Main Demo Menu 
+main2 [Source file used in 'main' demo]
+ex1	Demonstration for example 1 (simulated data - Bivariate Poisson models)
+ex2	Demonstration for example 2 (simulated data - Diagonal inflated Bivariate Poisson models)
+ex3	Demonstration for example 3 (health data)
+ex4	Demonstration for example 4 (soccer data)

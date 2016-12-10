@@ -1454,6 +1454,11 @@ if(exists('K2D2DWS2OO')) {
   saveRDS(K2D2DWS2OO, file = './data/K2D2DWS2OO.rds'); rm(K2D2DWS2OO)
 }
 
+## ================== Monte-Carlo Simulation =============================
+source('./function/simulateKelly.R')
+
+
+
 ## ================== Comparison Models =============================
 ## list the Kelly models for easier handling.
 Kmodels <- c(K1, K2, K1W1, K1W2, K2W1, K2W2, #6
@@ -1486,8 +1491,21 @@ Kmodels <- c(K1, K2, K1W1, K1W2, K2W1, K2W2, #6
 
 ## Similar with profHandling() for load or save profiles at once. You can just using below 
 ##   function to load all Kelly models, includes save or load.
-source('./KellyApps/KModels.R')
+source('./function/KModels.R', local = TRUE)
 KMods <- KModels()
+
+## A lite version function of KModels() due to size allocation issues.
+source('./function/KModelslite.R', local = TRUE)
+KModslite <- KModelslite()
+
+## 
+## Due to both KModels() and KModelslite() unable read 110 files completely. The 
+##   size of the objects have over the limit. Here I use below codes to direct read 
+##   only necessary bankroll and initial fund size dataset.
+## 
+source('./function/readKelly.R', local = TRUE)
+BRSummary <- readKelly()
+saveRDS(BRSummary, file = './data/BRSummary.rds')
 
 ## ================== Plot Investment Fund =============================
 ## Convert the various Kelly models into quantmod's xts format for ploting. Compare the growth of 

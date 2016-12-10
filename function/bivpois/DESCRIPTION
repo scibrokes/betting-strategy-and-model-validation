@@ -1,0 +1,11 @@
+Package: bivpois
+Title: Bivariate Poisson Models Using The EM Algorithm
+Version: 0.50-3
+Date: 2007-07-02
+Depends: R (>= 2.0.1)
+Author: Dimitris Karlis and Ioannis Ntzoufras
+Description: Functions for fitting Bivariate Poisson Models using the EM algorithm. Details can be found in Karlis and Ntzoufras (2003, RSS D & 2004,AUEB Technical Report)
+Maintainer: Ioannis Ntzoufras <ntzoufras@aueb.gr>
+License: GPL (version 2 or later) 
+URL: http://www.stat-athens.aueb.gr/~jbn/papers/paper14.htm
+Packaged: Mon Jul  2 16:40:18 2007; admin

@@ -77,6 +77,7 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
     + Section [4.4.3 ®γσ, Eng Lian Hu (2016)] - Odds Modelling and Testing Efficiency in Sportsbook Betting.
     + Section [4.4.4 Combination Handicap] - Descrete result of handicap and P&L.
   - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - Simulate the staking model.
+    + Section []
   - Section [4.6 Expectation Ⓜaximization and Staking Simulation] - Enhance by weighted function on Staking model and Simulation.
 
 ## 4.1 Basic Equation
@@ -1070,7 +1071,10 @@ $$r\begin{Bmatrix}
 =& Loss\end{Bmatrix} \cdots equation\ 4.3.3.2$$
 
   Here I try to diversified the weight parameters on *equation 4.3.3.2*. The first year data will be the baseline for further years analysis. The $\phi(r)$ function is a contant variable which using previous years's data to apply on current year staking model. You can also use other method to find yours.
+  
+  Due to we unable foreseen the result before a soccer match started, here I tried to categorise from -1, 0.75, -0.5... 1 as a set of handicap.
 
+<s>
 ```{r weight-para, echo = FALSE, results = 'asis'}
 ## ======================================================================
 ## Added below weight function into the vKelly() and vKelly2()
@@ -1089,6 +1093,10 @@ dat2 <- dat %>% mutate(
                   dpus = ifelse(Result == 'Push'|Result == 'Cancelled', 1, 0), 
                   dlhf = ifelse(Result == 'Half Loss', 1, 0), 
                   dlos = ifelse(Result == 'Loss', 1, 0))
+
+#############################################
+## Above chunk `weight-para` and below chunk `weight-para-draft` weight parameters are wrong due to we cannot foreseen the result, therefore I rewrote in function leagueRiskProf() to differentiate the weight value for different handicaps.
+#############################################
 ```
 
 ```{r weight-para-draft, eval = FALSE, echo = FALSE, results = 'asis'}
@@ -1189,8 +1197,9 @@ tagList(
 ```
 
 *table 4.3.3.1* : `r paste0(dim(theta), collapse = ' x ')` : *The static weight parameter from year 2011~2015.*
+</s>
 
-  Above parameters just a static weighted parameter or constant across a year, you can simulate by apply the Epectation Maximization to get a dynamic vector of weight parameters across the soccer matches. The later section will conduct a monte carlo simulation from 2011 until 2015 to get the best fit outcome.
+  Above *table 4.3.3.1*^[*table 4.3.3.1* is wrong due to we cannot foreseen the result of a soccer match before kick-off, here I rewrote two kind of weight functions for handicap] parameters just a static weighted parameter or constant across a year, you can simulate by apply the Epectation Maximization to get a dynamic vector of weight parameters across the soccer matches. The later section will conduct a monte carlo simulation from 2011 until 2015 to get the best fit outcome.
 
 #### Stakes based reversed Kelly models
 
@@ -1452,37 +1461,6 @@ tagList(
 
 ### 4.3.5 Bank Roll
 
-```{r eval = FALSE}
-suppressMessages(library('htmltools'))
-
-ddply(K, .(Result), summarise, KReturn = sum(KReturn), Return = sum(Return), EUPrice = mean(EUPrice), HKPrice = mean(HKPrice), KStakes = sum(KStakes), Stakes = sum(Stakes), Rebates = sum(Rebates), Change = mean(Change)) %>% mutate(Stakes = currency(Stakes)) %>% tbl_df %>% formattable %>% as.htmlwidget
-```
-
-```
-## Draft the further modelling
-- Summarise the return
-- measure the edge of odds price for staking
-  + ln(Edge) = ln(Stakes) - ln(HKPrice) , Stakes/HKPrice
-  + ln(Stakes) - ln(EUPrice) = (ln(Stakes) - ln(HKPrice)) - ((ln(Stakes) - ln(HKPrice)) + Stakes)
-- generalize Kelly model
-- Added the weight function
-- simulate with different result and score
-- Application of Maximum likelihood, Resampling and iteration to get the optimal weight value
-- Simulate to compare the result or investment
-```
-
-
-```{r}
-## 1. Summarise the data which group by Date
-accBets <- ddply(dat, .(Date), summarise, Stakes = sum(Stakes), S.median = median(Stakes), S.mean = mean(Stakes), S.sd = sd(Stakes), Count = length(PL), PL = sum(PL), PL.percent = PL / Stakes)
-
-## 2. Set initial bankroll as 1,000,000
-dat$iniBR <- c(1000000, cumsum(dat$Return[-1]))
-dat$K <- ((dat$EUPrice + 1) * dat$rEMProbB - 1) / (dat$EUPrice)
-
-exp(mean(log(dat$Stakes)))
-```
-
   There has few points we need to consider, there the we need to retrieve the initial investment capital $BR$:
   
   - risk averse from ruin^[The daily lost cannot over the investment fund, otherwise will be bankrupt before growth, Kelly model is sort of risky at the beginning period but bacame stable as time goes by.]
@@ -1491,55 +1469,16 @@ exp(mean(log(dat$Stakes)))
   - The financial settlement time of Asian operators (daily financial settlement time 12:00PM Hong Kongnese GMT+8 Credit market with rebates)^[Here I follow the kick-off time from GMT+8 1200 until next morning 1159 (or the American Timezone which is GMT - 4) considered as a soccer betting date. Re-categorise the soccer financial settlement date. Due to I have no the history matches dataset from bookmakers. The scrapped spbo time is not stable (always change, moreover there just an information website) where firm A is the firm who placed bets with millions HKD (although the kick-off time might also changed after placed that particular bet), therefore I follow the kick-off time of the firm A.]
 
 ```{r bank-roll, echo = FALSE, results = 'asis'}
-suppressMessages(library('knitr'))
-
-## Re-categorise the soccer financial settlement date. Due to I have no the history matches dataset from bookmakers. The scrapped spbo time is not stable (always change, moreover there just an information website) where firm A is the firm who placed bets with millions HKD (although the kick-off time might also changed after placed that particular bet), therefore I follow the kick-off time of the firm A.
-dat <- dat[order(dat$DateUK),] %>% mutate(DateUS = as.Date(format(DateUK, tz = 'EST', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S'))) #daily settlement will base on variable `DateUS`.
-
-BR <- ddply(dat, .(DateUS), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL), n = length(Sess), rRates = Return / Stakes) %>% mutate(CumStakes = cumsum(Stakes), SPL = cumsum(PL), BR = ifelse(4600 + SPL > 0, 4600 + SPL, -9999), gRates = c(1, exp(diff(log(BR), lag = 1))), gRates2 = BR/BR[1]) %>% tbl_df
-
-#'@ write.csv(BR, file = './data/BankRoll.csv')
-
-## Due to our bank roll cannot be less than 0, otherwie will be ruined. Therefore I added the initial balance of the account from the min value of variable `SPL` which is the balance before place bets must be more than 0. Otherwise unable to place bets.
-kable(summary(BR), caption = "Table 4.3.2 : Summary data of daily bank roll (HKD$0'000)")
+suppressAll(library('highcharter'))
+suppressAll(source('./function/compareKelly.R'))
+compareKelly(K1, chart = TRUE, type = 'multiple')
 ```
 
-*table 4.3.1.2* : `r paste0(dim(BR), collapse = ' x ')` : *Sample data of daily bank roll.*
+*graph 4.3.5.1 : Daily bank roll for Basic Kelly model.*
 
   Due to our bank roll cannot be less than 0, otherwie will be ruined. Therefore I added the initial balance of the account from the min value of variable `SPL` which is the balance before place bets must be more than 0. Otherwise unable to place bets.
   
-  From above table summary, we know that the gap of **daily growth rate** (variable *gRates* is geometric growth rates while *gRates2* is initial fund baseline growth rates) is very big which is from `r min(BR$gRates)` to `r max(BR$gRates)` although the median value is `r median(BR$gRates)`. From initial `paste0('HKD\$', r BR$BR[1] * 10000)` lost to `paste0('HKD\$', r min(BR$BR) * 10000)` while the maximum bankroll hit `paste0('HKD\$', r max(BR$BR) * 10000)` which was `r max(BR$BR)/ BR$BR[1]` and the final bankroll is `r tail(BR$BR)[1]/ BR$BR[1]` times initial invested fund. The ^[As I mentioned at the begining of the research paper, the stakes only reflects the profit and loss of agency A but not firm A. Firm A might have deal with 10~50 or even more agencies and the data from year 2011 is not the initial investment year. You are feel free to download the [BankRoll.csv](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BankRoll.csv). We will discuss the inventory management to reduce the risk.] From [BankRoll.csv](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BankRoll.csv) we observe the end of soccer sesson in May 2011 `dat %>% filter(DateUS >= '2011-05-14' & DateUS <= '2011-05-21')` has a seriourly crash. We can investigate more details about the loss matches from the data (or filter the range of the bets in the data table inside [Part I](http://rpubs.com/englianhu/208637)).
-
-```{r br-summary01, eval = FALSE, echo = FALSE, results = 'asis'}
-## eval = FALSE to save the file size heavily loading, will summarise after Kelly model and doing comparison at the conclusion section.
-## Will need to split the annual and monthly return and set a new initial fund for every month. The profit can 
-## 
-## monthly summary data table
-ddply(BR, .(month(DateUS)), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL), n = sum(n), rRates = Return / Stakes, CumStakes = cumsum(Stakes), SPL = cumsum(PL), BR = sum(BR)) %>% mutate(gRates = c(1, exp(diff(log(BR), lag = 1))), gRates2 = BR/BR[1]) %>% tbl_df
-#    month(DateUS)    Stakes    Return        PL    n    rRates CumStakes       SPL      BR    gRates   gRates2
-# 1              1 132529.90 137572.65  5042.751 2723 1.0380499 132529.90  5042.751 2870710 1.0000000 1.0000000
-# 2              2 178758.00 184542.81  5784.814 3741 1.0323611 178758.00  5784.814 2803937 0.9767398 0.9767398
-# 3              3 197311.00 200753.10  3442.100 4624 1.0174450 197311.00  3442.100 3333502 1.1888650 1.1612118
-# 4              4 190797.00 192263.64  1466.644 4737 1.0076869 190797.00  1466.644 3324891 0.9974167 1.1582120
-# 5              5 151884.60 153810.24  1925.639 4288 1.0126783 151884.60  1925.639 3464326 1.0419369 1.2067838
-# 6              6  76511.00  70926.86 -5584.136 1679 0.9270153  76511.00 -5584.136 2921503 0.8433105 1.0176934
-# 7              7  57176.34  53989.17 -3187.167 1991 0.9442572  57176.34 -3187.167 2699121 0.9238810 0.9402277
-# 8              8 147524.50 152946.75  5422.250 4183 1.0367549 147524.50  5422.250 2115689 0.7838436 0.7369914
-# 9              9 170805.95 176020.25  5214.300 4205 1.0305276 170805.95  5214.300 2240139 1.0588225 0.7803431
-# 10            10 115338.94 118597.68  3258.739 2907 1.0282536 115338.94  3258.739 2053623 0.9167391 0.7153710
-# 11            11 115978.00 124308.67  8330.670 3105 1.0718297 115978.00  8330.670 2015532 0.9814519 0.7021022
-# 12            12 129142.00 133797.72  4655.721 2872 1.0360512 129142.00  4655.721 2397673 1.1895982 0.8352195
-
-## annual summary data table
-ddply(BR, .(year(DateUS)), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL), n = sum(n), rRates = Return / Stakes, CumStakes = cumsum(Stakes), SPL = cumsum(PL), BR = sum(BR)) %>% mutate(gRates = c(1, exp(diff(log(BR), lag = 1))), gRates2 = BR/BR[1]) %>% tbl_df %>% formattable %>% as.htmlwidget
-#   year(DateUS)   Stakes   Return        PL     n   rRates CumStakes       SPL       BR    gRates  gRates2
-# 1         2011 305958.2 312683.6  6725.327  5554 1.021981  305958.2  6725.327  1286022 1.0000000 1.000000
-# 2         2012 309850.0 319747.3  9897.320  7392 1.031942  309850.0  9897.320  4931039 3.8343361 3.834336
-# 3         2013 436285.5 439093.9  2808.445 10957 1.006437  436285.5  2808.445  8069533 1.6364773 6.274804
-# 4         2014 391430.5 406585.2 15154.719 11041 1.038716  391430.5 15154.719 10394713 1.2881430 8.082845
-# 5         2015 220233.0 221419.5  1186.515  6111 1.005388  220233.0  1186.515  7559340 0.7272293 5.878081
-```
-
+  Above Graph is a basic Kelly model. The ^[As I mentioned at the begining of the research paper, the stakes only reflects the profit and loss of agency A but not firm A. Firm A might have deal with 10~50 or even more agencies and the data from year 2011 is not the initial investment year. You are feel free to download the [BankRoll.csv](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BankRoll.csv). We will discuss the inventory management to reduce the risk.] From [BankRoll.csv](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BankRoll.csv) we observe the end of soccer sesson in May 2011 `dat %>% filter(DateUS >= '2011-05-14' & DateUS <= '2011-05-21')` has a seriourly crash. We can investigate more details about the loss matches from the data (or filter the range of the bets in the data table inside [Part I](http://rpubs.com/englianhu/208637)).
 
 ## 4.4 Poisson Ⓜodel
 
@@ -1590,7 +1529,7 @@ German Bundesliga and Spanish Primera Liga...
   - [Dixon Coles model - Python](http://www.sportshacker.net/posts/simple_dixon_coles.html)
   - [Predicting Football Using R](http://pena.lt/y/2014/11/02/predicting-football-using-r/)
 
-  Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I try to filter-up the sample data to be only English soccer leagues as shinyApps [EnglishApps](..................). I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation *Robert Johnson (2011)*^[Kindly refer to 23th paper in [7.4 References]] from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
+  Due to the soccer matches randomly getting from different leagues, and also not Bernoulli win-lose result but half win-lose etc as we see from above. Besides, there were mixed Pre-Games and also In-Play soccer matches and I try to filter-up the sample data to be only English soccer leagues as shinyApps. I don't pretend to know the correct answer or the model from firm A. However I take a sample presentation *Robert Johnson (2011)*^[Kindly refer to 23th paper in [7.4 References]] from one of consultancy firm which is Dixon-Coles model and omitted the scoring process section.
 
 ### 4.4.3 ®γσ, Eng Lian Hu (2016)
 
@@ -1615,10 +1554,13 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
   
   Again, I don't pretend to know the correct models but here I try to simulate the occurance of the combination and independent handicaps by testing below distribution.
   
+  - categorise handicap set (from start of previous session until latest soccer matches as Weight function which has talked in [4.3.3 Weighted Fractional Kelly Ⓜodels])
   - normal distribution
   - binomial distribution
   - Poison distribution
   
+  Due to there have 110 different weighted Kelly models I test, here I put the application of distribution in specific English soccer league which will compare with my *Rmodel* in [Application of Kelly Criterion model in Sportsbook Investment - Part II](https://github.com/scibrokes/kelly-criterion).
+
 **Comparison Chart**
 
 ![*figure 4.4.4.1 : Binomial vs. Poisson*](figure/bnom-vs-pois01.jpg)
@@ -1640,73 +1582,18 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 
 ![*figure 4.4.4.4 : R functions in probability distributions*](figure/r-functions-for-prob-dist.jpg)
 
-```{r}
-
-```
-
   Here I try to bootstrap/resampling the scores of matches of the dataset to test the Kelly model and get the mean/likelihood value. Boostrapping the scores and staking model will be falling in the following sections [4.5 Staking Ⓜodel and Ⓜoney Management] and [4.6 Expectation Ⓜaximization and Staking Simulation].
 
 ## 4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement
 
-```{r, echo = FALSE, results = 'asis'}
-## Bootstrap and apply maximum likelihood model
-## Full-Kelly, Half-Kelly, Quarter-Kelly
-
-```
-
-  From the article [凯利模式资金管理](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)^[You might refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion) as well.] we know the application of generalization of Kelly criterion for uneven payoff games.
-
-$$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1}{N}\log\left( {\frac{{{S_N}}}{{{S_0}}}} \right) \cdots equation\ 4.3.2$$
-
-  In order to get the optimal value, I apply the bootrapping and resampling method.
-  
-$$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
-  
-  Now we look at abpve function from a different perspective by considering the observed values $x_{1}, x_{2}, x_{3}… x_{n}$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
-
-
-### 4.5.2 Risk Management
-
-
-
-
-### 4.5.3 Investors' Fund Refill
-
-  Below top-up and refill the fund into the pool is another method for risk management on money management while there is very dangerous if that leverage is higher. Similar with high leverage with contra in option market, endless pupm-in the fund will be very dangerous. Therefore we need to simulate what if the initial fund is smaller than the .
-
-![*equation 4.3.3 : Economic Order Quantity (EOQ)*](./figure/EOQ.jpg)
-
-  Base on above euqation, there has some criteria as below :
-
-  - $C$ is the total cycle-inventory cost per annum which is the invest or pump in figure into the investment pool.
-  - $Q$ is the fund size which pump into the investment pool. (For example: normally the investment fund or insurance company will advise the investors regularly credit a certain money into whose investment account.) 
-  - $H = 1$ due to there has no holding cost per annum unless there is inactive account which will be charges a certain amount of the administration fee where it is not apply to active players.
-  - $D$ is the betting stakes per annum.
-  - $S = 1$ due to there has no setup costs per lot. (unless we count in the bank charges, for example : western union, Entropay, bank transfer fee, etc)
-
-  You are feel free to know about inventory management via [Module 3: Inventory and Supply Chain Management](http://rpubs.com/englianhu/188394).
-
-```
-C = Q/2 + 305958.2/Q
-  = Q^2 / 2Q + 611916.4 / 2Q
-2QC  = Q^2 + 611916.4
-  = Q^2 - 2QC + 611916.4 = 0
-
-Q(Q - 2C) = 611916.4
-```
-
-```
-Section : reverse modelling to get the EMProb prior to calculate the coefficient of the staking model. Otherwise might rearrange the order of applied Poison model here by refer to international competitions.
-```
+### 4.5.1 Risk Management
 
   *Galema, Plantinga and Scholtens (2008)*^[You are feel free to refer to [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References** for further details]
 
 ### reminder (temporary noted for further):
 ```
 draft : 
-  - http://www.moneychimp.com/articles/risk/regression.htm
   - read *Galema, Plantinga and Scholtens (2008)* https://englianhu.files.wordpress.com/2016/06/the-stocks-at-stake-return-and-risk-in-socially-responsible-investment.pdf
-  - reverse engineering on staking-profit linear regression model to get/retrieve EMProb value since now only get the coefficients figire of EMProb. Although incompleted soccer teams... 2ndly, reversed poison model from EMProb might is not workable on one-sided competition, need to refer to some international competition as references for incompleted dataset.
 ```
 
   *Martin Spann and Bernd Skiera (2009)*^[Kindly refer to 19th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**] applied a basic probability sets on the draw games and also the portion of win and loss. The author simply measured the portion of the draw result with win/loss to get the edge to place a bet. However it made a loss on Italian operator Oddset due to the 25% high vigorish but profitable in 12%. Secondly, the bets placed on fixed odds but not Asian Handicap and also a fixed amount $100.
@@ -1742,26 +1629,44 @@ K %>% formattable(list(
     Change = formatter('span', style = ~ style(color = ifelse(Change < 0, 'red', 'green')), ~ icontext(ifelse(Change < 0, 'arrow-down', 'arrow-up'), Change))))
 ```
 
-*table 4.5.1* : `r paste0(dim(K), collapse = ' x ')` : *Kelly stakes and firm A's stakes of annually investment summary table.*^[The annum return rates but not all data return rates since we need to use the return of that particular year to reverse. The weight parameter in later section will take last year performance to be weight controller. Due to the firm A does not only placed bets with one agent but couples of agencies. Let say placed one millions HKD on a soccer match with higher price simultaniously compare to placed bets on one agency with price decreasingly, therefore the Kelly stakes will definately defferent with firm A's stakes.]
+*table 4.5.1* : `r paste0(dim(K), collapse = ' x ')` : *Kelly stakes and firm A's stakes of annually investment summary table.*
+
+### 4.5.2 Investors' Fund Refill
+
+  Kelly model will be a good risk averse investment portfolio. However, as we know normally a mutual fund or any investment fund will advise investors credit a certain money into the pool regularly. For this section I keep it as the next study which is in [Application of Kelly Criterion model in Sportsbook Investment - Part II](https://github.com/scibrokes/kelly-criterion). It will includes the :
+  
+  - bonus issue or dividends
+  - refill or pump-in money into the pool
+  - fund management and admin fees
+
+![*equation 4.5.2.1 : Economic Order Quantity (EOQ)*](./figure/EOQ.jpg)
+
+  Base on above euqation, there has some criteria as below :
+
+  - $C$ is the total cycle-inventory cost per annum which is the invest or pump in figure into the investment pool.
+  - $Q$ is the fund size which pump into the investment pool. (For example: normally the investment fund or insurance company will advise the investors regularly credit a certain money into whose investment account.) 
+  - $H = 1$ due to there has no holding cost per annum unless there is inactive account which will be charges a certain amount of the administration fee where it is not apply to active players.
+  - $D$ is the betting stakes per annum.
+  - $S = 1$ due to there has no setup costs per lot. (unless we count in the bank charges, for example : western union, Entropay, bank transfer fee, etc)
+
+  You are feel free to know about inventory management via [Module 3: Inventory and Supply Chain Management](http://rpubs.com/englianhu/188394).
 
 ## 4.6 Expectation Ⓜaximization and Staking Simulation
 
-```{r, echo = FALSE, results = 'asis'}
-## Apply Poison model to simulate the result of the matches
-## Apply the Kelly model (iterations) to test the efficiency of the value betting from  Sportsbook consultancy firm A
-## Apply poisson model to simulate different scores and result to test the efficiency of the staking model.
-## reverse Kelly Criterion to abtain the average EMPrice, reversed bivarite poisson to get the EMprobB
+  From the article [凯利模式资金管理](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)^[You might refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion) as well.] we know the application of generalization of Kelly criterion for uneven payoff games.
 
-```
+$$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1}{N}\log\left( {\frac{{{S_N}}}{{{S_0}}}} \right) \cdots equation\ 4.3.2$$
 
-  Application of Monte Carlo simulation. Based on the first year data, simulate the following matches from 2nd year onwards match-by-match to get the latest staking match result and predict the next staking match................
+  In order to get the optimal value, I apply the bootrapping and resampling method.
   
-```
-- simulate the resampling the stakes by mean and median value 100 times.
-- simulate the poisson models for soccer matches result 100 times to compare the soccer result 0-0, 1-0, 0-1, etc.
-- simulate the poisson models for place bets on various Handicap 100 times to compare the 'Win', 'Win-Half', 'Push', 'Loss-Half' and 'Loss' result.
-- simulate the dynamic fractional Kelly model with weight parameter, yearly base.
-- simulate whole process until get the optimal value...
+$$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
+  
+  Now we look at abpve function from a different perspective by considering the observed values $x_{1}, x_{2}, x_{3}… x_{n}$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
+
+  Now I try to simulate all 110 Kelly weighted models 100 times by resampling the scores and the weight parameters to get the optimal result.
+
+```{r}
+
 ```
 
 # 5. ®esult

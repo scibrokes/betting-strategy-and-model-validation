@@ -1,4 +1,4 @@
-KModelslite <- function(action = 'load', rm.files = as.logical(TRUE), 
+KModelslite <- function(action = 'load', kind = 'default', rm.files = as.logical(TRUE), 
                         overwrite = as.logical(FALSE), parallel = FALSE) {
   ## A lite version of KModels() due to the function always face size allocation issues.
   ## 
@@ -9,6 +9,9 @@ KModelslite <- function(action = 'load', rm.files = as.logical(TRUE),
   ##   environment once saved. (applicable only for action = "save")
   ## overwrite = FALSE or overwrite = TRUE, you can choose if you want to overwrite 
   ##   if there has any existing files in directory. (applicable only for action = "save")
+  ## kind = 'summary', kind = 'br' or kind = 'default'. 'summary' list the return of the 
+  ##   staking while 'br' is a quantmod xts format on the daily open, high, low and close 
+  ##   of fund size.
   
   ## ================== Load Function ================================
   ## Simulate and save the league profiling : all, annual, daily, time or dynamic.
@@ -80,7 +83,19 @@ KModelslite <- function(action = 'load', rm.files = as.logical(TRUE),
   
   } else if(action == 'load') {
     ## ================== Load Models ================================
-    KM <- llply(KMnames, listKelly, type = 'save', .parallel = parallel)
+    if(kind == 'default') {
+      KM <- llply(KMnames, listKelly, .parallel = parallel)
+      names(KM) <- KMnames
+    } else if(kind == 'summary') {
+      KM <- llply(KMnames, listKelly, .parallel = parallel)
+      names(KM) <- KMnames
+    } else if(kind == 'br') {
+      KM <- llply(KMnames, listKelly, .parallel = parallel)
+      names(KM) <- KMnames
+    } else {
+      
+    }
+    
   }
   
   return(KM)
