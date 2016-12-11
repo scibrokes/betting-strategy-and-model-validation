@@ -1663,8 +1663,64 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
   
   Now we look at abpve function from a different perspective by considering the observed values $x_{1}, x_{2}, x_{3}… x_{n}$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
 
-  Now I try to simulate all 110 Kelly weighted models 100 times by resampling the scores and the weight parameters to get the optimal result.
+  Now I try to simulate all 110 Kelly weighted models 100 times by resampling the scores by using *trancated bivariate normal distribution*^[You can refer to few r packages which are [MASS](https://cran.r-project.org/web/packages/MASS/index.html), [mvtnorm](https://cran.r-project.org/web/packages/mvtnorm/index.html) and [tmvtnorm](https://cran.r-project.org/web/packages/tmvtnorm/index.html).] and the weight parameters to get the optimal result.
 
+  Due to there has negative lambda values which unable proceed a scores based on basic bivariate normal distribution. Here I try to build few models in order to get the best fit model for soccer scores resampling.
+
+  - 1st bivariate normal distribution
+    
+    + adjust all negative values to be 0
+    + measure the mean of negative values and add to all positive values as average.
+    
+  - 2nd bivariate normal distribution
+    
+    + adjust all negative values to be 0
+    + measure the mean of negative values and substrated by all positive values as average.
+    + multiply all values by the portion of baseline which is the raw dataset.
+    
+  - 3rd bivariate normal distribution
+    
+    + adjust all negative values to be 0
+    + apply nested normal distribution on the mean and sd of all negative values and distribute to all positive values as average in `rnorm`.
+    + apply looping to get the likehood values.
+    
+  - 4th bivariate normal distribution
+    
+    + apply truncated adjustment with set a set of lower and upper values.
+    + set min as lower interval and max as upper interval.
+    + multiply all values by the portion of baseline which is the raw dataset.
+    
+  - 5th bivariate normal distribution
+    
+    + apply truncated adjustment with set a set of lower and upper values.
+    + manually set min as lower interval and `3, 2.3`^[3 goals for home team and 2.3 goals for away team]  as upper interval.
+    
+  - 6th bivariate normal distribution
+    
+    + apply truncated adjustment with set a set of lower and upper values.
+    + manually set `1, 0`^[1 goal for home team and 0 goal for away team] as lower interval and `2, 2.3`^[3 goals for home team and 2.3 goals for away team]  as upper interval.
+    
+  - 7th bivariate normal distribution
+    
+    + apply truncated adjustment with set a set of lower and upper values.
+    + set min values as lower interval and max as upper interval.
+    + multiply all values by the portion of baseline which is the raw dataset.
+    
+  - 8th bivariate normal distribution
+    
+    + apply truncated adjustment with set a set of lower and upper values.
+    + set min values as lower interval and mean values as upper interval.
+    + apply looping to get the likehood values by stepwise adding 0.0001 to upper interval.
+    
+  - 9th bivariate normal distribution
+    
+    + apply truncated adjustment with set a set of lower and upper values.
+    + set 1st quantile values as lower interval and 3rd quantile values as upper interval.
+    + apply looping to get the likehood values by stepwise exoanding 0.0001 to both lower and upper interval.
+    
+  - 10th bivariate normal distribution
+    
+  
 ```{r}
 
 ```
@@ -1676,6 +1732,8 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
 
 ## 5.1 Comparison of the ®esults
 
+### 5.1.1 Comparison of Fully Followed Bets
+
 Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 
 ```{r, echo = FALSE, results = 'asis'}
@@ -1686,6 +1744,13 @@ Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 ```
 
   *Dixon and Pope (2003)* apply linear model to compare the efficiency of the odds prices offer by first three largest Firm A, B and C in UK.
+
+### 5.1.2 Comparison of Missing Bets
+
+  Due to I have no followed bets data, therefore there has no any clue but based on my previous experience in Telebiz, Caspo and Global Solution Sdn Bhd as list in my [CV](https://beta.rstudioconnect.com/englianhu/ryo-eng/ryo-eng.html) I try to adjust setting of 90% successful following rates and 90% of average odds compare to firm A.
+  
+  According to above result, in order to made it workable in real life. Here I simulate whole Kelly function with monte carlo method to get the return.
+
 
 ## 5.2 Market Basket
 
