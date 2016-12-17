@@ -1,23 +1,35 @@
-plotChart <- function(Fund = substitute(Fund), type = 'single', event = NULL, 
-                      event.dates = NULL, chart.type = NULL) {
+plotChart <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL, 
+                      chart.type = NULL) {
   ## http://jkunst.com/highcharter/highstock.html
   ## type = 'single' or type = 'multiple'. Plot comparison graph or single fund details.
   ## chart.type = 'Op', chart.type = 'Hi', chart.type = 'Lo', chart.type = 'Cl'. Use 
   ##   what kind of fund size to plot for multiple funds comparison.
+  ## --------------------- Load packages ------------------------------------------
+  suppressMessages(library('formattable'))
   suppressMessages(library('quantmod'))
   suppressMessages(library('highcharter'))
   
   if(type == 'single') {
-    
+    ## --------------------- Plot single fund or sub funds ------------------------
     ## single model details, volume, moving average and daily open, high, low, close.
     FUND.SMA.10  <- SMA(Cl(Fund), n = 10)
     FUND.SMA.200 <- SMA(Cl(Fund), n = 200)
     FUND.RSI.14  <- RSI(Cl(Fund), n = 14)
     FUND.RSI.SellLevel <- xts(rep(70, NROW(Fund)), index(Fund))
     FUND.RSI.BuyLevel  <- xts(rep(30, NROW(Fund)), index(Fund))
-    fname <- 
+    
+    initial <- Op(Fund)[1, ] %>% unique %>% currency
+    
+    fname <- str_split_fixed(names(Fund), '\\.', 2) %>% .[, 1] %>% unique
+    if(length(fname) != 1) {
+      stop('The name of sub fund must be only one.')
+    } else {
+      fname <- fname
+    }
     
     plotc <- highchart() %>% 
+      hc_title(text = "Sportsbook Hedge Fund") %>% 
+      hc_subtitle(text = paste("Candle stick chart with initial fund size : ", initial)) %>% 
       # create axis :)
       hc_yAxis_multiples(
         list(title = list(text = NULL), height = '45%', top = '0%'),
@@ -28,7 +40,7 @@ plotChart <- function(Fund = substitute(Fund), type = 'single', event = NULL,
       hc_add_series_ohlc(Fund, yAxis = 0, name = fname) %>% 
       hc_add_series_xts(FUND.SMA.10,  yAxis = 0, name = 'Fast MA') %>% 
       hc_add_series_xts(FUND.SMA.200, yAxis = 0, name = 'Slow MA') %>% 
-      hc_add_series_xts(Fund$Fund.Volume, color = 'gray', yAxis = 1, name = 'Volume', 
+      hc_add_series_xts(Fund[,names(Vo(Fund))], color = 'gray', yAxis = 1, name = 'Volume', 
                         type = 'column') %>% 
       hc_add_series_xts(FUND.RSI.14, yAxis = 2, name = 'Osciallator') %>% 
       hc_add_series_xts(FUND.RSI.SellLevel, color = 'red', yAxis = 2, 
@@ -38,14 +50,16 @@ plotChart <- function(Fund = substitute(Fund), type = 'single', event = NULL,
       # I <3 themes
       hc_add_theme(hc_theme_smpl())
     
-  } else if(type == 'multiple') {
+    return(plotc)
     
+  } else if(type == 'multiple') {
+    ## --------------------- Plot multiple funds or main funds ------------------
     ## put remarks on big gap within highest and lowest within a day.
     #'@ event <- Hi(Fund) - Lo(Fund) # need to modify...
     # single chart high-low candle stick might need to 
     # label the reason and event to cause a hight volatility.
     
-    initial <- Op(Fund)[1, ] %>% unique
+    initial <- Op(Fund)[1, ] %>% unique %>% currency
     chart.type <- ifelse(is.null(chart.type), 'Cl', chart.type)
     
     ## comparison of fund size and growth of various Kelly models
@@ -93,35 +107,42 @@ plotChart <- function(Fund = substitute(Fund), type = 'single', event = NULL,
       stop('Kindly choose chart.type = "Op", chart.type = "Hi", chart.type = "Lo", chart.type = "Cl".')
     }
     
-    plotc <- highchart(type = "stock") %>% 
-      hc_title(text = "Charting some Funds") %>% 
-      hc_subtitle(text = paste("Data extracted using various Kelly functions. Initial fund size : $", initial)) %>% 
-      hc_add_series_xts(Fund[, 1], id = names(Fund)[1]) %>% 
-      hc_add_series_xts(Fund[, 2], id = names(Fund)[2]) %>% 
-      hc_add_series_xts(Fund[, 3], id = names(Fund)[3]) %>% 
-      hc_add_series_xts(Fund[, 4], id = names(Fund)[4]) %>% 
-      hc_add_series_xts(Fund[, 5], id = names(Fund)[5]) %>% 
-      hc_add_series_xts(Fund[, 6], id = names(Fund)[6]) %>% 
-      hc_add_series_xts(Fund[, 7], id = names(Fund)[7]) %>% 
-      hc_add_series_xts(Fund[, 8], id = names(Fund)[8]) %>% 
-      hc_add_series_xts(Fund[, 9], id = names(Fund)[9]) %>% 
-      hc_add_series_xts(Fund[,10], id = names(Fund)[10]) %>% 
-      hc_add_series_xts(Fund[,11], id = names(Fund)[11]) %>% 
-      hc_add_series_xts(Fund[,12], id = names(Fund)[12]) %>% 
-      hc_add_series_xts(Fund[,13], id = names(Fund)[13]) %>% 
-      hc_add_series_xts(Fund[,14], id = names(Fund)[14]) %>% 
-      hc_add_series_xts(Fund[,15], id = names(Fund)[15]) %>% 
-      hc_add_series_xts(Fund[,16], id = names(Fund)[16]) %>% 
-      hc_add_series_xts(Fund[,17], id = names(Fund)[17]) %>% 
-      hc_add_series_xts(Fund[,18], id = names(Fund)[18]) %>% 
-      hc_add_series_xts(Fund[,19], id = names(Fund)[19]) %>% 
-      
-      ## add event remarks onto the chart.
-      hc_add_series_flags(event.dates, title = paste0('E', event), #label of the event box
-                          text = paste('Event : High volatility ', event), id = id) %>% #text inside the event box
-      hc_add_theme(hc_theme_flat())
+    #'@ plotc <- highchart(type = "stock") %>% 
+    #'@   hc_title(text = "Sportsbook Hedge Fund") %>% 
+    #'@   hc_subtitle(text = paste("Multiple funds trend chart initial fund size : ", initial)) %>% 
+    #'@   hc_add_series_xts(Fund[, 1], id = names(Fund)[1]) %>% 
+    #'@   hc_add_series_xts(Fund[, 2], id = names(Fund)[2]) %>% 
+    #'@   hc_add_series_xts(Fund[, 3], id = names(Fund)[3]) %>% 
+    #'@   hc_add_series_xts(Fund[, 4], id = names(Fund)[4]) %>% 
+    #'@   hc_add_series_xts(Fund[, 5], id = names(Fund)[5]) %>% 
+    #'@   hc_add_series_xts(Fund[, 6], id = names(Fund)[6]) %>% 
+    #'@   hc_add_series_xts(Fund[, 7], id = names(Fund)[7]) %>% 
+    #'@   hc_add_series_xts(Fund[, 8], id = names(Fund)[8]) %>% 
+    #'@   hc_add_series_xts(Fund[, 9], id = names(Fund)[9]) %>% 
+    #'@   hc_add_series_xts(Fund[,10], id = names(Fund)[10]) %>% 
+    #'@   hc_add_series_xts(Fund[,11], id = names(Fund)[11]) %>% 
+    #'@   hc_add_series_xts(Fund[,12], id = names(Fund)[12]) %>% 
+    #'@   hc_add_series_xts(Fund[,13], id = names(Fund)[13]) %>% 
+    #'@   hc_add_series_xts(Fund[,14], id = names(Fund)[14]) %>% 
+    #'@   hc_add_series_xts(Fund[,15], id = names(Fund)[15]) %>% 
+    #'@   hc_add_series_xts(Fund[,16], id = names(Fund)[16]) %>% 
+    #'@   hc_add_series_xts(Fund[,17], id = names(Fund)[17]) %>% 
+    #'@   hc_add_series_xts(Fund[,18], id = names(Fund)[18]) %>% 
+    #'@   hc_add_series_xts(Fund[,19], id = names(Fund)[19]) %>% 
     
-    return(plotc)
+      ## add event remarks onto the chart.
+    #'@  hc_add_series_flags(event.dates, title = paste0('E', event), #label of the event box
+    #'@                      text = paste('Event : High volatility ', event), id = id) %>% #text inside the event box
+    #'@  hc_add_theme(hc_theme_flat())
+    
+    plotc <- paste0(
+      'highchart(type = \'stock\') %>% ', 
+      'hc_title(text = \'Sportsbook Hedge Fund\') %>% ', 
+      'hc_subtitle(text = paste(\'Multiple funds trend chart initial fund size : \', initial)) %>% ', 
+      paste0('hc_add_series_xts(Fund[,', subnum, '], id = names(Fund)[', subnum,'])', collapse = '%>%'), 
+      ' %>% hc_add_series_flags(event.dates, title = paste0(\'E\', event), text = paste(\'Event : High volatility \', event), id = id) %>% hc_add_theme(hc_theme_flat());')
+    
+    return(eval(parse(text = plotc)))
     
   } else {
     stop('Kindly choose type = "single" or type = "multiple" if you choose chart = TRUE.')

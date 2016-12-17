@@ -1,6 +1,7 @@
 compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = 'daily', 
-                         by.league = as.logical(FALSE), adjusted = 1, chart = as.logical(FALSE), 
-                         type = NULL, event = NULL, event.dates = NULL, chart.type = NULL) {
+                         by.league = as.logical(FALSE), adjusted = 1, 
+                         chart = as.logical(FALSE), type = 'multiple', event = NULL, 
+                         event.dates = NULL, chart.type = NULL, num = NULL, subnum = NULL) {
   ## A function which compare the staking, P&L result as well as the risk (sd and var)
   ##   of vKelly() and also vKelly2() models. Set an initial fund and simulate a moving
   ##   average or so call bollinger bands for risk control and avoid the bankruptcy while 
@@ -13,15 +14,22 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
   ## parallel = FALSE or parallel = TRUE if you want to set parallel computing.
   ## by = 'daily' or by = 'time' is summarise the data by daily or TimeUS (Kick-Off Time).
   ## by.league = TRUE or by.league = FALSE if you want to breakdown the league or not.
-  ## chart = FALSE or chart = TRUE and sub-option type = 'single' or type = 'multiple'.
+  ## chart = FALSE or chart = TRUE
+  ## type = 'single' or type = 'multiple' will use for both dataset and plot. For 'single' 
+  ##   will return with a list of main funds and a list of sub funds. For 'multiple' will 
+  ##   return with a list of main funds while all sub funds join as one xts format data frame.
   ## event = NULL, you can set a vector of event contain and event.dates.
-  ## chart.type = 'Cl', you can choose open, high, low or close daily fund size data for 'multiple'.
+  ## chart.type = 'Cl', you can choose open, high, low or close daily fund size data for 
+  ##   'multiple'.
+  ## num is a vector value which up to the max number of main funds. vKelly() is 1 or 4 while 
+  ##   vKelly2() is 1 or 2. You can select to plot or get only the dataset of certain fund.
+  ## subnum is a vector value which up to the max number of sub funds. max 19 sub funds per 
+  ##   main fund. You can select to plot or get only the dataset of certain fund but not all.
   
   ## --------------------- Load packages ------------------------------------------
   options(warn = -1)
   suppressMessages(library('plyr'))
   suppressMessages(library('tidyverse'))
-  suppressMessages(library('formattable'))
   suppressMessages(library('quantmod'))
   suppressMessages(library('highcharter'))
   suppressMessages(library('doParallel'))
@@ -34,7 +42,6 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
     registerDoParallel(cores = 3)
   }
   ## --------------------- Data Validation ----------------------------------------
-  
   if(any(str_detect(names(K), 'Kelly'))) {
     Kbase <- llply(K[grep('Kelly', names(K), value = TRUE)], function(x) x$BR)
     
@@ -42,7 +49,12 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
     stop('Kindly apply vKelly() or vKelly2() to get the Kelly models and set as the data input `K`.')
   }
   
-  if(!is.numeric(adjusted)) stop('Kindly insert a vector of numeric values.')
+  if(!is.numeric(adjusted)) {
+    stop('Kindly insert a vector of numeric values.')
+    
+  } else {
+    adjusted <- adjusted
+  }
   
   if(is.numeric(initial)) {
     initial <- initial
@@ -59,11 +71,11 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
   }
   
   ## --------------------- Data Manipulation --------------------------------------
-  
   if(by == 'daily') {
     if(by.league == TRUE) {
       Kbase <- llply(Kbase, function(x) {
-        suppressAll(llply(list('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted'), function(y) {
+        suppressAll(llply(
+          list('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted'), function(y) {
           df <- data.frame(x[c('TimeUS', 'DateUS', 'League')], 
                            x[grep(y, names(x), value = TRUE)]) %>% tbl_df
           
@@ -86,11 +98,13 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
             df
           }
         }, .parallel = parallel) %>% join_all %>% tbl_df)
-      }, .parallel = parallel) %>% llply(split(., .$League), function(x) xts(x[-c(1:2)], x$DateUS))
+      }, .parallel = parallel) %>% llply(split(., .$League), 
+                                         function(x) xts(x[-c(1:2)], x$DateUS))
     
     } else {
       Kbase <- llply(Kbase, function(x) {
-        suppressAll(llply(list('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted'), function(y) {
+        suppressAll(llply(
+          list('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted'), function(y) {
           df <- data.frame(x[c('TimeUS', 'DateUS', 'League')], 
                            x[grep(y, names(x), value = TRUE)]) %>% tbl_df
           
@@ -116,7 +130,8 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
   } else if(by == 'time') {
     if(by.league == TRUE) {
       Kbase <- llply(Kbase, function(x) {
-        suppressAll(llply(list('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted'), function(y) {
+        suppressAll(llply(
+          list('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted'), function(y) {
           df <- data.frame(x[c('TimeUS', 'DateUS', 'League')], 
                            x[grep(y, names(x), value = TRUE)]) %>% tbl_df
           
@@ -136,12 +151,13 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
             df
           }
         }, .parallel = parallel) %>% join_all %>% tbl_df)
-      }, .parallel = parallel) %>% llply(split(., .$League), function(x) xts(x[-c(1:2)], x$TimeUS))
+      }, .parallel = parallel) %>% llply(split(., .$League), 
+                                         function(x) xts(x[-c(1:2)], x$TimeUS))
     
     } else {
       Kbase <- llply(Kbase, function(x) {
-        suppressAll(llply(list('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted'), 
-                          function(y) {
+        suppressAll(llply(
+          list('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted'), function(y) {
           df <- data.frame(x[c('TimeUS', 'DateUS', 'League')], 
                            x[grep(y, names(x), value = TRUE)]) %>% tbl_df
           
@@ -168,29 +184,96 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
     stop('Kindly select by = "daily" or by = "time".')
   }
   
-  ## --------------------- Data Visualization -------------------------------------
+  ## --------------------- Data Categorization -------------------------------------
+  ## categorise single or multiple dataset.
+  name <- names(Kbase)
+  subname <- grep('.Open', names(Op(Kbase[[1]])), value = TRUE) %>% 
+    str_split_fixed('\\.', 2) %>% .[, 1]
   
-  if(chart == TRUE) {
-    ## load plotChart()
-    if(type == 'single') {
-      plotFund <- llply(Kbase, plotChart, type = type, event = event, event.dates = event.dates)
-    } else if(type == 'multiple') {
-      plotFund <- llply(Kbase, plotChart, type = type, event = event, event.dates = event.dates, 
-                        chart.type = chart.type)
+  if(is.null(num)) {
+    num <- seq(name)
+  } else if(all(num %in% seq(name)) == FALSE) {
+    stop('Kindly set num as a vector which must be inside the set of ', 
+         paste(seq(name), collapse = ', '), '.')
+  } else {
+    num <- num
+  }
+  
+  if(is.null(subnum)) {
+    subnum <- seq(subname)
+  } else if(all(subnum %in% seq(subname)) == FALSE) {
+    stop('Kindly set subnum as a vector which must be inside the set of ', 
+         paste(seq(subname), collapse = ', '), '.')
+  } else {
+    subnum <- subnum
+  }
+  
+  if(type == 'single') {
+    ## --------------------- Single Sub Funds -------------------------------------
+    Kbase <- llply(Kbase, function(x) {
+      z = llply(subname, function(y) {
+        x[, y == str_replace_all(
+          names(x), '\\.Open|\\.High|\\.Low|\\.Close|\\.Volume|\\.Adjusted', '')]
+      }, .parallel = parallel)
+      names(z) = subname; z
+    }, .parallel = parallel)
+    
+    Kbase <- llply(num, function(i) {
+      z = llply(subnum, function(j) {
+        plotFund[[i]][[j]]
+      }, .parallel = parallel)
+      names(z) <- subname[subnum]; z
+    }, .parallel = parallel)
+    names(Kbase) <- name[num]
+    
+    if(chart == TRUE) {
+      ## --------------------- Data Visualization -------------------------------
+      ## plot a single fund candle stick chart.
+      
+      plotFund <- paste('plotFund(Fund = ', names(Kbase), '$', sapply(Kbase, names), 
+               ', type = \'single\', event = event, event.dates = event.dates);')
+      
+      options(warn = 0)
+      return(eval(parse(text = plotFund)))
+      
+    } else if(chart == FALSE) {
+      options(warn = 0)
+      return(Kbase)
+      
     } else {
-      stop('Kindly choose type = "single" or type = "multiple" if you choose chart = TRUE.')
+      options(warn = 0)
+      stop('Kindly choose chart = TRUE or chart = FALSE.')
     }
     
-    return(plotFund)
-    
-  } else if(chart == FALSE) {
-    ## --------------------- Return Function ----------------------------------------
-    options(warn = 0)
-    return(Kbase)
+  } else if(type == 'multiple') {
+    ## --------------------- Multiple Sub Funds ---------------------------------
+    Kbase <- llply(Kbase, function(x) {
+      x[, sapply(
+        subname[subnum], paste0, 
+        c('.Open', 'High', '.Low', '.Close', '.Volume', '.Adjusted')) %>% as.vector]
+    }, .parallel = parallel)
+      
+    if(chart == TRUE) {
+      ## --------------------- Data Visualization -------------------------------
+      ## plot a multiple sub funds trend chart.
+      plotFund <- paste0(
+        'plotFund(Fund = ', names(Kbase), 
+        ', type = \'multiple\', event = event, event.dates = event.dates, chart.type = chart.type);')
+      
+      options(warn = 0)
+      return(eval(parse(text = plotFund)))
+      
+    } else if(chart == FALSE) {
+      options(warn = 0)
+      return(Kbase)
+      
+    } else {
+      options(warn = 0)
+      stop('Kindly choose chart = TRUE or chart = FALSE.')
+    }
     
   } else {
-    options(warn = 0)
-    stop('Kindly choose chart = TRUE or chart = FALSE.')
+    stop('Kindly choose type = "single" or type = "multiple" if you choose chart = TRUE.')
   }
 }
 
