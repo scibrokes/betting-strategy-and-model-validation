@@ -24,8 +24,8 @@ simulateKelly <- function(mbase, lPmean = 'runif', type = 'vKelly', Kelly.type =
   ## truncated.scores = 'option1' until truncated.scores = 'option7' which will simulate the 
   ##   soccer scores result for Kelly model proceed further and eventaully get the P&L from 
   ##   investment.
-  
-  
+  ## --------------------- Load Packages -------------------------------- 
+  suppressMessages(source('./function/rScores.R', local = TRUE))
   
   ## --------------------- Data validation -------------------------------- 
   if(!is.data.frame(mbase)) stop('Kindly apply the readfirmData() and arrfirmData() 
@@ -124,13 +124,10 @@ simulateKelly <- function(mbase, lPmean = 'runif', type = 'vKelly', Kelly.type =
       ## I directly apply the model8 as refer to below paper to simulate a final scores of a soccer match.
       ## chrome-extension://oemmndcbldboiebfnladdacbdfmadadm/http://tolstoy.newcastle.edu.au/R/e8/help/att-6544/karlisntzuofras03.pdf
       
+      ## 
+      
       mbase %>% mutate(FTHG = rpois(length(FTHG), rnorm(mean(FTHG), sd(FTHG))), 
                         FTAG = rpois(length(FTAG), rnorm(mean(FTAG), sd(FTAG))))
-      ## --------------- start wrong ------------------------
-      > dat %>% mutate(FTHG = rpois(length(FTHG), rnorm(mean(FTHG), sd(FTHG))), 
-                       FTAG = rpois(length(FTAG), rnorm(mean(FTAG), sd(FTAG))), DIFF = FTHG - FTAG) %>% select(FTHG, FTAG, DIFF) %>% apply(2, mean, na.rm = TRUE)
-      
-      ## ------------- end wrong ----------------------
       
       lProf <- leagueProf %>% 
         mutate(mean = ifelse(lPmean == 'runif', runif(mean, min, max), 

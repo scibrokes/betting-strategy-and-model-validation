@@ -1,4 +1,4 @@
-rScores <- function(mbase, type = 'option6', print.loop = FALSE) {
+rScores <- function(mbase, type = 'option10', print.loop = FALSE) {
   ## type = 'option1' until type = 'option9' which will simulate the 
   ##   soccer scores result for Kelly model proceed further and eventaully get the P&L from 
   ##   investment.

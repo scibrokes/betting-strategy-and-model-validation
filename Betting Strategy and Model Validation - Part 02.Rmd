@@ -77,8 +77,11 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
     + Section [4.4.3 ®γσ, Eng Lian Hu (2016)] - Odds Modelling and Testing Efficiency in Sportsbook Betting.
     + Section [4.4.4 Combination Handicap] - Descrete result of handicap and P&L.
   - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - Simulate the staking model.
-    + Section []
+    + Section [4.5.1 Risk Management]
+    + Section [4.5.2 Investors' Fund Refill]
   - Section [4.6 Expectation Ⓜaximization and Staking Simulation] - Enhance by weighted function on Staking model and Simulation.
+    + Section [4.6.1 Truncated Bivariate Normal Distribution] - Test the best fit random scoring models.
+    + Section [4.6.2 Resampling Scores and Stakes] - Application of Monte Carlo Method to get the optimal return from investment.
 
 ## 4.1 Basic Equation
 
@@ -1219,7 +1222,8 @@ suppressMessages(source('./function/vKelly.R'))
 
 ## Applied various fractional Kelly models version I.
 ##   stakes based reverser models.
-K1W1 <- vKelly(dat, type = 'weight1')
+#'@ K1W1 <- vKelly(dat, type = 'W1')
+K1W1 <- read_rds(path = './data/K1W1.rds')
 
 K1W1sum <- data.frame(K1W1.1 = K1W1$Kelly1$summary, A = '', K1W1.2 = K1W1$Kelly2$summary, B = '', K1W1.3 = K1W1$Kelly3$summary, C = '', K1W1.4 = K1W1$Kelly4$summary) %>% tbl_df
 
@@ -1250,7 +1254,8 @@ tagList(
 #'@ suppressMessages(library('formattable'))
 ## Applied various fractional Kelly models version I.
 ##   stakes based reverser models.
-K1W2 <- vKelly(dat, type = 'weight2')
+#'@ K1W2 <- vKelly(dat, type = 'W2')
+K1W2 <- read_rds(path = './data/K1W2.rds')
 
 K1W2sum <- data.frame(K1W2.1 = K1W2$Kelly1$summary, A = '', K1W2.2 = K1W2$Kelly2$summary, B = '', K1W2.3 = K1W2$Kelly3$summary, C = '', K1W2.4 = K1W2$Kelly4$summary) %>% tbl_df
 
@@ -1287,7 +1292,8 @@ suppressMessages(source('./function/vKelly2.R'))
 
 ## Applied various fractional Kelly models version II.
 ##   rEMProb based model without adjust the stakes.
-K2W1 <- vKelly2(dat, type = 'weight1')
+#'@ K2W1 <- vKelly2(dat, type = 'W1')
+K2W1 <- read_rds(path = './data/K2W1.rds')
 
 K2W1sum <- data.frame(K2W1.1 = K2W1$Kelly1$summary, A = '', K2W1.2 = K2W1$Kelly2$summary) %>% tbl_df
 
@@ -1316,7 +1322,8 @@ tagList(
 
 ```{r K2W2, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
-K2W2 <- vKelly2(dat, type = 'weight2')
+#'@ K2W2 <- vKelly2(dat, type = 'W2')
+K2W2 <- read_rds(path = './data/K2W2.rds')
 
 K2W2sum <- data.frame(K2W2.1 = K2W2$Kelly1$summary, A = '', K2W2.2 = K2W2$Kelly2$summary) %>% tbl_df
 
@@ -1354,7 +1361,8 @@ tagList(
 ```{r K1D1, echo = FALSE, results = 'asis'}
 ## Applied various fractional Kelly models version I.
 ##   stakes based reverser models.
-K1D1 <- vKelly(dat, type = 'dynamic1')
+#'@ K1D1 <- vKelly(dat, type = 'D1')
+K1D1 <- read_rds(path = './data/K1D1.rds')
 
 K1D1sum <- data.frame(K1D1.1 = K1D1$Kelly1$summary, A = '', K1D1.2 = K1D1$Kelly2$summary, B = '', K1D1.3 = K1D1$Kelly3$summary, C = '', K1D1.4 = K1D1$Kelly4$summary) %>% tbl_df
 
@@ -1380,7 +1388,8 @@ tagList(
 *table 4.3.4.1A* : `r paste0(dim(K1D1sum), collapse = ' x ')` : *PL of Reversed stakes dynamic 1 Kelly models 1 year 2012~2015.*
 
 ```{r K1D2, echo = FALSE, results = 'asis'}
-K1D2 <- vKelly(dat, type = 'dynamic2')
+#'@ K1D2 <- vKelly(dat, type = 'D2')
+K1D2 <- read_rds(path = './data/K1D2.rds')
 
 K1D2sum <- data.frame(K1D2.1 = K1D2$Kelly1$summary, A = '', K1D2.2 = K1D2$Kelly2$summary, B = '', K1D2.3 = K1D2$Kelly3$summary, C = '', K1D2.4 = K1D2$Kelly4$summary) %>% tbl_df
 
@@ -1408,7 +1417,8 @@ tagList(
 #### Reversed rEMProbB based Kelly models
 
 ```{r K2D1, echo = FALSE, results = 'asis'}
-K2D1 <- vKelly2(dat, type = 'dynamic1')
+#'@ K2D1 <- vKelly2(dat, type = 'D1')
+K2D1 <- read_rds(path = './data/K2D1.rds')
 
 K2D1sum <- data.frame(K2D1.1 = K2D1$Kelly1$summary, A = '', K2D1.2 = K2D1$Kelly2$summary) %>% tbl_df
 
@@ -1434,7 +1444,8 @@ tagList(
 *table 4.3.4.2A* : `r paste0(dim(K2D1sum), collapse = ' x ')` : *PL of Reversed rEMProbB dynamic 1 Kelly models 2 year 2012~2015.*
 
 ```{r K2D2, echo = FALSE, results = 'asis'}
-K2D2 <- vKelly2(dat, type = 'dynamic2')
+#'@ K2D2 <- vKelly2(dat, type = 'D2')
+K2D2 <- read_rds(path = './data/K2D2.rds')
 
 K2D2sum <- data.frame(K2D2.1 = K2D2$Kelly1$summary, A = '', K2D2.2 = K2D2$Kelly2$summary) %>% tbl_df
 
@@ -1471,7 +1482,12 @@ tagList(
 ```{r bank-roll, echo = FALSE, results = 'asis'}
 suppressAll(library('highcharter'))
 suppressAll(source('./function/compareKelly.R'))
-compareKelly(K1, chart = TRUE, type = 'multiple')
+#'@ compareKelly(K1, chart = TRUE, type = 'multiple') # workable if run in chunk but but not in knit.
+KCS1 <- read_rds(path = './data/K1.rds')$Kelly1 #Kelly 1 Candle Stick model 1
+
+## directly load internal function in compareKelly.
+suppressAll(source('./function/plotChart.R'))
+plotChart(Fund = KCS1, type = 'multiple')
 ```
 
 *graph 4.3.5.1 : Daily bank roll for Basic Kelly model.*
@@ -1629,7 +1645,7 @@ K %>% formattable(list(
     Change = formatter('span', style = ~ style(color = ifelse(Change < 0, 'red', 'green')), ~ icontext(ifelse(Change < 0, 'arrow-down', 'arrow-up'), Change))))
 ```
 
-*table 4.5.1* : `r paste0(dim(K), collapse = ' x ')` : *Kelly stakes and firm A's stakes of annually investment summary table.*
+*table 4.5.1.1* : `r paste0(dim(K), collapse = ' x ')` : *Kelly stakes and firm A's stakes of annually investment summary table.*
 
 ### 4.5.2 Investors' Fund Refill
 
@@ -1649,21 +1665,13 @@ K %>% formattable(list(
   - $D$ is the betting stakes per annum.
   - $S = 1$ due to there has no setup costs per lot. (unless we count in the bank charges, for example : western union, Entropay, bank transfer fee, etc)
 
-  You are feel free to know about inventory management via [Module 3: Inventory and Supply Chain Management](http://rpubs.com/englianhu/188394).
+  You are feel free to know about inventory management and Kelly fund portfolio management via [Module 3: Inventory and Supply Chain Management](http://rpubs.com/englianhu/188394).
 
 ## 4.6 Expectation Ⓜaximization and Staking Simulation
 
-  From the article [凯利模式资金管理](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)^[You might refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion) as well.] we know the application of generalization of Kelly criterion for uneven payoff games.
+### 4.6.1 Truncated Bivariate Normal Distribution
 
-$$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1}{N}\log\left( {\frac{{{S_N}}}{{{S_0}}}} \right) \cdots equation\ 4.3.2$$
-
-  In order to get the optimal value, I apply the bootrapping and resampling method.
-  
-$$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
-  
-  Now we look at abpve function from a different perspective by considering the observed values $x_{1}, x_{2}, x_{3}… x_{n}$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
-
-  Now I try to simulate all 110 Kelly weighted models 100 times by resampling the scores by using *trancated bivariate normal distribution*^[You can refer to few r packages which are [MASS](https://cran.r-project.org/web/packages/MASS/index.html), [mvtnorm](https://cran.r-project.org/web/packages/mvtnorm/index.html) and [tmvtnorm](https://cran.r-project.org/web/packages/tmvtnorm/index.html).] and the weight parameters to get the optimal result.
+  Before I simulate all 110 Kelly weighted models 100 times by resampling the scores. Here I using few different *trancated bivariate normal distribution*^[You can refer to few r packages which are [MASS](https://cran.r-project.org/web/packages/MASS/index.html), [mvtnorm](https://cran.r-project.org/web/packages/mvtnorm/index.html) and [tmvtnorm](https://cran.r-project.org/web/packages/tmvtnorm/index.html).] and the weight parameters to get the optimal randomise scores.
 
   Due to there has negative lambda values which unable proceed a scores based on basic bivariate normal distribution. Here I try to build few models in order to get the best fit model for soccer scores resampling.
 
@@ -1720,10 +1728,212 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
     
   - 10th bivariate normal distribution
     
-  
-```{r}
+    + apply truncated adjustment with set a set of lower and upper values.
+    + set mean values as lower interval and 3rd quantile values as upper interval.
+    + apply looping to get the likehood values by stepwise exoanding 0.0001 to both lower and upper interval.
+    
+```{r test-scores, echo = FALSE, results = 'asis'}
+## Test the efficiency of truncated normal distribution.
+#'@ source('./function/rScores.R', local = TRUE)
+#'@ scores <- dat[c('FTHG', 'FTAG')]
+#'@ scores1 <- rScores(dat, type = 'option1')
+#'@ scores2 <- rScores(dat, type = 'option2')
+#'@ scores3 <- rScores(dat, type = 'option3')
+#'@ scores4 <- rScores(dat, type = 'option4')
+#'@ scores5 <- rScores(dat, type = 'option5')
+#'@ scores6 <- rScores(dat, type = 'option6')
+#'@ scores7 <- rScores(dat, type = 'option7')
+#'@ scores8 <- rScores(dat, type = 'option8')
+#'@ scores9 <- rScores(dat, type = 'option9')
+#'@ scores10 <- rScores(dat, type = 'option10')
 
+## save random scoring models.
+#'@ saveRDS(scores, file = './data/scores.rds')
+#'@ saveRDS(scores1, file = './data/scores1.rds')
+#'@ saveRDS(scores2, file = './data/scores2.rds')
+#'@ saveRDS(scores3, file = './data/scores3.rds')
+#'@ saveRDS(scores4, file = './data/scores4.rds')
+#'@ saveRDS(scores5, file = './data/scores5.rds')
+#'@ saveRDS(scores6, file = './data/scores6.rds')
+#'@ saveRDS(scores7, file = './data/scores7.rds')
+#'@ saveRDS(scores8, file = './data/scores8.rds')
+#'@ saveRDS(scores9, file = './data/scores9.rds')
+#'@ saveRDS(scores10, file = './data/scores10.rds')
+
+## read random scoring models.
+scores <- read_rds(path = './data/scores.rds')
+scores1 <- read_rds(path = './data/scores1.rds')
+scores2 <- read_rds(path = './data/scores2.rds')
+scores3 <- read_rds(path = './data/scores3.rds')
+scores4 <- read_rds(path = './data/scores4.rds')
+scores5 <- read_rds(path = './data/scores5.rds')
+scores6 <- read_rds(path = './data/scores6.rds')
+scores7 <- read_rds(path = './data/scores7.rds')
+scores8 <- read_rds(path = './data/scores8.rds')
+scores9 <- read_rds(path = './data/scores9.rds')
+scores10 <- read_rds(path = './data/scores10.rds')
+
+sc0 <- lm(scores$FTHG ~ scores$FTAG)
+sc1 <- lm(scores1$pred$FTHG ~ scores1$pred$FTAG)
+sc2 <- lm(scores2$pred$FTHG ~ scores2$pred$FTAG)
+sc3 <- lm(scores3$pred$FTHG ~ scores3$pred$FTAG)
+sc4 <- lm(scores4$pred$FTHG ~ scores4$pred$FTAG)
+sc5 <- lm(scores5$pred$FTHG ~ scores5$pred$FTAG)
+sc6 <- lm(scores6$pred$FTHG ~ scores6$pred$FTAG)
+sc7 <- lm(scores7$pred$FTHG ~ scores7$pred$FTAG)
+sc8 <- lm(scores8$pred$FTHG ~ scores8$pred$FTAG)
+sc9 <- lm(scores9$pred$FTHG ~ scores9$pred$FTAG)
+sc10 <- lm(scores10$pred$FTHG ~ scores10$pred$FTAG)
 ```
+
+```{r test-scores1A, echo = FALSE, results = 'asis'}
+par(mfrow = c(2, 4))
+plot(sc0, main = 'raw', pch = '+')
+plot(sc1, main = 'option1', pch = '+')
+```
+
+*graph 4.6.1.1A : comparison of random scoring models.*
+
+```{r test-scores1B, echo = FALSE, results = 'asis'}
+par(mfrow = c(2, 4))
+plot(sc0, main = 'raw', pch = '+')
+plot(sc2, main = 'option2', pch = '+')
+```
+
+*graph 4.6.1.1B : comparison of random scoring models.*
+
+```{r test-scores1C, echo = FALSE, results = 'asis'}
+par(mfrow = c(2, 4))
+plot(sc0, main = 'raw', pch = '+')
+plot(sc3, main = 'option3', pch = '+')
+```
+
+*graph 4.6.1.1C : comparison of random scoring models.*
+
+```{r test-scores1D, echo = FALSE, results = 'asis'}
+par(mfrow = c(2, 4))
+plot(sc0, main = 'raw', pch = '+')
+plot(sc4, main = 'option4', pch = '+')
+```
+
+*graph 4.6.1.1D : comparison of random scoring models.*
+
+```{r test-scores1E, echo = FALSE, results = 'asis'}
+par(mfrow = c(2, 4))
+plot(sc0, main = 'raw', pch = '+')
+plot(sc5, main = 'option5', pch = '+')
+```
+
+*graph 4.6.1.1E : comparison of random scoring models.*
+
+```{r test-scores1F, echo = FALSE, results = 'asis'}
+par(mfrow = c(2, 4))
+plot(sc0, main = 'raw', pch = '+')
+plot(sc6, main = 'option6', pch = '+')
+```
+
+*graph 4.6.1.1F : comparison of random scoring models.*
+
+```{r test-scores1G, echo = FALSE, results = 'asis'}
+par(mfrow = c(2, 4))
+plot(sc0, main = 'raw', pch = '+')
+plot(sc7, main = 'option7', pch = '+')
+```
+
+*graph 4.6.1.1G : comparison of random scoring models.*
+
+```{r test-scores1H, echo = FALSE, results = 'asis'}
+par(mfrow = c(2, 4))
+plot(sc0, main = 'raw', pch = '+')
+plot(sc8, main = 'option8', pch = '+')
+```
+
+*graph 4.6.1.1H : comparison of random scoring models.*
+
+```{r test-scores1I, echo = FALSE, results = 'asis'}
+par(mfrow = c(2, 4))
+plot(sc0, main = 'raw', pch = '+')
+plot(sc9, main = 'option9', pch = '+')
+```
+
+*graph 4.6.1.1I : comparison of random scoring models.*
+
+```{r test-scores1J, echo = FALSE, results = 'asis'}
+par(mfrow = c(2, 4))
+plot(sc0, main = 'raw', pch = '+')
+plot(sc10, main = 'option10', pch = '+')
+```
+
+*graph 4.6.1.1J : comparison of random scoring models.*
+
+```{r test-scores-sum, echo = FALSE, results = 'asis'}
+suppressPackageStartupMessages(library('formattable'))
+pstpois <- list(scores1 = scores1$pstpois, scores2 = scores2$pstpois, 
+                scores3 = scores3$pstpois, scores4 = scores4$pstpois, 
+                scores5 = scores5$pstpois, scores6 = scores6$pstpois, 
+                scores7 = scores7$pstpois, scores8 = scores8$pstpois, 
+                scores9 = scores9$pstpois, scores10 = scores10$pstpois)
+rm(scores, scores1, scores2, scores3, scores4, scores5, scores6, scores7, scores8, scores9, scores10)
+
+scs.m <- ldply(pstpois, function(x) x$mean) %>% mutate(.id = paste(.id, c('home', 'away'), sep = '.'))
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "Truncated Bivariate Normal Distribution"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Mean values and comparison among randomize bivariate scoring models")), 
+  as.htmlwidget(scs.m %>% formattable))
+```
+
+*table 4.5.2.1A* : `r paste0(dim(scs.m), collapse = ' x ')` : *Comparison of truncated bivariate normal distributions part-1.*
+
+```{r test-scores-var, echo = FALSE, results = 'asis'}
+scs.v <- ldply(pstpois, function(x) x$var) %>% mutate(.id = paste(.id, c('FTHG', 'FTAG'), sep = '.'))
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "Truncated Bivariate Normal Distribution"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "variance among randomize bivariate scoring models")), 
+  as.htmlwidget(scs.v %>% formattable))
+```
+
+*table 4.5.2.1B* : `r paste0(dim(scs.v), collapse = ' x ')` : *Comparison of truncated bivariate normal distributions part-2.*
+
+```{r test-scores-lm, echo = FALSE, results = 'asis'}
+suppressPackageStartupMessages(library('broom'))
+#'@ llply(list(option0 = sc0, option1 = sc1, option2 = sc2, option3 = sc3, option4 = sc4, option5 = sc5, option6 = sc6, option7 = sc7, option8 = sc8, option9 = sc9, option10 = sc10), summary)
+
+scs.b <- ldply(list(option0 = sc0, option1 = sc1, option2 = sc2, option3 = sc3, option4 = sc4, option5 = sc5, option6 = sc6, option7 = sc7, option8 = sc8, option9 = sc9, option10 = sc10), tidy)
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "Truncated Bivariate Normal Distribution"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "summary among randomize bivariate scoring models")), 
+  as.htmlwidget(scs.b %>% formattable))
+```
+  
+  You are feel free to refer to below articles for further understanding:
+  
+  - [Introduction to Bivariate Analysis](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Introduction%20to%20Bivariate%20Analysis.pdf)
+  - [How can I tell if a model fits my data?](http://www.itl.nist.gov/div898/handbook/pmd/section4/pmd44.htm)
+  - [A residuals vs. fits plot](https://onlinecourses.science.psu.edu/stat501/node/36)
+
+### 4.6.2 Resampling Scores and Stakes
+
+  From the article [凯利模式资金管理](http://ch-hsieh.blogspot.com/2015/01/kelly-criterion-0.html)^[You might refer to [Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion) as well.] we know the application of generalization of Kelly criterion for uneven payoff games.
+
+$$G: = \mathop {\lim }\limits_{N \to \infty } \frac{1}{N}\log\left( {\frac{{{S_N}}}{{{S_0}}}} \right) \cdots equation\ 4.3.2$$
+
+  In order to get the optimal value, I apply the bootrapping and resampling method.
+  
+$$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
+  
+  Now we look at abpve function from a different perspective by considering the observed values $x_{1}, x_{2}, x_{3}… x_{n}$ to be fixed *parameters* of this function, whereas $\rho$ will be the function's variable and allowed to vary freely; this function will be called the [**likelihood**](https://onlinecourses.science.psu.edu/stat414/node/191).
 
 # 5. ®esult
 
@@ -1747,10 +1957,11 @@ Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 
 ### 5.1.2 Comparison of Missing Bets
 
-  Due to I have no followed bets data, therefore there has no any clue but based on my previous experience in Telebiz, Caspo and Global Solution Sdn Bhd as list in my [CV](https://beta.rstudioconnect.com/englianhu/ryo-eng/ryo-eng.html) I try to adjust setting of 90% successful following rates and 90% of average odds compare to firm A.
+  <s>Due to I have no followed bets data, therefore there has no any clue but based on my previous experience in Telebiz, Caspo and Global Solution Sdn Bhd as list in my [CV](https://beta.rstudioconnect.com/englianhu/ryo-eng/ryo-eng.html) I try to adjust setting of 90% successful following rates and 90% of average odds compare to firm A.
   
-  According to above result, in order to made it workable in real life. Here I simulate whole Kelly function with monte carlo method to get the return.
+  According to above result, in order to made it workable in real life. Here I simulate whole Kelly function with monte carlo method to get the return.</s>
 
+  Here I skip this sub-section due to no following bets dataset and somemore there is a profit sharing investment business.
 
 ## 5.2 Market Basket
 

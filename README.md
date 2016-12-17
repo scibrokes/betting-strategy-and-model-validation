@@ -51,8 +51,8 @@
 
 ## 5. Reference
 
-1. [**Odds Modelling and Testing Inefficiency of Sports Bookmakers : Rmodel** by Â®Î³Ïƒ, Eng Lian Hu (2016)](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers)
-2. [**Apply Kelly-Criterion on English Soccer 2011/12 to 2012/13** *by Â®Î³Ïƒ, Eng Lian Hu (2014)*](https://github.com/scibrokes/kelly-criterion)
+1. [**Odds Modelling and Testing Inefficiency of Sports Bookmakers : Rmodel** by ?¦Ã¦Ò, Eng Lian Hu (2016)](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers)
+2. [**Apply Kelly-Criterion on English Soccer 2011/12 to 2012/13** *by ?¦Ã¦Ò, Eng Lian Hu (2014)*](https://github.com/scibrokes/kelly-criterion)
 3. [**Creating a Profitable Betting Strategy for Football by Using Statistical Modelling** *by Niko Marttinen (2006)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Creating%20a%20Profitable%20Betting%20Strategy%20for%20Football%20by%20Using%20Statistical%20Modelling.pdf)
 
-**Powered by - CopyrightÂ® Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [ScibrokesÂ®](http://www.scibrokes.com)å€‹äººã®çµŒå–¶ä¼æ¥­**
+**Powered by - Copyright? Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes?](http://www.scibrokes.com)‚€ÈË¤Î½U†ÓÆó˜I**

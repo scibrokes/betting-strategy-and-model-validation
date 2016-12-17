@@ -1507,6 +1507,77 @@ source('./function/readKelly.R', local = TRUE)
 BRSummary <- readKelly()
 saveRDS(BRSummary, file = './data/BRSummary.rds')
 
+## ================== Load Data ================================
+## When we saved data by execute above codes, then we just load the data from here onwards. 
+## Simulate and save Kelly models for easily loading
+source('./function/libs.R')
+load('./KellyApps/shinyData.RData')
+
+## Test the efficiency of truncated normal distribution.
+#'@ source('./function/rScores.R', local = TRUE)
+#'@ scores <- dat[c('FTHG', 'FTAG')]
+#'@ scores1 <- rScores(dat, type = 'option1')
+#'@ scores2 <- rScores(dat, type = 'option2')
+#'@ scores3 <- rScores(dat, type = 'option3')
+#'@ scores4 <- rScores(dat, type = 'option4')
+#'@ scores5 <- rScores(dat, type = 'option5')
+#'@ scores6 <- rScores(dat, type = 'option6')
+#'@ scores7 <- rScores(dat, type = 'option7')
+#'@ scores8 <- rScores(dat, type = 'option8')
+#'@ scores9 <- rScores(dat, type = 'option9')
+#'@ scores10 <- rScores(dat, type = 'option10')
+
+## save random scoring models.
+#'@ saveRDS(scores, file = './data/scores.rds')
+#'@ saveRDS(scores1, file = './data/scores1.rds')
+#'@ saveRDS(scores2, file = './data/scores2.rds')
+#'@ saveRDS(scores3, file = './data/scores3.rds')
+#'@ saveRDS(scores4, file = './data/scores4.rds')
+#'@ saveRDS(scores5, file = './data/scores5.rds')
+#'@ saveRDS(scores6, file = './data/scores6.rds')
+#'@ saveRDS(scores7, file = './data/scores7.rds')
+#'@ saveRDS(scores8, file = './data/scores8.rds')
+#'@ saveRDS(scores9, file = './data/scores9.rds')
+#'@ saveRDS(scores10, file = './data/scores10.rds')
+
+## read random scoring models.
+scores <- read_rds(path = './data/scores.rds')
+scores1 <- read_rds(path = './data/scores1.rds')
+scores2 <- read_rds(path = './data/scores2.rds')
+scores3 <- read_rds(path = './data/scores3.rds')
+scores4 <- read_rds(path = './data/scores4.rds')
+scores5 <- read_rds(path = './data/scores5.rds')
+scores6 <- read_rds(path = './data/scores6.rds')
+scores7 <- read_rds(path = './data/scores7.rds')
+scores8 <- read_rds(path = './data/scores8.rds')
+scores9 <- read_rds(path = './data/scores9.rds')
+scores10 <- read_rds(path = './data/scores10.rds')
+
+par(mfrow = c(3, 4))
+plot(lm(dat$FTHG ~ dat$FTAG), main = 'raw1', pch = '+')
+plot(lm(scores1$pred$FTHG ~ scores1$pred$FTAG), main = 'option1', pch = '+')
+plot(lm(scores2$pred$FTHG ~ scores2$pred$FTAG), main = 'option2', pch = '+')
+
+par(mfrow = c(3, 4))
+plot(lm(dat$FTHG ~ dat$FTAG), main = 'raw1', pch = '+')
+plot(lm(scores3$pred$FTHG ~ scores3$pred$FTAG), main = 'option3', pch = '+')
+plot(lm(scores4$pred$FTHG ~ scores4$pred$FTAG), main = 'option4', pch = '+')
+
+par(mfrow = c(3, 4))
+plot(lm(dat$FTHG ~ dat$FTAG), main = 'raw1', pch = '+')
+plot(lm(scores5$pred$FTHG ~ scores5$pred$FTAG), main = 'option5', pch = '+')
+plot(lm(scores6$pred$FTHG ~ scores6$pred$FTAG), main = 'option6', pch = '+')
+
+par(mfrow = c(3, 4))
+plot(lm(dat$FTHG ~ dat$FTAG), main = 'raw1', pch = '+')
+plot(lm(scores7$pred$FTHG ~ scores7$pred$FTAG), main = 'option7', pch = '+')
+plot(lm(scores8$pred$FTHG ~ scores8$pred$FTAG), main = 'option8', pch = '+')
+
+par(mfrow = c(3, 4))
+plot(lm(dat$FTHG ~ dat$FTAG), main = 'raw1', pch = '+')
+plot(lm(scores9$pred$FTHG ~ scores9$pred$FTAG), main = 'option9', pch = '+')
+plot(lm(scores10$pred$FTHG ~ scores10$pred$FTAG), main = 'option10', pch = '+')
+
 ## ================== Plot Investment Fund =============================
 ## Convert the various Kelly models into quantmod's xts format for ploting. Compare the growth of 
 ##   investment funds.
