@@ -220,7 +220,7 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
     
     Kbase <- llply(num, function(i) {
       z = llply(subnum, function(j) {
-        plotFund[[i]][[j]]
+        Kbase[[i]][[j]]
       }, .parallel = parallel)
       names(z) <- subname[subnum]; z
     }, .parallel = parallel)
@@ -230,11 +230,11 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
       ## --------------------- Data Visualization -------------------------------
       ## plot a single fund candle stick chart.
       
-      plotFund <- paste('plotFund(Fund = ', names(Kbase), '$', sapply(Kbase, names), 
+      plotFund <- paste0('plotChart(Fund = Kbase$', names(Kbase), '$', sapply(Kbase, names), 
                ', type = \'single\', event = event, event.dates = event.dates);')
       
       options(warn = 0)
-      return(eval(parse(text = plotFund)))
+      return(llply(plotFund, function(x) eval(parse(text = x))))
       
     } else if(chart == FALSE) {
       options(warn = 0)
@@ -257,11 +257,11 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
       ## --------------------- Data Visualization -------------------------------
       ## plot a multiple sub funds trend chart.
       plotFund <- paste0(
-        'plotFund(Fund = ', names(Kbase), 
+        'plotChart(Fund = Kbase$', names(Kbase), 
         ', type = \'multiple\', event = event, event.dates = event.dates, chart.type = chart.type);')
       
       options(warn = 0)
-      return(eval(parse(text = plotFund)))
+      return(llply(plotFund, function(x) eval(parse(text = x))))
       
     } else if(chart == FALSE) {
       options(warn = 0)
