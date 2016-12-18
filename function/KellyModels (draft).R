@@ -1,6 +1,6 @@
 ## ================== Load Data ================================
 ## Simulate and save Kelly models for easily loading
-#'@ source('./function/libs.R')
+#'@ source('./function/libs.R', local = TRUE)
 #'@ load('./KellyApps/shinyData.RData', envir = .GlobalEnv)
 
 ## ================== League Profile ===========================
@@ -9,7 +9,7 @@
 ##   and then you can just execute the === Kelly Models === section since it will auto read saved 
 ##   profiles which will be more efficient compare to use vKelly() to calculate the weighted parameters 
 ##   and get the result from start to end will take few minutes time to complete.
-#'@ source('./function/leagueRiskProf.R')
+#'@ source('./function/leagueRiskProf.R', local = TRUE)
 
 ## --------------- league weight parameters --------------------
 #'@ lRProf1A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'all')
@@ -86,7 +86,7 @@
 ## I wrote a function for league risk profiles and weight profiles handling. You can just easily 
 ##   load below function to save. load and auto calculate + save/load (if the files are not exist).
 
-source('./function/profHandling.R')
+source('./function/profHandling.R', local = TRUE)
 wProf = profHandling()
 lRProf = profHandling(type = 'weight.stakes')
 rm(profHandling)
@@ -103,7 +103,7 @@ rm(profHandling)
 ## ================== Load Data ================================
 ## When we saved data by execute above codes, then we just load the data from here onwards. 
 ## Simulate and save Kelly models for easily loading
-source('./function/libs.R')
+source('./function/libs.R', local = TRUE)
 load('./KellyApps/shinyData.RData')
 
 ## ================== Kelly Models =============================
@@ -1455,7 +1455,7 @@ if(exists('K2D2DWS2OO')) {
 }
 
 ## ================== Monte-Carlo Simulation =============================
-source('./function/simulateKelly.R')
+source('./function/simulateKelly.R', local = TRUE)
 
 
 
@@ -1510,7 +1510,7 @@ saveRDS(BRSummary, file = './data/BRSummary.rds')
 ## ================== Load Data ================================
 ## When we saved data by execute above codes, then we just load the data from here onwards. 
 ## Simulate and save Kelly models for easily loading
-source('./function/libs.R')
+source('./function/libs.R', local = TRUE)
 load('./KellyApps/shinyData.RData')
 
 ## Test the efficiency of truncated normal distribution.
@@ -1581,7 +1581,7 @@ plot(lm(scores10$pred$FTHG ~ scores10$pred$FTAG), main = 'option10', pch = '+')
 ## ================== Plot Investment Fund =============================
 ## Convert the various Kelly models into quantmod's xts format for ploting. Compare the growth of 
 ##   investment funds.
-source('./function/compareKelly.R')
+source('./function/compareKelly.R', local = TRUE)
 compareKelly
 
 

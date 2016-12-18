@@ -230,11 +230,13 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
       ## --------------------- Data Visualization -------------------------------
       ## plot a single fund candle stick chart.
       
-      plotFund <- paste0('plotChart(Fund = Kbase$', names(Kbase), '$', sapply(Kbase, names), 
-               ', type = \'single\', event = event, event.dates = event.dates);')
+      plotFund <- paste0('list(', paste0(llply(name[num], function(x) {
+        paste0('Fund.', x, '.', subname[subnum], ' = plotChart(Fund = Kbase$', x, '$', 
+               subname[subnum], ', type = \'single\')', collapse = ', ')
+      }) %>% unlist, collapse = ', '), ')')
       
       options(warn = 0)
-      return(llply(plotFund, function(x) eval(parse(text = x))))
+      return(eval(parse(text = plotFund)))
       
     } else if(chart == FALSE) {
       options(warn = 0)
@@ -250,18 +252,40 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
     Kbase <- llply(Kbase, function(x) {
       x[, sapply(
         subname[subnum], paste0, 
-        c('.Open', 'High', '.Low', '.Close', '.Volume', '.Adjusted')) %>% as.vector]
+        c('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted')) %>% as.vector]
     }, .parallel = parallel)
-      
+    
+    ## combine all Kelly models to be one to plot for multiple funds comparison chart.
+    Kbase <- llply(name[num], function(x) {
+      y = Kbase[[x]]
+      names(y) = paste0(x, '.', names(y)); y
+    }, .parallel = parallel) %>% do.call(cbind, .)
+    
+    #> system.time(do.call(cbind, Fund))
+    #user system   棳惱 
+    #6.17   0.02   6.28 
+    #> system.time(do.call(merge, Fund))
+    #user system   棳惱 
+    #6.19   0.00   6.52
+    
     if(chart == TRUE) {
       ## --------------------- Data Visualization -------------------------------
       ## plot a multiple sub funds trend chart.
-      plotFund <- paste0(
-        'plotChart(Fund = Kbase$', names(Kbase), 
-        ', type = \'multiple\', event = event, event.dates = event.dates, chart.type = chart.type);')
+      #'@ plotFund <- paste0(
+      #'@   'Fund.', names(Kbase), ' <- plotChart(Fund = Kbase$', names(Kbase), 
+      #'@   ', type = \'multiple\', event = event, event.dates = event.dates, chart.type = chart.type)', 
+      #'@   collapse = '; ')
+      
+      #'@ plotFund <- paste0('list(', 
+      #'@   paste0(paste0(substitute(K)), ' = plotChart(Fund = Kbase$', names(Kbase), 
+      #'@   ', type = \'multiple\', event = event, event.dates = event.dates, chart.type = chart.type)', 
+      #'@   collapse = ', '), ')')
+      plotFund <- plotChart(Fund = Kbase, type = 'multiple', event = event, 
+                            event.dates = event.dates, chart.type = chart.type)
       
       options(warn = 0)
-      return(llply(plotFund, function(x) eval(parse(text = x))))
+      #'@ return(eval(parse(text = plotFund)))
+      return(plotFund)
       
     } else if(chart == FALSE) {
       options(warn = 0)

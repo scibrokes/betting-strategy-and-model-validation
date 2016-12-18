@@ -20,16 +20,24 @@ plotChart <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL,
     
     initial <- Op(Fund)[1, ] %>% unique %>% currency
     
-    fname <- str_split_fixed(names(Fund), '\\.', 2) %>% .[, 1] %>% unique
-    if(length(fname) != 1) {
-      stop('The name of sub fund must be only one.')
+    #'@ fname <- grep('.Open', names(Op(Fund)), value = TRUE) %>% 
+    #'@   str_split_fixed('\\.', 2) %>% .[, 1]
+    if(('$' %in% paste0(substitute(Fund))) & (length(paste0(substitute(Fund))) > 1)) {
+      fname <- str_split(paste0(substitute(Fund))[2:3], '\\$') %>% 
+        unlist %>% .[2:3] %>% paste0(collapse = '.')
+      
+    } else if((!'$' %in% paste0(substitute(Fund))) & (length(paste0(substitute(Fund))) == 1)) {
+      fname <- grep('.Open', names(Op(Fund)), value = TRUE) %>% 
+        str_split_fixed('\\.', 2) %>% .[, 1]
+      
     } else {
-      fname <- fname
+      fname <- 'Fund'
     }
     
     plotc <- highchart() %>% 
       hc_title(text = "Sportsbook Hedge Fund") %>% 
-      hc_subtitle(text = paste("Candle stick chart with initial fund size : ", initial)) %>% 
+      hc_subtitle(text = paste0("Candle stick chart with initial fund size : ", 
+                               paste0(initial, collapse = ', '))) %>% 
       # create axis :)
       hc_yAxis_multiples(
         list(title = list(text = NULL), height = '45%', top = '0%'),
@@ -59,8 +67,12 @@ plotChart <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL,
     # single chart high-low candle stick might need to 
     # label the reason and event to cause a hight volatility.
     
-    initial <- Op(Fund)[1, ] %>% unique %>% currency
     chart.type <- ifelse(is.null(chart.type), 'Cl', chart.type)
+    initial <- Op(Fund)[1, ] %>% unique %>% currency
+    
+    fname <- grep('.Open', names(Op(Kbase)), value = TRUE) %>% 
+      str_split('\\.') %>% llply(., function(x) 
+        paste0(str_replace_all(x, 'Open', '')[1:2], collapse = '.')) %>% unlist
     
     ## comparison of fund size and growth of various Kelly models
     #'@ event <- c('netEMEdge', 'PropHKPriceEdge', 'PropnetProbBEdge', 'KProbHKPrice',
@@ -109,7 +121,8 @@ plotChart <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL,
     
     #'@ plotc <- highchart(type = "stock") %>% 
     #'@   hc_title(text = "Sportsbook Hedge Fund") %>% 
-    #'@   hc_subtitle(text = paste("Multiple funds trend chart initial fund size : ", initial)) %>% 
+    #'@   hc_subtitle(text = paste0("Multiple funds trend chart initial fund size : ", 
+    #'@                            paste0(initial, collapse = ', '))) %>% 
     #'@   hc_add_series_xts(Fund[, 1], id = names(Fund)[1]) %>% 
     #'@   hc_add_series_xts(Fund[, 2], id = names(Fund)[2]) %>% 
     #'@   hc_add_series_xts(Fund[, 3], id = names(Fund)[3]) %>% 
@@ -135,11 +148,18 @@ plotChart <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL,
     #'@                      text = paste('Event : High volatility ', event), id = id) %>% #text inside the event box
     #'@  hc_add_theme(hc_theme_flat())
     
+    #'@ plotc <- paste0(
+    #'@   'highchart(type = \'stock\') %>% ', 
+    #'@   'hc_title(text = \'Sportsbook Hedge Fund\') %>% ', 
+    #'@   'hc_subtitle(text = paste(\'Multiple funds trend chart initial fund size : \', initial)) %>% ', 
+    #'@   paste0('hc_add_series_xts(Fund[,', subnum, '], id = fname[', subnum,'])', collapse = '%>%'), 
+    #'@   ' %>% hc_add_series_flags(event.dates, title = paste0(\'E\', event), text = paste(\'Event : High volatility \', event), id = id) %>% hc_add_theme(hc_theme_flat());')
+    
     plotc <- paste0(
       'highchart(type = \'stock\') %>% ', 
       'hc_title(text = \'Sportsbook Hedge Fund\') %>% ', 
-      'hc_subtitle(text = paste(\'Multiple funds trend chart initial fund size : \', initial)) %>% ', 
-      paste0('hc_add_series_xts(Fund[,', subnum, '], id = names(Fund)[', subnum,'])', collapse = '%>%'), 
+      'hc_subtitle(text = paste0(\'Multiple funds trend chart initial fund size : \', paste0(initial, collapse = \', \'))) %>% ', 
+      paste0('hc_add_series_xts(Fund[,', seq(fname), '], name = \'', fname,'\', id = \'', fname, '\')', collapse = ' %>% '), 
       ' %>% hc_add_series_flags(event.dates, title = paste0(\'E\', event), text = paste(\'Event : High volatility \', event), id = id) %>% hc_add_theme(hc_theme_flat());')
     
     return(eval(parse(text = plotc)))

@@ -124,10 +124,11 @@ simulateKelly <- function(mbase, lPmean = 'runif', type = 'vKelly', Kelly.type =
       ## I directly apply the model8 as refer to below paper to simulate a final scores of a soccer match.
       ## chrome-extension://oemmndcbldboiebfnladdacbdfmadadm/http://tolstoy.newcastle.edu.au/R/e8/help/att-6544/karlisntzuofras03.pdf
       
-      ## 
+      ## load rScores() for bivariate scoring.
+      
       
       mbase %>% mutate(FTHG = rpois(length(FTHG), rnorm(mean(FTHG), sd(FTHG))), 
-                        FTAG = rpois(length(FTAG), rnorm(mean(FTAG), sd(FTAG))))
+                       FTAG = rpois(length(FTAG), rnorm(mean(FTAG), sd(FTAG))))
       
       lProf <- leagueProf %>% 
         mutate(mean = ifelse(lPmean == 'runif', runif(mean, min, max), 

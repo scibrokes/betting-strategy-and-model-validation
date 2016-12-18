@@ -16,14 +16,14 @@ arrTeamID <- function(mbase, spboData, method = c('osa', 'lv', 'dl', 'hamming',
     stop('Please select one or more stringdist.method from above:', cat(methd))
   }
   
-  suppressAll(source('function/makeList.R'))
+  suppressAll(source('./function/makeList.R', local = TRUE))
   ## Since the elements are not much enough but list quit a number, 
   ##   just set parallel=FALSE will be faster few minutes.
   dfm <- makeList(mbase, spboData, levDist=levDist, parallel=parallel)
   
   ## STEP 3) Option stringdistList
   ## Load the stringdistList() function
-  suppressAll(source('function/stringdistList.R'))
+  suppressAll(source('./function/stringdistList.R', local = TRUE))
   #'@ parallel=TRUE ## parallel=FALSE will spend above 30 minutes, but parallel=TRUE will hanging
   df2 <- llply(seq(nrow(dfm$partialData)), function(i){
            stringdistList(method=method, tmID_A=dfm$partialData$tmID[i], 

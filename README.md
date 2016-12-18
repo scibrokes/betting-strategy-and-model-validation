@@ -33,8 +33,7 @@
     + Kindly click on [*KellyApps*] to use the ShinyApp
     + ![KellyApps]
     + Kindly refer to [English Soccer League] for analysis on only English soccer which is pretest on my personal research.
-    + [Introduction of R Packages](http://rpubs.com/englianhu/introduction-of-r-packages), [Unable display hight at html format](http://rpubs.com/englianhu/highcharter-issue)
-
+    
 ## 3. Old File
 
   I splited below file to be **two part** as list above since there are a lot of gragh and high volume dataset. The `Return` and `PL` columns suddenly noticed wrong figure and cause the profit of below files are not accurate. Secondly, the old files are not completed as it only stop at section 3 which just a breakdown display and summary of staking data but section 4 and so fort analyse the dataset.
@@ -43,6 +42,7 @@
 
   - [Betting Strategy and Model Validation (Old)](http://rpubs.com/englianhu/betting-strategy-and-model-validation) (*Remarks: Initially one file, but due to file size and finally seperate to few sections and files.*)
   - [Betting Strategy and Model Validation - Part I (*Aug-2016*)](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_01.html)
+  - Miscellaneous : [Introduction of R Packages](http://rpubs.com/englianhu/introduction-of-r-packages) and [Unable display highchart at html format](http://rpubs.com/englianhu/highcharter-issue)
 
 ## 4. Future Work
 

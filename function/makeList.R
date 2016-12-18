@@ -35,7 +35,7 @@ makeList <- function(mbase, spboData, levDist=0.1, parallel=FALSE){
   suppressPackageStartupMessages(library('BBmisc'))
   pkgs <- c('devtools', 'stringr', 'magrittr', 'plyr', 'dplyr', 'foreach', 'doParallel', 'tidyr')
   suppressAll(lib(pkgs)); rm(pkgs)
-  suppressAll(source('function/signature.R'))
+  suppressAll(source('function/signature.R', local = TRUE))
   
   teamID <- sort(unique(c(as.character(mbase$datasets$Home), as.character(mbase$datasets$Away))))
   spboTeam <- sort(c(as.vector(spboData$Home), as.vector(spboData$Away))) %>% 

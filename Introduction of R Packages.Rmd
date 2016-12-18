@@ -20,7 +20,7 @@ output:
 ## Loading the packages and setting adjustment
 suppressMessages(library('BBmisc'))
 suppressAll(library('utils'))
-suppressAll(source('function/libs.R'))
+suppressAll(source('./function/libs.R', local = TRUE))
 ```
 
 ```{r read-data1}
@@ -53,14 +53,16 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
 
   Below is codes for merge files, there has another function which is `plyr::join_all()` which is very efficient, however the datetime format will became 0 value but `reshape::merge_all()` can combine the data efficiently but taken longer time.
 
-```{r get-data-summary-table-2.1}
-nrow(do.call(rbind, llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0(getwd(), '/datasets/', x, '.csv'))), .parallel = TRUE)))
+```{r get-data-summary-table-2.1, warning = FALSE}
+nrow(do.call(rbind, llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = TRUE)))
 
-nrow(rbind_all(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0(getwd(), '/datasets/', x, '.csv'))), .parallel = TRUE)))
+nrow(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = TRUE)))
 
-system.time(do.call(rbind, llply(as.list(seq(2011,2015)), function(x) data.frame(Sess = x, read.csv(paste0(getwd(), '/datasets/', x, '.csv'))), .parallel = TRUE)))
+system.time(do.call(rbind, llply(as.list(seq(2011,2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = TRUE)))
 
-system.time(rbind_all(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0(getwd(), '/datasets/', x, '.csv'))), .parallel = TRUE)))
+system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = TRUE)))
+
+system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, data.table::fread(paste0('./data/', x, '.csv'))), .parallel = TRUE)))
 ```
 
   You can also embed plots, for example:
@@ -202,6 +204,66 @@ print(xtable(summary(BR)), type = 'html')
   - googleVis - use Google Chart Tools from R
   - RECharts (two packages from Xie Yihui and Wei Taiyun)
   - [highcharter](http://jkunst.com/highcharter/index.html) - An interative d3 chart
+
+```{r bank-roll1, results = 'asis'}
+suppressAll(library('highcharter'))
+suppressAll(source('./function/compareKelly.R'))
+
+## Applied various fractional Kelly models version I.
+##   stakes based reverser models.
+if(file.exists('./data/K1D1.rds')) {
+  K1D1 <- read_rds(path = './data/K1D1.rds')
+} else {
+  K1D1 <- vKelly(dat, type = 'D1')
+}
+
+plotFund <- compareKelly(K1D1, chart = TRUE, type = 'single')
+plotFund
+```
+
+*graph 2.5.1 : Candle stick chart.*
+
+```{r bank-roll2, results = 'asis'}
+suppressAll(library('highcharter'))
+suppressAll(source('./function/compareKelly.R'))
+
+plotFund <- compareKelly(K1D1, chart = TRUE, type = 'multiple')
+plotFund
+```
+
+*graph 2.5.2 : Comparison of multiple funds chart.*
+
+```{r}
+## Need to correct the content, below just a sample...
+
+## Random pick 2 observations among each stratified levels of Result.
+K <- llply(split(dat, dat$Result), function(x) x[sample(nrow(x), 2), c('Result', 'Return', 'EUPrice', 'HKPrice', 'Stakes', 'Rebates')]) %>% ldply(., .id = 'Result') %>% mutate(KReturn = currency(Return), Return = currency(Return), KStakes = currency(Stakes), Stakes = currency(Stakes), Rebates = percent(Rebates), Change = percent(KStakes / Stakes - 1)) %>% .[sample(nrow(.), nrow(.)), ]
+
+## http://www.w3schools.com/colors/colors_picker.asp
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "Comparison of Return of Staking"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Difference of PL btw Normal and Kelly Staking. (Sample)")), 
+  
+  as.htmlwidget(K %>% formattable(list(
+    
+    Result = formatter('span', style = x ~ ifelse(x == 'Win', style(color = '#269900', font.weight = 'bold'), ifelse(x == 'Half Win', style(color = '#40FF00'), ifelse(x == 'Push', style(color = '#FFFF00'), ifelse(x == 'Half Loss', style(color = '#FF8C1A'), ifelse(x == 'Loss', style(color = '#FF0000', font.weight = 'bold'), NA)))))),
+    
+    KReturn = formatter('span', style = ~ style(color = ifelse(KReturn >= KStakes, 'green', 'red')), ~ icontext(ifelse(KReturn >= KStakes, 'plus-sign', 'minus-sign'), KReturn)),
+    
+    Return = formatter('span', style = ~ style(color = ifelse(Return >= Stakes, 'green', 'red')), ~ icontext(ifelse(Return >= Stakes, 'plus-sign', 'minus-sign'), Return)),
+    
+    EUPrice = color_tile('white', '#003D99'),
+    HKPrice = color_tile('white', '#003D99'),
+    KStakes = color_tile('white', '#CC9900'),
+    Stakes = color_tile('white', '#CC9900'),
+    
+    Change = formatter('span', style = ~ style(color = ifelse(Change < 0, 'red', 'green')), ~ icontext(ifelse(Change < 0, 'arrow-down', 'arrow-up'), Change))))))
+```
+
+*table 2.5.1 : Price flutuation table.*
 
 Reference :
   - [Interactive visualizations with R - a minireview](http://ouzor.github.io/blog/2014/11/21/interactive-visualizations.html)

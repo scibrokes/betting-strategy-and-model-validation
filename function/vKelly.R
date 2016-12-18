@@ -3025,7 +3025,7 @@ vKelly <- function(mbase, weight.stakes = 1, weight = 1, type = 'flat', dym.weig
   
   ## ==================== P&L Comparison ========================================
   ## load KellyPL() to summarise the P&L of various Kelly models.
-  #'@ suppressMessages(source('./function/KellyPL.R'))
+  #'@ suppressMessages(source('./function/KellyPL.R', local = TRUE))
   
   ## ==================== Return function ========================================
   

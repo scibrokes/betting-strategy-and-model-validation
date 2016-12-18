@@ -45,7 +45,7 @@ stringdistList <- function(method=c('osa', 'lv', 'dl', 'hamming', 'lcs', 'qgram'
     #'@ doParallel::registerDoParallel(makeCluster(detectCores(logical=TRUE)))
   }
   
-  source(paste0(getwd(), '/function/signature.R'))
+  source(paste0(getwd(), '/function/signature.R'), local = TRUE)
   ## Apply signature() which will re-arrange the strings for increased the accuracy of Levenstein or 
   ##   or string distance calculation.
   names(tmID_A) <- sapply(tmID_A, signature)

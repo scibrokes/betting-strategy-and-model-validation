@@ -747,7 +747,11 @@ suppressMessages(source('./function/vKelly.R'))
 
 ## Applied various fractional Kelly models version I.
 ##   stakes based reverser models.
-K1 <- vKelly(dat)
+if(file.exists('./data/K1.rds')) {
+  K1 <- read_rds(path = './data/K1.rds')
+} else {
+  K1 <- vKelly(dat)
+}
 
 kable(summary(K1$Kelly1$data), caption = 'Table 4.3.2.2A : Summary Table of Various Kelly Models (Stakes reversed based models)')
 ```
@@ -905,7 +909,11 @@ suppressMessages(source('./function/vKelly2.R'))
 
 ## Applied various fractional Kelly models version II.
 ##   rEMProb based model without adjust the stakes.
-K2 <- vKelly2(dat)
+if(file.exists('./data/K2.rds')) {
+  K2 <- read_rds(path = './data/K2.rds')
+} else {
+  K2 <- vKelly2(dat)
+}
 
 kable(summary(K2$Kelly1$data), caption = 'Table 4.3.2.3 : Summary Table of Various Kelly Models (reversed rEMProbB based models)')
 ```
@@ -1222,8 +1230,11 @@ suppressMessages(source('./function/vKelly.R'))
 
 ## Applied various fractional Kelly models version I.
 ##   stakes based reverser models.
-#'@ K1W1 <- vKelly(dat, type = 'W1')
-K1W1 <- read_rds(path = './data/K1W1.rds')
+if(file.exists('./data/K1W1.rds')) {
+  K1W1 <- read_rds(path = './data/K1W1.rds')
+} else {
+  K1W1 <- vKelly(dat, type = 'W1')
+}
 
 K1W1sum <- data.frame(K1W1.1 = K1W1$Kelly1$summary, A = '', K1W1.2 = K1W1$Kelly2$summary, B = '', K1W1.3 = K1W1$Kelly3$summary, C = '', K1W1.4 = K1W1$Kelly4$summary) %>% tbl_df
 
@@ -1254,8 +1265,11 @@ tagList(
 #'@ suppressMessages(library('formattable'))
 ## Applied various fractional Kelly models version I.
 ##   stakes based reverser models.
-#'@ K1W2 <- vKelly(dat, type = 'W2')
-K1W2 <- read_rds(path = './data/K1W2.rds')
+if(file.exists('./data/K1W2.rds')) {
+  K1W2 <- read_rds(path = './data/K1W2.rds')
+} else {
+  K1W2 <- vKelly(dat, type = 'W2')
+}
 
 K1W2sum <- data.frame(K1W2.1 = K1W2$Kelly1$summary, A = '', K1W2.2 = K1W2$Kelly2$summary, B = '', K1W2.3 = K1W2$Kelly3$summary, C = '', K1W2.4 = K1W2$Kelly4$summary) %>% tbl_df
 
@@ -1292,8 +1306,11 @@ suppressMessages(source('./function/vKelly2.R'))
 
 ## Applied various fractional Kelly models version II.
 ##   rEMProb based model without adjust the stakes.
-#'@ K2W1 <- vKelly2(dat, type = 'W1')
-K2W1 <- read_rds(path = './data/K2W1.rds')
+if(file.exists('./data/K2W1.rds')) {
+  K2W1 <- read_rds(path = './data/K2W1.rds')
+} else {
+  K2W1 <- vKelly2(dat, type = 'W1')
+}
 
 K2W1sum <- data.frame(K2W1.1 = K2W1$Kelly1$summary, A = '', K2W1.2 = K2W1$Kelly2$summary) %>% tbl_df
 
@@ -1322,8 +1339,11 @@ tagList(
 
 ```{r K2W2, echo = FALSE, results = 'asis'}
 #'@ suppressMessages(library('formattable'))
-#'@ K2W2 <- vKelly2(dat, type = 'W2')
-K2W2 <- read_rds(path = './data/K2W2.rds')
+if(file.exists('./data/K2W2.rds')) {
+  K2W2 <- read_rds(path = './data/K2W2.rds')
+} else {
+  K2W2 <- vKelly2(dat, type = 'W2')
+}
 
 K2W2sum <- data.frame(K2W2.1 = K2W2$Kelly1$summary, A = '', K2W2.2 = K2W2$Kelly2$summary) %>% tbl_df
 
@@ -1361,8 +1381,11 @@ tagList(
 ```{r K1D1, echo = FALSE, results = 'asis'}
 ## Applied various fractional Kelly models version I.
 ##   stakes based reverser models.
-#'@ K1D1 <- vKelly(dat, type = 'D1')
-K1D1 <- read_rds(path = './data/K1D1.rds')
+if(file.exists('./data/K1D1.rds')) {
+  K1D1 <- read_rds(path = './data/K1D1.rds')
+} else {
+  K1D1 <- vKelly(dat, type = 'D1')
+}
 
 K1D1sum <- data.frame(K1D1.1 = K1D1$Kelly1$summary, A = '', K1D1.2 = K1D1$Kelly2$summary, B = '', K1D1.3 = K1D1$Kelly3$summary, C = '', K1D1.4 = K1D1$Kelly4$summary) %>% tbl_df
 
@@ -1388,8 +1411,11 @@ tagList(
 *table 4.3.4.1A* : `r paste0(dim(K1D1sum), collapse = ' x ')` : *PL of Reversed stakes dynamic 1 Kelly models 1 year 2012~2015.*
 
 ```{r K1D2, echo = FALSE, results = 'asis'}
-#'@ K1D2 <- vKelly(dat, type = 'D2')
-K1D2 <- read_rds(path = './data/K1D2.rds')
+if(file.exists('./data/K1D2.rds')) {
+  K1D2 <- read_rds(path = './data/K1D2.rds')
+} else {
+  K1D2 <- vKelly(dat, type = 'D2')
+}
 
 K1D2sum <- data.frame(K1D2.1 = K1D2$Kelly1$summary, A = '', K1D2.2 = K1D2$Kelly2$summary, B = '', K1D2.3 = K1D2$Kelly3$summary, C = '', K1D2.4 = K1D2$Kelly4$summary) %>% tbl_df
 
@@ -1417,8 +1443,11 @@ tagList(
 #### Reversed rEMProbB based Kelly models
 
 ```{r K2D1, echo = FALSE, results = 'asis'}
-#'@ K2D1 <- vKelly2(dat, type = 'D1')
-K2D1 <- read_rds(path = './data/K2D1.rds')
+if(file.exists('./data/K2D1.rds')) {
+  K2D1 <- read_rds(path = './data/K2D1.rds')
+} else {
+  K2D1 <- vKelly2(dat, type = 'D1')
+}
 
 K2D1sum <- data.frame(K2D1.1 = K2D1$Kelly1$summary, A = '', K2D1.2 = K2D1$Kelly2$summary) %>% tbl_df
 
@@ -1444,8 +1473,11 @@ tagList(
 *table 4.3.4.2A* : `r paste0(dim(K2D1sum), collapse = ' x ')` : *PL of Reversed rEMProbB dynamic 1 Kelly models 2 year 2012~2015.*
 
 ```{r K2D2, echo = FALSE, results = 'asis'}
-#'@ K2D2 <- vKelly2(dat, type = 'D2')
-K2D2 <- read_rds(path = './data/K2D2.rds')
+if(file.exists('./data/K2D2.rds')) {
+  K2D2 <- read_rds(path = './data/K2D2.rds')
+} else {
+  K2D2 <- vKelly2(dat, type = 'D2')
+}
 
 K2D2sum <- data.frame(K2D2.1 = K2D2$Kelly1$summary, A = '', K2D2.2 = K2D2$Kelly2$summary) %>% tbl_df
 
@@ -1482,12 +1514,9 @@ tagList(
 ```{r bank-roll, echo = FALSE, results = 'asis'}
 suppressAll(library('highcharter'))
 suppressAll(source('./function/compareKelly.R'))
-#'@ compareKelly(K1, chart = TRUE, type = 'multiple') # workable if run in chunk but but not in knit.
-KCS1 <- read_rds(path = './data/K1.rds')$Kelly1 #Kelly 1 Candle Stick model 1
 
-## directly load internal function in compareKelly.
-suppressAll(source('./function/plotChart.R'))
-plotChart(Fund = KCS1, type = 'multiple')
+plotFund <- compareKelly(K1D1, chart = TRUE, type = 'multiple')
+plotFund
 ```
 
 *graph 4.3.5.1 : Daily bank roll for Basic Kelly model.*

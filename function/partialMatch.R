@@ -9,7 +9,7 @@ partialMatch <- function(x, y, levDist=0.1){
   require('plyr', quietly=TRUE)
   require('dplyr', quietly=TRUE)
   
-  source(paste0(getwd(), '/function/signature.R'))
+  source(paste0(getwd(), '/function/signature.R'), local = TRUE)
   xx <- data.frame(sign=sapply(x, signature), row.names=NULL)
   yy <- data.frame(sign=sapply(y, signature), row.names=NULL)
   
