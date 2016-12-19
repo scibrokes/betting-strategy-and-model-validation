@@ -8,6 +8,7 @@ plotChart <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL,
   suppressMessages(library('formattable'))
   suppressMessages(library('quantmod'))
   suppressMessages(library('highcharter'))
+  suppressMessages(library('tidyverse'))
   
   if(type == 'single') {
     ## --------------------- Plot single fund or sub funds ------------------------

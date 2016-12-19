@@ -27,7 +27,7 @@ buildFund <- function(mbase, initial = NULL, parallel = as.logical(FALSE),
   dateUSID <- sort(unique(mbase$DateUS)) %>% ymd
   timeUSID <- sort(unique(mbase$TimeUS)) %>% ymd_hms
   
-  Fund <- mbase %>% select(DateUS, TimeUS, League, Stakes, Return, PL) %>% 
+  Fund <- mbase[c('DateUS', 'TimeUS', 'League', 'Stakes', 'Return', 'PL')] %>% 
     mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(PL), 
            PL.R = percent(ifelse(is.nan(PL / Stakes), 0, PL / Stakes)))
   
@@ -62,7 +62,7 @@ buildFund <- function(mbase, initial = NULL, parallel = as.logical(FALSE),
     apply(BR[grep('.Close|.Open', names(BR), value = TRUE)], 1, max, na.rm = TRUE)
   BR[grep('.Low', names(BR), value = TRUE)] <- 
     apply(BR[grep('.Close|.Open', names(BR), value = TRUE)], 1, min, na.rm = TRUE)
-  BR[grep('.Volume', names(BR), value = TRUE)] <- Fund %>% select(Stakes)
+  BR[grep('.Volume', names(BR), value = TRUE)] <- Fund['Stakes']
   BR[grep('.Adjusted', names(BR), value = TRUE)] <- adjusted
   
   rm(KPL, KPL2, Fund)

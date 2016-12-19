@@ -22,12 +22,21 @@ rScores <- function(mbase, type = 'option10', print.loop = FALSE) {
   ## 
   scores <- mbase[c('FTHG', 'FTAG')]
   
+  org <- mvrnorm(n = nrow(scores), mu = colMeans(scores), Sigma = as.matrix(var(scores))) %>% 
+    data.frame %>% tbl_df
+  
+  prepois <- list(mean = org %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                    mutate(dif = pre / obs), 
+                  var = data.frame(var(scores), var(org)))
+  
+  # return value of original observation.
+  opt0 <- list(pred = org, pstpois = prepois)
+  
   if(type == 'option1') {
     ## --------------------- option 1 ---------------------------------------------------
     
     ## adjusted the mean value of negative figures from rmvnorm() and mvrnorm and then plus.
-    bvs <- mvrnorm(n = nrow(scores), mu = colMeans(scores), Sigma = as.matrix(var(scores))) %>% 
-      data.frame %>% tbl_df
+    bvs <- org
     hgadj <- bvs$FTHG[bvs$FTHG <= 0] %>% sum(.)/length(bvs$FTHG[bvs$FTHG > 0]) %>% abs
     agadj <- bvs$FTAG[bvs$FTAG <= 0] %>% sum(.)/length(bvs$FTAG[bvs$FTAG > 0]) %>% abs
     
@@ -89,8 +98,7 @@ rScores <- function(mbase, type = 'option10', print.loop = FALSE) {
     ## --------------------- option 2 ---------------------------------------------------
     
     ## adjusted the mean value of negative figures from rmvnorm() and mvrnorm and then minus.
-    bvs <- mvrnorm(n = nrow(scores), mu = colMeans(scores), Sigma = as.matrix(var(scores))) %>% 
-      data.frame %>% tbl_df
+    bvs <- org
     hgadj <- bvs$FTHG[bvs$FTHG <= 0] %>% sum(.)/length(bvs$FTHG[bvs$FTHG > 0]) %>% abs
     agadj <- bvs$FTAG[bvs$FTAG <= 0] %>% sum(.)/length(bvs$FTAG[bvs$FTAG > 0]) %>% abs
     
@@ -153,8 +161,7 @@ rScores <- function(mbase, type = 'option10', print.loop = FALSE) {
     ## --------------------- option 3 ---------------------------------------------------
     
     ## adjusted the mean value of negative figures from rmvnorm() and mvrnorm and then apply rnorm.
-    bvs <- mvrnorm(n = nrow(scores), mu = colMeans(scores), Sigma = as.matrix(var(scores))) %>% 
-      data.frame(No = seq(nrow(.)), .) %>% tbl_df
+    bvs <- org %>% mutate(No = seq(nrow(.)))
     
     # start looping
     while(any(bvs$FTHG < 0)|any(bvs$FTAG < 0)) {
@@ -427,6 +434,9 @@ rScores <- function(mbase, type = 'option10', print.loop = FALSE) {
     #FTHG  1.63115357 -0.06298846  8.212482e-02 -7.639482e-06
     #FTAG -0.06298846  1.27395462 -7.639482e-06  3.006181e-01
     
+    bvs %<>% mutate(FTHG = FTHG * colMeans(scores[,1])/colMeans(bvs[,1]), 
+                    FTAG = FTAG * colMeans(scores[,2])/colMeans(bvs[,2]))
+    
     # rpois the scores
     bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
                     FTAG = rpois(n = nrow(bvs), lambda = FTAG))
@@ -499,6 +509,9 @@ rScores <- function(mbase, type = 'option10', print.loop = FALSE) {
         matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
       
       bvs %<>% mutate(FTHG = ifelse(FTHG <= 0, 0, FTHG), FTAG = ifelse(FTAG <= 0, 0, FTAG))
+      
+      bvs %<>% mutate(FTHG = FTHG * colMeans(scores[,1])/colMeans(bvs[,1]), 
+                      FTAG = FTAG * colMeans(scores[,2])/colMeans(bvs[,2]))
       
       prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
                         mutate(dif = pre / obs), 
@@ -706,6 +719,9 @@ rScores <- function(mbase, type = 'option10', print.loop = FALSE) {
       
       bvs %<>% mutate(FTHG = ifelse(FTHG <= 0, 0, FTHG), FTAG = ifelse(FTAG <= 0, 0, FTAG))
       
+      bvs %<>% mutate(FTHG = FTHG * colMeans(scores[,1])/colMeans(bvs[,1]), 
+                      FTAG = FTAG * colMeans(scores[,2])/colMeans(bvs[,2]))
+      
       prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
                         mutate(dif = pre / obs), 
                       var = data.frame(var(scores), var(bvs)))
@@ -762,9 +778,391 @@ rScores <- function(mbase, type = 'option10', print.loop = FALSE) {
     #3rd Qu.: 2.000   3rd Qu.: 2.000  
     #Max.   :13.000   Max.   :11.000
     
+  } else if(type == 'all') {
+    ## --------------------- option all ---------------------------------------------------
+    
+      ## --------------------- option 1 ---------------------------------------------------
+      ## adjusted the mean value of negative figures from rmvnorm() and mvrnorm and then plus.
+      bvs <- org
+      hgadj <- bvs$FTHG[bvs$FTHG <= 0] %>% sum(.)/length(bvs$FTHG[bvs$FTHG > 0]) %>% abs
+      agadj <- bvs$FTAG[bvs$FTAG <= 0] %>% sum(.)/length(bvs$FTAG[bvs$FTAG > 0]) %>% abs
+      
+      # add the range of negative figure to the positive figure to raise the R^2.
+      bvs %<>% mutate(FTHG = ifelse(FTHG <= 0, 0, FTHG + hgadj), 
+                      FTAG = ifelse(FTAG <= 0, 0, FTAG + agadj))
+      rm(hgadj, agadj)
+      
+      prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # rpois the scores
+      bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
+                      FTAG = rpois(n = nrow(bvs), lambda = FTAG)) %>% 
+        mutate(FTHG = ifelse(is.na(FTHG), 0, FTHG), FTAG = ifelse(is.na(FTAG), 0, FTAG))
+      pstpois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # return value of option 1
+      opt1 <- list(pred = bvs, pstpois = pstpois)
+      
+      ## --------------------- option 2 ---------------------------------------------------
+      ## adjusted the mean value of negative figures from rmvnorm() and mvrnorm and then minus.
+      bvs <- org
+      hgadj <- bvs$FTHG[bvs$FTHG <= 0] %>% sum(.)/length(bvs$FTHG[bvs$FTHG > 0]) %>% abs
+      agadj <- bvs$FTAG[bvs$FTAG <= 0] %>% sum(.)/length(bvs$FTAG[bvs$FTAG > 0]) %>% abs
+      
+      # add the range of negative figure to the positive figure to raise the R^2.
+      bvs %<>% mutate(FTHG = ifelse(FTHG <= 0, 0, FTHG - hgadj), 
+                      FTAG = ifelse(FTAG <= 0, 0, FTAG - agadj)) %>% 
+        mutate(FTHG =  FTHG * (colMeans(scores)[1] / mean(FTHG)), 
+               FTAG = FTAG * (colMeans(scores)[2]/mean(FTAG)))
+      rm(hgadj, agadj)
+      
+      prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # rpois the scores
+      bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
+                      FTAG = rpois(n = nrow(bvs), lambda = FTAG)) %>% 
+        mutate(FTHG = ifelse(is.na(FTHG), 0, FTHG), FTAG = ifelse(is.na(FTAG), 0, FTAG))
+      pstpois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # return value of option 2
+      opt2 <- list(pred = bvs, pstpois = pstpois)
+      
+      ## --------------------- option 3 ---------------------------------------------------
+      ## adjusted the mean value of negative figures from rmvnorm() and mvrnorm and then apply rnorm.
+      bvs <- org %>% mutate(No = seq(nrow(.)))
+      
+      # start looping
+      while(any(bvs$FTHG < 0)|any(bvs$FTAG < 0)) {
+        hgadj0 <- bvs[c('No', 'FTHG')] %>% filter(FTHG <= 0)
+        hgadj1 <- bvs[c('No', 'FTHG')] %>% filter(FTHG > 0) %>% 
+          mutate(FTHG = rnorm(n = nrow(.), mean = mean(hgadj0$FTHG), sd = sd(hgadj0$FTHG)))
+        agadj0 <- bvs[c('No', 'FTAG')] %>% filter(FTAG <= 0)
+        agadj1 <- bvs[c('No', 'FTAG')] %>% filter(FTAG > 0) %>% 
+          mutate(FTAG = rnorm(n = nrow(.), mean = mean(agadj0$FTAG), sd = sd(agadj0$FTAG)))
+        hgadj <- suppressMessages(join(bvs[c('No')], hgadj1)) %>% tbl_df %>% 
+          mutate(FTHG = ifelse(is.na(FTHG), 0, FTHG))
+        agadj <- suppressMessages(join(bvs[c('No')], agadj1)) %>% tbl_df %>% 
+          mutate(FTAG = ifelse(is.na(FTAG), 0, FTAG))
+        rm(hgadj0, hgadj1, agadj0, agadj1)
+        
+        # add the range of negative figure to the positive figure to raise the R^2.
+        bvs %<>% mutate(FTHG = ifelse(FTHG <= 0, 0, FTHG - hgadj$FTHG), 
+                        FTAG = ifelse(FTAG <= 0, 0, FTAG - agadj$FTAG))
+      }
+      hgadj %<>% .[c('FTHG')]
+      agadj %<>% .[c('FTAG')]
+      bvs %<>% .[c('FTHG', 'FTAG')]
+      
+      rm(hgadj, agadj)
+      prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      bvs %<>% mutate(FTHG = FTHG * colMeans(scores[,1])/colMeans(bvs[,1]), 
+                      FTAG = FTAG * colMeans(scores[,2])/colMeans(bvs[,2]))
+      
+      # rpois the scores
+      bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
+                      FTAG = rpois(n = nrow(bvs), lambda = FTAG))
+      pstpois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # return value of option 3
+      opt3 <- list(pred = bvs, pstpois = pstpois)
+      
+      ## --------------------- option 4 ---------------------------------------------------
+      ## apply min and max as adjusted which is similar with rmvnorm() and mvrnorm. Test the difference.
+      bvs <- rtmvnorm(n = nrow(scores), mean = colMeans(scores), sigma = var(scores), 
+                      lower = apply(scores, 2 , min), upper = apply(scores, 2 , max),  #adjuster
+                      algorithm = 'gibbs') %>% 
+        matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
+      prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      bvs %<>% mutate(FTHG = FTHG * colMeans(scores[,1])/colMeans(bvs[,1]), 
+                      FTAG = FTAG * colMeans(scores[,2])/colMeans(bvs[,2]))
+      
+      # rpois the scores
+      bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
+                      FTAG = rpois(n = nrow(bvs), lambda = FTAG))
+      pstpois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # return value of option 4
+      opt4 <- list(pred = bvs, pstpois = pstpois)
+      
+      ## --------------------- option 5 ---------------------------------------------------
+      ## manual adjusted lower and upper but option 8 will be more accurate by apply while loops.
+      bvs <- rtmvnorm(n = nrow(scores), mean = colMeans(scores), sigma = var(scores), 
+                      lower = apply(scores, 2 , min), upper = c(3, 2.3), #adjuster
+                      algorithm = 'gibbs') %>% 
+        matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
+      prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # rpois the scores
+      bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
+                      FTAG = rpois(n = nrow(bvs), lambda = FTAG))
+      pstpois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # return value of option 5
+      opt5 <- list(pred = bvs, pstpois = pstpois)
+      
+      ## --------------------- option 6 ---------------------------------------------------
+      ## apply quantile 1st and 3rd as lower and upper.
+      bvs <- rtmvnorm(n = nrow(scores), mean = colMeans(scores), sigma = var(scores), 
+                      lower = c(1, 0), upper = c(2, 2.3), 
+                      algorithm = 'gibbs') %>% 
+        matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
+      prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # rpois the scores
+      bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
+                      FTAG = rpois(n = nrow(bvs), lambda = FTAG))
+      pstpois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # return value of option 6
+      opt6 <- list(pred = bvs, pstpois = pstpois)
+      
+      ## --------------------- option 7 ---------------------------------------------------
+      ## apply quantile 1st and 3rd as lower and upper.
+      bvs <- rtmvnorm(n = nrow(scores), mean = colMeans(scores), sigma = var(scores), 
+                      lower = apply(scores, 2 , quantile)[2,], upper = apply(scores, 2 , quantile)[4,], 
+                      algorithm = 'gibbs') %>% 
+        matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
+      prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      bvs %<>% mutate(FTHG = FTHG * colMeans(scores[,1])/colMeans(bvs[,1]), 
+                      FTAG = FTAG * colMeans(scores[,2])/colMeans(bvs[,2]))
+      
+      # rpois the scores
+      bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
+                      FTAG = rpois(n = nrow(bvs), lambda = FTAG))
+      pstpois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # return value of option 7
+      opt7 <- list(pred = bvs, pstpois = pstpois)
+      
+      ## --------------------- option 8 ---------------------------------------------------
+      ## set min value as lower which is 0 but adjust the upper from mean value.
+      xy <- colMeans(scores)
+      iteration <- 0
+      x <- xy[1]
+      y <- xy[2]
+      
+      bvs <- rtmvnorm(n = nrow(scores), mean = colMeans(scores), sigma = var(scores), 
+                      lower = apply(scores, 2 , min), upper = c(x, y), 
+                      algorithm = 'gibbs') %>% 
+        matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
+      
+      prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # start looping
+      while((prepois$mean$dif[1] < 0.9999) | (prepois$mean$dif[2] < 0.9999)) {
+        
+        bvs <- rtmvnorm(n = nrow(scores), mean = colMeans(scores), sigma = var(scores), 
+                        lower = apply(scores, 2 , min), upper = c(x, y), 
+                        algorithm = 'gibbs') %>% 
+          matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
+        
+        bvs %<>% mutate(FTHG = ifelse(FTHG <= 0, 0, FTHG), FTAG = ifelse(FTAG <= 0, 0, FTAG))
+        
+        bvs %<>% mutate(FTHG = FTHG * colMeans(scores[,1])/colMeans(bvs[,1]), 
+                        FTAG = FTAG * colMeans(scores[,2])/colMeans(bvs[,2]))
+        
+        prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                          mutate(dif = pre / obs), 
+                        var = data.frame(var(scores), var(bvs)))
+        
+        iteration = iteration + 1
+        if(prepois$mean$dif[1] < 0.9999) {
+          x <- x + 0.0001
+        }
+        if(prepois$mean$dif[2] < 0.9999) {
+          y <- y + 0.0001
+        }
+        
+        if(print.loop == TRUE) {
+          cat('iteration :', iteration, '; x = ', x, 'and y = ', y, '\n')
+          print(prepois)
+        }
+      }
+      
+      # rpois the scores
+      bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
+                      FTAG = rpois(n = nrow(bvs), lambda = FTAG))
+      
+      pstpois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # return value of option 8
+      opt8 <- list(pred = bvs, pstpois = pstpois)
+      
+      ## --------------------- option 9 ---------------------------------------------------
+      ## Range within 1st quantile and 3rd quantile of scores set as the upper interval of 
+      ##   rtmvnorm().
+      ## Adjust the both lower and also upper from quantile which will be more centralize.
+      xy <- apply(scores, 2, quantile)
+
+      # I choose iteration start expand from quantile 1 and quantile 3 will be more accurate 
+      #   compare to start from min & max.
+      x <- xy[,1]
+      y <- xy[,2]
+      
+      iteration <- 0
+      x2 <- x[2]; x4 <- x[4]
+      y2 <- y[2]; y4 <- y[4]
+      
+      bvs <- rtmvnorm(n = nrow(scores), mean = colMeans(scores), sigma = var(scores), 
+                      lower = c(x2, y2), upper = c(x4, y4), 
+                      algorithm = 'gibbs') %>% 
+        matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
+      
+      prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # start looping
+      while((prepois$mean$dif[1] > 1.0001) | (prepois$mean$dif[2] < 0.9999)) {
+        bvs <- rtmvnorm(n = nrow(scores), mean = colMeans(scores), sigma = var(scores), 
+                        lower = c(x2, y2), upper = c(x4, y4), 
+                        algorithm = 'gibbs') %>% 
+          matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
+        
+        bvs %<>% mutate(FTHG = ifelse(FTHG <= 0, 0, FTHG), FTAG = ifelse(FTAG <= 0, 0, FTAG))
+        
+        prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                          mutate(dif = pre / obs), 
+                        var = data.frame(var(scores), var(bvs)))
+        
+        iteration = iteration + 1
+        if(findInterval(prepois$mean$dif[1], c(0.9999, 1.0001)) == FALSE) {
+          x2 <- x2 - 0.0001
+          x4 <- x4 + 0.0001
+        }
+        if(findInterval(prepois$mean$dif[2], c(0.9999, 1.0001)) == FALSE) {
+          y2 <- y2 - 0.0001
+          y4 <- y4 + 0.0001
+        }
+        if(print.loop == TRUE) {
+          cat('iteration :', iteration, '; x.low = ', x2, 'and y.low = ', y2, 
+              '; x.up = ', x4, 'and y.up = ', y4, '\n')
+          print(prepois)
+        }
+      }
+      
+      # rpois the scores
+      bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
+                      FTAG = rpois(n = nrow(bvs), lambda = FTAG))
+      
+      pstpois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # return value of option 9
+      opt9 <- list(pred = bvs, pstpois = pstpois)
+      
+      ## --------------------- option 10 ---------------------------------------------------
+      ## Range within 1st quantile and 3rd quantile of scores set as the upper interval of 
+      ##   rtmvnorm().
+      ## Adjust the both lower and also upper from quantile which will be more centralize.
+      ## set median value as lower and mean value as upper and expand both lower and upper intervals.
+      
+      xy1 <- apply(scores, 2, quantile)
+      xy2 <- colMeans(scores)
+      
+      iteration <- 0
+      x2 <- xy1[3]; x4 <- xy2[1]
+      y2 <- xy1[3]; y4 <- xy2[2]
+      
+      bvs <- rtmvnorm(n = nrow(scores), mean = colMeans(scores), sigma = var(scores), 
+                      lower = c(x2, y2), upper = c(x4, y4), 
+                      algorithm = 'gibbs') %>% 
+        matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
+      
+      prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # start looping
+      while((prepois$mean$dif[1] > 1.0001) | (prepois$mean$dif[2] < 0.9999)) {
+        bvs <- rtmvnorm(n = nrow(scores), mean = colMeans(scores), sigma = var(scores), 
+                        lower = c(x2, y2), upper = c(x4, y4), 
+                        algorithm = 'gibbs') %>% 
+          matrix(ncol = 2, dimnames = list(NULL, c('FTHG', 'FTAG'))) %>% data.frame %>% tbl_df
+        
+        bvs %<>% mutate(FTHG = ifelse(FTHG <= 0, 0, FTHG), FTAG = ifelse(FTAG <= 0, 0, FTAG))
+        
+        bvs %<>% mutate(FTHG = FTHG * colMeans(scores[,1])/colMeans(bvs[,1]), 
+                        FTAG = FTAG * colMeans(scores[,2])/colMeans(bvs[,2]))
+        
+        prepois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                          mutate(dif = pre / obs), 
+                        var = data.frame(var(scores), var(bvs)))
+        
+        iteration = iteration + 1
+        if(findInterval(prepois$mean$dif[1], c(0.9999, 1.0001)) == FALSE) {
+          x2 <- x2 - 0.0001
+          x4 <- x4 + 0.0001
+        }
+        if(findInterval(prepois$mean$dif[2], c(0.9999, 1.0001)) == FALSE) {
+          y2 <- y2 - 0.0001
+          y4 <- y4 + 0.0001
+        }
+        if(print.loop == TRUE) {
+          cat('iteration :', iteration, '; x.low = ', x2, 'and y.low = ', y2, 
+              '; x.up = ', x4, 'and y.up = ', y4, '\n')
+          print(prepois)
+        }
+      }
+      
+      # rpois the scores
+      bvs %<>% mutate(FTHG = rpois(n = nrow(bvs), lambda = FTHG), 
+                      FTAG = rpois(n = nrow(bvs), lambda = FTAG))
+      
+      pstpois <- list(mean = bvs %>% colMeans %>% data.frame(obs = colMeans(scores), pre = .) %>% 
+                        mutate(dif = pre / obs), 
+                      var = data.frame(var(scores), var(bvs)))
+      
+      # return value of option 10
+      opt10 <- list(pred = bvs, pstpois = pstpois)
+      
+      opts = list(opt0 = opt0, opt1 = opt1, opt2 = opt2, 
+                  opt3 = opt3, opt4 = opt4, opt5 = opt5,
+                  opt6 = opt6, opt7 = opt7, opt8 = opt8,
+                  opt9 = opt9, opt10 = opt10)
+      
+      tmp <- list(data = scores, opts = opts)
+      return(tmp)
+      
   } else {
     
-    stop('Kindly choose type = "option1" until type = "option7".')
+    stop('Kindly choose type from type = "option1" to type = "option10" or type = "all".')
   }
   
   ## --------------------- skip Poison models ------------------------------------------
