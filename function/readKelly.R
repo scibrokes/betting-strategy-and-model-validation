@@ -1,8 +1,19 @@
-readKelly <- function(details = 'bankroll', summary = TRUE){
+readKelly <- function(details = 'bankroll', .summary = TRUE, .progress = 'none', parallel = FALSE){
   ## read 110 vKelly() and vKelly2() models. You can either choose 
   ## details = 'bankroll', details = 'dataset' or details = 'initial-fund-size'. It will read the 
   ##   necessary dataset from the list of Kelly models. Besides, you can choose 
-  ## summary = TRUE or summary = FALSE, get summarise the dataset.
+  ## .summary = TRUE or .summary = FALSE, get summarise the dataset.
+  
+  ## --------------------- Load packages ------------------------------------------
+  suppressMessages(library('rlist'))
+  suppressMessages(library('plyr'))
+  suppressMessages(library('magrittr'))
+  suppressMessages(library('tidyverse'))
+  
+  if(parallel == TRUE) {
+    suppressMessages(library('doParallel'))
+    doParallel::registerDoParallel(cores = detectCores())
+  }
   
   KMnames <- c('K1', 'K2', 'K1W1', 'K1W2', 'K2W1', 'K2W2', #6
                'K1W1WS1', 'K1W1WS2', 'K1W2WS1', 'K1W2WS2', #4 #10
@@ -35,69 +46,51 @@ readKelly <- function(details = 'bankroll', summary = TRUE){
   if(details == 'dataset') {
     ## ========= read dataset ================================
     
-    if(summary == TRUE) {
-      KM <- llply(KMnames, function(filename) {
-        x <- read_rds(path = paste0('./data/', filename, '.rds'))
-        list.select(x[grepl('Kelly', list.names(x))], data)
-      })
-      names(KM) <- KMnames
-      
+    KM <- llply(KMnames, function(filename) {
+      x = readr::read_rds(path = paste0('./data/', filename, '.rds'))
+      rlist::list.select(x[grepl('Kelly', list.names(x))], data)
+    }, .progress = .progress, .parallel = parallel)
+    names(KM) <- KMnames
+    
+    if(.summary == TRUE) {
       KM <- llply(seq(KM), function(i) {
-        llply(seq(KM[[i]]), function(j) {
+        x = llply(seq(KM[[i]]), function(j) {
           summary(KM[[i]][[j]]$data)
-        })})
-      names(KM) <- KMnames
-      
-    } else {
-      KM <- llply(KMnames, function(filename) {
-        x <- read_rds(path = paste0('./data/', filename, '.rds'))
-        list.select(x[grepl('Kelly', list.names(x))], data)
-      })
+        }, .progress = .progress, .parallel = parallel)
+        names(x) = paste0('Kelly', seq(x)); x
+      }, .progress = .progress, .parallel = parallel)
       names(KM) <- KMnames
     }
-    
     
   } else if(details == 'bankroll') {
     ## ========= read Bank Roll ================================
-    if(summary == TRUE) {
-      KM <- llply(KMnames, function(filename) {
-        x <- read_rds(path = paste0('./data/', filename, '.rds'))
-        list.select(x[grepl('Kelly', list.names(x))], BR)
-      })
-      names(KM) <- KMnames
-      
+    
+    KM <- llply(KMnames, function(filename) {
+      x = readr::read_rds(path = paste0('./data/', filename, '.rds'))
+      rlist::list.select(x[grepl('Kelly', list.names(x))], BR)
+    }, .progress = .progress, .parallel = parallel)
+    names(KM) <- KMnames
+    
+    if(.summary == TRUE) {
       KM <- llply(seq(KM), function(i) {
-        llply(seq(KM[[i]]), function(j) {
+        x = llply(seq(KM[[i]]), function(j) {
           summary(KM[[i]][[j]]$BR)
-        })})
-      names(KM) <- KMnames
-      
-    } else {
-      KM <- llply(KMnames, function(filename) {
-        x <- read_rds(path = paste0('./data/', filename, '.rds'))
-        list.select(x[grepl('Kelly', list.names(x))], BR)
-      })
+          }, .progress = .progress, .parallel = parallel)
+        names(x) = paste0('Kelly', seq(x)); x
+      }, .progress = .progress, .parallel = parallel)
       names(KM) <- KMnames
     }
-    
     
   } else if(details == 'initial-fund-size') {
     ## ========= read Bank Roll ================================
-    if(summary == TRUE) {
-      KM <- llply(KMnames, function(filename) {
-        x <- read_rds(path = paste0('./data/', filename, '.rds'))
-        unlist(list.select(x[grepl('Kelly', list.names(x))], initial))
-      })
-      names(KM) <- KMnames
-      KM <- summary(unlist(KM))
-      
-    } else {
-      KM <- llply(KMnames, function(filename) {
-        x <- read_rds(path = paste0('./data/', filename, '.rds'))
-        unlist(list.select(x[grepl('Kelly', list.names(x))], initial))
-      })
-      names(KM) <- KMnames
-    }
+    
+    KM <- llply(KMnames, function(filename) {
+      x = readr::read_rds(path = paste0('./data/', filename, '.rds'))
+      unlist(rlist::list.select(x[grepl('Kelly', list.names(x))], initial))
+    }, .progress = .progress, .parallel = parallel)
+    names(KM) <- KMnames
+    
+    if(.summary == TRUE) KM <- summary(unlist(KM))
    
   } else {
     stop('Kindly choose details = "dataset", details = "bankroll" or details = "initial-fund-size".')

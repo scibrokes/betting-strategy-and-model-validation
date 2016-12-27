@@ -1792,20 +1792,114 @@ All investors:
 
 <br>
 
-  Now we simulate ......
-  
-```{r }
+```{r bank-roll-portfolio, echo = FALSE, message = FALSE, results = 'asis'}
 ## simulate Kelly 
 ## - united initial fund size
 ## - portion arrangement as baseline stakes for league profile
+source('./function/readKelly.R', local = TRUE)
+
+if(file.exists('./data/initial.rds')) {
+  initial <- read_rds(path = './data/initial.rds')
+} else {
+  initial <- readKelly(details = 'initial-fund-size')
+  saveRDS(initial, file = './data/initial.rds')
+}
+
+iniVal <- initial$KM[6] %>% as.character %>% as.numeric
+
+#'@ if(file.exists('./data/BR.rds')) {
+#'@   BR <- read_rds(path = './data/BR.rds')
+#'@ } else {
+#'@   BR <- readKelly(.summary = FALSE)
+#'@   saveRDS(BR, file = './data/BR.rds')
+#'@ }
+
+## read the summary of the data for comparison.
+if(file.exists('./data/BRSummary.rds')) {
+  BRSummary <- read_rds(path = './data/BRSummary.rds')
+} else {
+  BRSummary <- readKelly()
+  saveRDS(BRSummary, file = './data/BRSummary.rds')
+}
+
+ldply(BRSummary$KM, ldply, as.matrix) %>% datatable(
+  caption = "Table 4.5.1.1 : Summary of Kelly Main Funds ('0,000)", 
+  escape = FALSE, filter = 'top', rownames = FALSE, 
+  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                    'Buttons' = NULL, 'Responsive' = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
+                 lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
+                 ColReorder = TRUE, rowReorder = TRUE, 
+                 buttons = list('copy', 'print', 
+                                list(extend = 'collection', 
+                                     buttons = c('csv', 'excel', 'pdf'), 
+                                     text = 'Download'), I('colvis'))))
+```
+
+*table 4.5.1.1 : Summary of `r length(BRSummary$KMnames)` Kelly main funds.*
+
+  From *table 4.5.1.1* we can know the risk of the all investmental funds.
+
+  In order to equalise the initial fund size, here I united it as `r currency(iniVal)` which is get from max value among the 110 funds.
+
+```{r}
+## need to embed a shinyapps for comparison of the effeciency of follow bets.
+## ![Kelly fund](figure/.gif)
+```
+
+  From above shinyApps, we can know the initial fund required and the risk as well as the return of investment for us to follow the firm A with application of a time series onto the Kelly staking models.
+
+  Now we try to simulate whole 110 Kelly funds with steps in [4.3 Kelly Ⓜodel] to made a comparison based on the portion of stakes from the initial pools for every single league as we can refer to *table 4.3.2.1*.
+
+```{r lprofile2, echo = FALSE, results = 'asis'}
+## Below profHandling() will read all league risk profile but now we only need to read lRProf1A.rds.
+#'@ source('./function/profHandling.R', local = TRUE)
+#'@ wProf = profHandling()
+#'@ lRProf = profHandling(type = 'weight.stakes')
+#'@ rm(profHandling)
+source('./function/leagueRiskProf.R', local = TRUE)
+
+if(file.exists('./data/lRProf1A.rds')) {
+    lRProf1A <- read_rds(path = './data/lRProf1A.rds')
+} else {
+    lRProf1A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'all')
+    saveRDS(lRProf1A, file = './data/lRProf1A.rds')
+}
+
+lRiskSettingProf <- lRProf1A %>% 
+  mutate(portion = percent(all.lg/sum(all.lg)), baseline = currency(iniVal * portion))
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "League Stakes Profiling"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Staking allocation and portfolio ($0,000)")), 
+  as.htmlwidget(lRiskSettingProf %>% .[sample(1:nrow(.), 6), ] %>% formattable(list(
+    all.lg = color_tile('white', 'darkgoldenrod'), 
+    portion = color_tile('white', 'darkgoldenrod'), 
+    baseline = color_tile('white', 'darkgoldenrod')))))
+```
+
+*table 4.5.1.2* : `r paste0(dim(lRiskSettingProf), collapse = ' x ')` : *A simple new league stakes profile.*
+
+  *table 4.5.1.2* is just a simple baseline profile for league risk management to test the Kelly models. Here I try to adjust few points to do comparison : 
+  
+  - united the initial fund size
+  - set a baseline staking portfolio acrosss the leagues
+  - application of various Kelly but not reversed models
+
+```{r kelly-staking-models, echo = FALSE, results = 'asis'}
+## After we set a united initial fund size and set a baseline for staking, here we need to test the Kelly.
+
 
 ```
 
-*张丹 (2016)*^[Kindly refer to 7th paper inside [Reference for technical research on programming and coding portion for the paper.] in **7.4 References** for further details] provides couple of r package for investment and analysis in financial market. You can also refer to [Introduction of R Packages](http://rpubs.com/englianhu/introduction-of-r-packages).
+  *张丹 (2016)*^[Kindly refer to 7th paper inside [Reference for technical research on programming and coding portion for the paper.] in **7.4 References** for further details] provides couple of r package for investment and analysis in financial market. You can also refer to [Introduction of R Packages](http://rpubs.com/englianhu/introduction-of-r-packages).
 
 ### 4.5.2 Investors' Fund Refill
 
-  Kelly model will be a good risk averse investment portfolio. However, as we know normally a mutual fund or any investment fund will advise investors credit a certain money into the pool regularly. For this section I keep it as the next study which is in [Application of Kelly Criterion model in Sportsbook Investment - Part II](https://github.com/scibrokes/kelly-criterion). It will includes the :
+  Kelly model will be a good risk averse investment portfolio. As we know normally a mutual fund or any investment fund will advise investors credit a certain money into the pool regularly. For this section I keep it as the next study which is in [Application of Kelly Criterion model in Sportsbook Investment - Part II](https://github.com/scibrokes/kelly-criterion) as an dynamic staking baseline model upon injection of new fund into the pool. It will includes the :
   
   - bonus issue or dividends
   - refill or pump-in money into the pool
@@ -2221,9 +2315,13 @@ options(op)
 
 <iframe src="https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/c2da2e5ca09aaf218616045031c9ee4ce3537b18/references/An%20Introduction%20to%20Football%20Modelling%20at%20SmartOdds%20(v1).pdf" style="width:560px; height:500px;" frameborder="0"></iframe>
 
+<br>
+
 ![*Mark Dixon*](figure/back-to-the-future-atass-1.png)
 
 *graph 6.1.1 : The pioneer of sportsbook statistical analytical ATASS --- founder : Mark Dixon*
+
+<br>
 
   You are feel free to know further about the history of Mr Mark Dixon from [Boffins -vs- Bookies (The Man Who Broke the World Leading Bookmakers)](https://englianhu.wordpress.com/sportsbook/boffins-vs-bookies-the-man-who-broke-the-world-leading-bookmakers/).
 
@@ -2297,8 +2395,9 @@ rm(sys1)
     + Reviewed previous version, DT::datatable updated new version replaced *Button* extension from *TableTools*, removed sparkline and htmlwidget
     + Applied linear regression to test the efficiency of staking model by consultancy firm A
   - File pre-release version 0.9.4 - *2016-09-28 00:15:24 JST*
-    + Add linear regression and shinyApp to test the effects on staking
-    + 
+    + Added linear regression and shinyApp to test the effects on staking
+  - File pre-release version 0.9.5 - *2016-12-20 02:26:19 JST*
+    + Added Kelly criterion for 110 main-funds with each has 19 sub-funds.
 
 ## 7.3 Speech and Blooper
 

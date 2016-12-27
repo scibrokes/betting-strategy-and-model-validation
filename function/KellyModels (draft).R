@@ -1507,6 +1507,37 @@ source('./function/readKelly.R', local = TRUE)
 BRSummary <- readKelly()
 saveRDS(BRSummary, file = './data/BRSummary.rds')
 
+
+## simulate Kelly 
+## - united initial fund size
+## - portion arrangement as baseline stakes for league profile
+source('./function/readKelly.R', local = TRUE)
+
+if(file.exists('./data/initial.rds')) {
+  BR <- read_rds(path = './data/initial.rds')
+} else {
+  initial <- readKelly(details = 'initial-fund-size')
+  saveRDS(initial, file = './data/initial.rds')
+}
+
+iniVal <- initial$KM[6] %>% as.character %>% as.numeric
+
+if(file.exists('./data/BR.rds')) {
+  BR <- read_rds(path = './data/BR.rds')
+} else {
+  BR <- readKelly(.summary = FALSE)
+  saveRDS(BR, file = './data/BR.rds')
+}
+
+if(file.exists('./data/BRSummary.rds')) {
+  BRSummary <- read_rds(path = './data/BRSummary.rds')
+} else {
+  BRSummary <- readKelly()
+  saveRDS(BRSummary, file = './data/BRSummary.rds')
+}
+
+
+
 ## ================== Load Data ================================
 ## When we saved data by execute above codes, then we just load the data from here onwards. 
 ## Simulate and save Kelly models for easily loading

@@ -10,9 +10,6 @@ suppressMessages(library('magrittr'))
 suppressMessages(library('formattable'))
 suppressMessages(library('stringr'))
 
-source('./vKelly.R')
-source('./vKelly2.R')
-
 ## ========= Read Data =================================
 ## Load saved dataset to save the loading time.
 ## directly load the dataset from running chunk `read-data-summary-table` and also chunk `scrap-data`. 

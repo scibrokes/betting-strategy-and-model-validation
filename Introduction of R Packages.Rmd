@@ -3,12 +3,15 @@ title: "Introduction of R Packages"
 author: "®yo, Eng Lian Hu"
 date: "8/28/2015"
 output:
+  html_notebook: 
+    toc: yes
   html_document:
     fig_height: 3
     fig_width: 5
     highlight: haddock
     theme: cerulean
     toc: yes
+runtime: shiny
 ---
 
 # 1. Introduction
@@ -20,7 +23,10 @@ output:
 ## Loading the packages and setting adjustment
 suppressMessages(library('BBmisc'))
 suppressAll(library('utils'))
-suppressAll(source('./function/libs.R', local = TRUE))
+#'@ suppressAll(source('./function/libs.R'))
+suppressAll(requirePackages(c('plyr', 'magrittr', 'stringr', 'tidyverse', 'formattable', 'doParallel')))
+
+doParallel::registerDoParallel(cores = detectCores())
 ```
 
 ```{r read-data1}
@@ -53,16 +59,20 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
 
   Below is codes for merge files, there has another function which is `plyr::join_all()` which is very efficient, however the datetime format will became 0 value but `reshape::merge_all()` can combine the data efficiently but taken longer time.
 
+```{r setwd, echo = FALSE, results = 'asis'}
+pth <- 'C:/Users/scibr/Documents/GitHub/scibrokes/betting-strategy-and-model-validation'
+```
+
 ```{r get-data-summary-table-2.1, warning = FALSE}
-nrow(do.call(rbind, llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = TRUE)))
+nrow(do.call(rbind, llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0(pth, '/data/', x, '.csv'))), .parallel = FALSE)))
 
-nrow(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = TRUE)))
+nrow(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0(pth, '/data/', x, '.csv'))), .parallel = FALSE)))
 
-system.time(do.call(rbind, llply(as.list(seq(2011,2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = TRUE)))
+system.time(do.call(rbind, llply(as.list(seq(2011,2015)), function(x) data.frame(Sess = x, read.csv(paste0(pth, '/data/', x, '.csv'))), .parallel = FALSE)))
 
-system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = TRUE)))
+system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0(pth, '/data/', x, '.csv'))), .parallel = FALSE)))
 
-system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, data.table::fread(paste0('./data/', x, '.csv'))), .parallel = TRUE)))
+system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, data.table::fread(paste0(pth, '/data/', x, '.csv'))), .parallel = FALSE)))
 ```
 
   You can also embed plots, for example:
@@ -95,7 +105,7 @@ suppressMessages(library('dplyr'))
 suppressMessages(library('formattable'))
 
 ## Re-categorise the soccer financial settlement date. Due to I have no the history matches dataset from bookmakers. The scrapped spbo time is not stable (always change, moreover there just an information website) where firm A is the firm who placed bets with millions HKD (although the kick-off time might also changed after placed that particular bet), therefore I follow the kick-off time of the firm A.
-dat <- dat[order(dat$DateUK),] %>% mutate(DateUS = as.Date(format(DateUK, tz = 'EST', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S'))) #daily settlement will base on variable `DateUS`.
+dat <- suppressAll(dat[order(dat$DateUK),] %>% mutate(DateUS = as.Date(format(DateUK, tz = 'EST', usetz = TRUE, format = '%Y-%m-%d %H:%M:%S')))) #daily settlement will base on variable `DateUS`.
 
 BR <- ddply(dat, .(DateUS), summarise, Stakes = sum(Stakes), Return = sum(Return), PL = sum(PL), n = length(Sess), rRates = Return / Stakes) %>% mutate(CumStakes = cumsum(Stakes), SPL = cumsum(PL), BR = 4600 + SPL, gRates = BR/CumStakes)
 
@@ -104,6 +114,26 @@ summary(BR) %>% formattable
 summary(BR) %>% formattable %>% as.htmlwidget
 kable(summary(BR))
 htmlTable(summary(BR))
+print(xtable(summary(BR)), type = 'html')
+```
+
+```{r formattable}
+summary(BR) %>% formattable 
+```
+
+```{r htmlwidget}
+summary(BR) %>% formattable %>% as.htmlwidget
+```
+
+```{r kable}
+kable(summary(BR))
+```
+
+```{r htmltable}
+htmlTable(summary(BR))
+```
+
+```{r xtable}
 print(xtable(summary(BR)), type = 'html')
 ```
 
@@ -160,16 +190,16 @@ print(xtable(summary(BR)), type = 'html')
 
 对多策略或多模型进行管理和优化，涉及R包
 
-1. PortfolioAnalytics(组合分析和优化)
-2. stockPortfolio(股票组合管理)
-3. fAssets(Rmetrics系组合管理)等
+1. PortfolioAnalytics (组合分析和优化)
+2. stockPortfolio (股票组合管理)
+3. fAssets (Rmetrics系组合管理)等
 
 ### 2.3.5 风险管理：
 
 对持仓进行风险指标的计算和风险提示，涉及R包
-1. PerformanceAnalytics(风险分析)
-2. fPortfolio(Rmetrics系组合优化)
-3. fExtremes(Rmetrics系数据处理)
+1. PerformanceAnalytics (风险分析)
+2. fPortfolio (Rmetrics系组合优化)
+3. fExtremes (Rmetrics系数据处理)
 
 ## 2.4 Time Format
 
@@ -205,8 +235,11 @@ print(xtable(summary(BR)), type = 'html')
   - RECharts (two packages from Xie Yihui and Wei Taiyun)
   - [highcharter](http://jkunst.com/highcharter/index.html) - An interative d3 chart
 
-```{r bank-roll1, results = 'asis'}
+  - [Unable display hight at html format](http://rpubs.com/englianhu/highcharter-issue) states the issue but *SOLVED* as we can see from below data visualization.
+
+```{r bank-roll1A, message = FALSE, warning = FALSE, results = 'asis'}
 suppressAll(library('highcharter'))
+suppressAll(library('stringr'))
 suppressAll(source('./function/compareKelly.R'))
 
 ## Applied various fractional Kelly models version I.
@@ -221,9 +254,69 @@ plotFund <- compareKelly(K1D1, chart = TRUE, type = 'single')
 plotFund
 ```
 
-*graph 2.5.1 : Candle stick chart.*
+*graph 2.5.1A : Candle stick chart.*
 
-```{r bank-roll2, results = 'asis'}
+```{r bank-roll1B, eval = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
+suppressAll(source('./function/buildFund.R'))
+suppressAll(source('./function/plotChart.R'))
+load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
+
+SOFund = buildFund(dat)
+
+## Select 1st main-fund and also 1st sub-fund.
+plotFund <- plotChart(SOFund, type = 'single')
+plotFund
+
+## Exactly same with *graph 4.3.5.1* from http://rpubs.com/englianhu/208636. Working fine in rmarkdown but unable work in rmarkdown-shiny, here I set `eval = FALSE`
+
+#Quitting from lines 260-269 (Introduction_of_R_Packages.Rmd) 
+#
+#Warning: Error in order: 嶲悢1晄惀栴検
+#Stack trace (innermost first):
+#    123: order
+#    122: NextMethod
+#    121: [.Date
+#    120: FUN
+#    119: lapply
+#    118: [.tbl_df
+#    117: [
+#    116: buildFund
+#    115: eval
+#    114: eval
+#    113: withVisible
+#    112: withCallingHandlers
+#    111: handle
+#    110: timing_fn
+#    109: evaluate_call
+#    108: evaluate::evaluate
+#    107: evaluate
+#    106: in_dir
+#    105: block_exec
+#    104: call_block
+#    103: process_group.block
+#    102: process_group
+#    101: withCallingHandlers
+#    100: process_file
+#     99: knitr::knit
+#     98: <Anonymous>
+#     97: do.call
+#     96: contextFunc
+#     95: .getReactiveEnvironment()$runWith
+#     94: shiny::maskReactiveContext
+#     93: <reactive>
+#     82: doc
+#     81: shiny::renderUI
+#     80: func
+#     79: origRenderFunc
+#     78: output$__reactivedoc__
+#      3: <Anonymous>
+#      2: do.call
+#      1: rmarkdown::run
+```
+
+*graph 2.5.1B : Candle stick chart.*
+
+```{r bank-roll2, message = FALSE, warning = FALSE, results = 'asis'}
 suppressAll(library('highcharter'))
 suppressAll(source('./function/compareKelly.R'))
 
@@ -233,7 +326,7 @@ plotFund
 
 *graph 2.5.2 : Comparison of multiple funds chart.*
 
-```{r}
+```{r price-table, message = FALSE, warning = FALSE}
 ## Need to correct the content, below just a sample...
 
 ## Random pick 2 observations among each stratified levels of Result.
@@ -264,6 +357,60 @@ tagList(
 ```
 
 *table 2.5.1 : Price flutuation table.*
+
+  Here are some examples about applicatino of highchart on shiny. The original link is <http://rpubs.com/englianhu/introduction-of-r-packages> while I added shinyapp and post as shiny rmarkdown file.
+  
+  - [Adding a legend to a pie chart using highcharter, or Rcharts](http://stackoverflow.com/questions/38179361/adding-a-legend-to-a-pie-chart-using-highcharter-or-rcharts)
+  - [Shiny Integration](http://jkunst.com/highcharter/shiny.html)
+
+```{r highchart, message = FALSE, warning = FALSE}
+library("shiny")
+library("highcharter")
+
+data(citytemp)
+
+ui <- fluidPage(
+    h1("Highcharter Demo"),
+    fluidRow(
+        column(width = 4, class = "panel",
+               selectInput("type", label = "Type", width = "100%",
+                           choices = c("line", "column", "bar", "spline"), 
+                           selected = "bar"), 
+               selectInput("stacked", label = "Stacked",  width = "100%",
+                           choices = c(FALSE, "normal", "percent"), 
+                           selected = "percent"),
+               selectInput("hc_theme", label = "Theme",  width = "100%",
+                           choices = c("538" = "hc_theme_538()", "economist" = "hc_theme_economist()",
+                                       "darkunica" = "hc_theme_darkunica()", 
+                                       "gridlight" = "hc_theme_gridlight()", 
+                                       "sandsignika" = "hc_theme_sandsignika()",
+                                       "null" = "hc_theme_null()", "handdrwran" = "hc_theme_handdrawn()", 
+                                       "chalk" = "hc_theme_chalk"), 
+                           selected = "hc_theme_economist()")),
+        column(width = 8, highchartOutput("hcontainer",height = "500px"))))
+
+server = function(input, output) {
+    
+    output$hcontainer <- renderHighchart({
+        
+        hc <- paste("hc <- highchart() %>% 
+            hc_chart(type = input$type) %>% 
+            hc_plotOptions(
+                series = list(showInLegend = TRUE)) %>% 
+            hc_add_series(data = list(
+                list(y = 3, name = \"cat 1\"),
+                list(y = 4, name = \"cat 2\"))) %>% 
+            hc_add_theme(", input$hc_theme, ")
+        
+        if (input$stacked != FALSE) {
+            hc <- hc %>%
+                hc_plotOptions(showInLegend=TRUE,dataLabels=FALSE)
+        }")
+        eval(parse(text = hc))
+    })}
+
+shinyApp(ui = ui, server = server)
+```
 
 Reference :
   - [Interactive visualizations with R - a minireview](http://ouzor.github.io/blog/2014/11/21/interactive-visualizations.html)
