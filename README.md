@@ -42,7 +42,9 @@
 
   - [Betting Strategy and Model Validation (Old)](http://rpubs.com/englianhu/betting-strategy-and-model-validation) (*Remarks: Initially one file, but due to file size and finally seperate to few sections and files.*)
   - [Betting Strategy and Model Validation - Part I (*Aug-2016*)](http://englianhu.github.io/2016/08/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_01.html)
-  - Miscellaneous : [Introduction of R Packages](http://rpubs.com/englianhu/introduction-of-r-packages) and [Unable display highchart at html format](http://rpubs.com/englianhu/highcharter-issue)
+  - Miscellaneous : [Introduction of R Packages](http://rpubs.com/englianhu/introduction-of-r-packages)
+  - Miscellaneous : [Introduction of R Packages (Shiny)](https://beta.rstudioconnect.com/content/2291/)
+  - Miscellaneous : [Unable display highchart at html format](http://rpubs.com/englianhu/highcharter-issue)
 
 ## 4. Future Work
 

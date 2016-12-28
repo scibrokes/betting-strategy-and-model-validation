@@ -2045,6 +2045,10 @@ if(file.exists('./data/scoresall.rds')){
 }
 
 lms <- llply(scoresall$opts, function(x) lm(FTHG~FTAG, x$pred))
+
+lms$opt0 <- mvrnorm(n = nrow(dat[c('FTHG', 'FTAG')]), 
+                    mu = colMeans(dat[c('FTHG', 'FTAG')]), 
+                    Sigma = as.matrix(var(dat[c('FTHG', 'FTAG')])))
 ```
 
 ```{r test-scores1A, echo = FALSE, results = 'asis'}

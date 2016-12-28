@@ -3,33 +3,59 @@ title: "Introduction of R Packages"
 author: "®yo, Eng Lian Hu"
 date: "8/28/2015"
 output:
-  html_notebook: 
-    toc: yes
   html_document:
     fig_height: 3
     fig_width: 5
     highlight: haddock
     theme: cerulean
     toc: yes
+  html_notebook:
+    toc: yes
 runtime: shiny
+resource_files:
+- regressionApps/shinyData.RData
+- function/buildFund.R
+- function/compareKelly.R
+- function/plotChart.R
+- function/KellyPL.R
+- function/vKelly.R
+- function/vKelly2.R
+- function/libs.R
+- data/2011.csv
+- data/2012.csv
+- data/2013.csv
+- data/2014.csv
+- data/2015.csv
+- data/K1D1.rds
+- figure/oda-army.jpg
 ---
 
 # 1. Introduction
 
   This is an casting page of testing the efficiency of the coding and also some useful r packages for the research on `Betting Strategy and Model Validation`. Some packages are introduce from other websites while I made it a scrapbook to easier for references.
 
-```{r libs}
+```{r libs, message = FALSE, warning = FALSE}
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
 suppressMessages(library('BBmisc'))
 suppressAll(library('utils'))
+suppressAll(library('plyr'))
 #'@ suppressAll(source('./function/libs.R'))
-suppressAll(requirePackages(c('plyr', 'magrittr', 'stringr', 'tidyverse', 'formattable', 'doParallel')))
+
+pkgs <- c('magrittr', 'stringr', 'formattable', 'doParallel')
+if(!require('tidyverse')) {
+  suppressAll(install.packages('tidyverse'))
+  suppressAll(suppressPackageStartupMessages(library('tidyverse')))
+}
+
+suppressAll(plyr::l_ply(pkgs, require, quietly = TRUE, character.only = TRUE))
+suppressAll(suppressPackageStartupMessages(library('tidyverse')))
+rm(pkgs)
 
 doParallel::registerDoParallel(cores = detectCores())
 ```
 
-```{r read-data1}
+```{r read-data1, message = FALSE, warning = FALSE}
 ## Load saved dataset to save the loading time.
 ## directly load the dataset from running chunk `read-data-summary-table` and also chunk `scrap-data`. 
 ## The spboData for filtering leagues and matches scores purpose. Kindly refer to file named 
@@ -49,30 +75,26 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
 
   In my previous assignments, there has some useful function for read files :
   
-  - `scan()` - scan the table files.
-  - `readLines()` - read the files line by line.
-  - `readtable()` - read the table files.
-  - `readBin()` - fatest since read the binary code and convert to character.
+  - *scan()* - scan the table files.
+  - *readLines()* - read the files line by line.
+  - *readtable()* - read the table files.
+  - *readBin()* - fatest since read the binary code and convert to character.
 
   - [Coursera Data Science Capstone](https://github.com/englianhu/Coursera-Data-Science-Capstone)
   - [Coursera Data Mining](https://github.com/englianhu/Coursera-Data-Mining)
 
   Below is codes for merge files, there has another function which is `plyr::join_all()` which is very efficient, however the datetime format will became 0 value but `reshape::merge_all()` can combine the data efficiently but taken longer time.
 
-```{r setwd, echo = FALSE, results = 'asis'}
-pth <- 'C:/Users/scibr/Documents/GitHub/scibrokes/betting-strategy-and-model-validation'
-```
-
 ```{r get-data-summary-table-2.1, warning = FALSE}
-nrow(do.call(rbind, llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0(pth, '/data/', x, '.csv'))), .parallel = FALSE)))
+suppressWarnings(nrow(do.call(rbind, llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = FALSE))))
 
-nrow(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0(pth, '/data/', x, '.csv'))), .parallel = FALSE)))
+suppressWarnings(nrow(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = FALSE))))
 
-system.time(do.call(rbind, llply(as.list(seq(2011,2015)), function(x) data.frame(Sess = x, read.csv(paste0(pth, '/data/', x, '.csv'))), .parallel = FALSE)))
+suppressWarnings(system.time(do.call(rbind, llply(as.list(seq(2011,2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = FALSE))))
 
-system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0(pth, '/data/', x, '.csv'))), .parallel = FALSE)))
+suppressWarnings(system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = FALSE))))
 
-system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, data.table::fread(paste0(pth, '/data/', x, '.csv'))), .parallel = FALSE)))
+suppressWarnings(system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, data.table::fread(paste0('./data/', x, '.csv'))), .parallel = FALSE))))
 ```
 
   You can also embed plots, for example:
@@ -240,6 +262,7 @@ print(xtable(summary(BR)), type = 'html')
 ```{r bank-roll1A, message = FALSE, warning = FALSE, results = 'asis'}
 suppressAll(library('highcharter'))
 suppressAll(library('stringr'))
+suppressAll(source('./function/vKelly.R'))
 suppressAll(source('./function/compareKelly.R'))
 
 ## Applied various fractional Kelly models version I.
@@ -267,10 +290,7 @@ SOFund = buildFund(dat)
 plotFund <- plotChart(SOFund, type = 'single')
 plotFund
 
-## Exactly same with *graph 4.3.5.1* from http://rpubs.com/englianhu/208636. Working fine in rmarkdown but unable work in rmarkdown-shiny, here I set `eval = FALSE`
-
-#Quitting from lines 260-269 (Introduction_of_R_Packages.Rmd) 
-#
+#Quitting from lines 275-284 (Introduction_of_R_Packages.Rmd) 
 #Warning: Error in order: 嶲悢1晄惀栴検
 #Stack trace (innermost first):
 #    123: order

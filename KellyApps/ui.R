@@ -11,6 +11,7 @@ suppressMessages(library('dplyr'))
 suppressMessages(library('magrittr'))
 suppressMessages(library('formattable'))
 suppressMessages(library('stringr'))
+suppressMessages(library('highcharter'))
 
 appCSS <- "
 #loading-content {
@@ -61,9 +62,25 @@ ui <- shinyUI(fluidPage(
                 sliderInput('n', 'Stakes Weight Adjuster:', min = 1, max = 5, value = 1, step = 0.0001),
                 sliderInput('n', 'Weight Adjuster (EXP):', min = 0, max = 5, value = 1, step = 0.0001),
                 sliderInput('n', 'Maximum Iteration Adjuster:', min = 1, max = 1000, value = 1, step = 1),
-                style = "primary"),
+                actionButton('tabBut', 'View Table'), style = 'primary'),
             br(),
-            bsCollapse(id = "advanced",
+            bsCollapse(id = 'chart',
+              selectInput('type', label = 'Type', width = '100%',
+                          choices = c('line', 'column', 'bar', 'spline'), 
+                          selected = 'bar'), 
+              selectInput('stacked', label = 'Stacked',  width = '100%',
+                          choices = c(FALSE, 'normal', 'percent'), 
+                          selected = 'percent'),
+              selectInput('hc_theme', label = 'Theme',  width = '100%',
+                          choices = c('538' = 'hc_theme_538()', 'economist' = 'hc_theme_economist()',
+                                      'darkunica' = 'hc_theme_darkunica()', 
+                                      'gridlight' = 'hc_theme_gridlight()', 
+                                      'sandsignika' = 'hc_theme_sandsignika()',
+                                      'null' = 'hc_theme_null()', 'handdrwran' = 'hc_theme_handdrawn()', 
+                                      'chalk' = 'hc_theme_chalk'), 
+                          selected = 'hc_theme_economist()'), style = 'primary'),
+            br(),
+            bsCollapse(id = 'advanced',
                        p('- Author Profile:', HTML("<a href='https://beta.rstudioconnect.com/englianhu/ryo-eng/'>RYO, ENG Lian Hu</a>")),
                        p('- GitHub:', HTML("<a href='https://github.com/scibrokes/betting-strategy-and-model-validation'>Source Code</a>")),
                        br(),
