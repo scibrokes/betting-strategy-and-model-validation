@@ -1,5 +1,5 @@
-compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = 'daily', 
-                         by.league = as.logical(FALSE), adjusted = 1, 
+compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), .progress = 'none', 
+                         by = 'daily', by.league = as.logical(FALSE), adjusted = 1, 
                          chart = as.logical(FALSE), type = 'multiple', event = NULL, 
                          event.dates = NULL, chart.type = NULL, num = NULL, subnum = NULL) {
   ## A function which compare the staking, P&L result as well as the risk (sd and var)
@@ -64,7 +64,7 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
     ## retrieve the initial fund size.
     initial <- llply(K, function(x) {
       unlist(x[grep('initial', names(x), value = TRUE)])
-    }, .parallel = parallel) %>% unlist %>% as.list
+    }, .progress = .progress, .parallel = parallel) %>% unlist %>% as.list
     
   } else {
     stop('Kindly set a numeric value as initial fund to compare the various Kelly models.')
@@ -97,8 +97,8 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
           } else {
             df
           }
-        }, .parallel = parallel) %>% join_all %>% tbl_df)
-      }, .parallel = parallel) %>% llply(split(., .$League), 
+        }, .progress = .progress, .parallel = parallel) %>% join_all %>% tbl_df)
+      }, .progress = .progress, .parallel = parallel) %>% llply(split(., .$League), 
                                          function(x) xts(x[-c(1:2)], x$DateUS))
     
     } else {
@@ -123,8 +123,8 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
           } else {
             df
           }
-        }, .parallel = parallel) %>% join_all %>% tbl_df)
-      }, .parallel = parallel) %>% llply(function(x) xts(x[-1], x$DateUS))
+        }, .progress = .progress, .progress = .progress, .parallel = parallel) %>% join_all %>% tbl_df)
+      }, .progress = .progress, .parallel = parallel) %>% llply(function(x) xts(x[-1], x$DateUS))
     }
     
   } else if(by == 'time') {
@@ -150,8 +150,8 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
           } else {
             df
           }
-        }, .parallel = parallel) %>% join_all %>% tbl_df)
-      }, .parallel = parallel) %>% llply(split(., .$League), 
+        }, .progress = .progress, .parallel = parallel) %>% join_all %>% tbl_df)
+      }, .progress = .progress, .parallel = parallel) %>% llply(split(., .$League), 
                                          function(x) xts(x[-c(1:2)], x$TimeUS))
     
     } else {
@@ -176,8 +176,8 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
           } else {
             df
           }
-        }, .parallel = parallel) %>% join_all %>% tbl_df)
-      }, .parallel = parallel) %>% llply(function(x) xts(x[-1], x$TimeUS))
+        }, .progress = .progress, .parallel = parallel) %>% join_all %>% tbl_df)
+      }, .progress = .progress, .parallel = parallel) %>% llply(function(x) xts(x[-1], x$TimeUS))
     }
     
   } else {
@@ -214,16 +214,16 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
       z = llply(subname, function(y) {
         x[, y == str_replace_all(
           names(x), '\\.Open|\\.High|\\.Low|\\.Close|\\.Volume|\\.Adjusted', '')]
-      }, .parallel = parallel)
+      }, .progress = .progress, .parallel = parallel)
       names(z) = subname; z
-    }, .parallel = parallel)
+    }, .progress = .progress, .parallel = parallel)
     
     Kbase <- llply(num, function(i) {
       z = llply(subnum, function(j) {
         Kbase[[i]][[j]]
-      }, .parallel = parallel)
+      }, .progress = .progress, .parallel = parallel)
       names(z) <- subname[subnum]; z
-    }, .parallel = parallel)
+    }, .progress = .progress, .parallel = parallel)
     names(Kbase) <- name[num]
     
     if(chart == TRUE) {
@@ -253,13 +253,13 @@ compareKelly <- function(K, initial = NULL, parallel = as.logical(FALSE), by = '
       x[, sapply(
         subname[subnum], paste0, 
         c('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted')) %>% as.vector]
-    }, .parallel = parallel)
+    }, .progress = .progress, .parallel = parallel)
     
     ## combine all Kelly models to be one to plot for multiple funds comparison chart.
     Kbase <- llply(name[num], function(x) {
       y = Kbase[[x]]
       names(y) = paste0(x, '.', names(y)); y
-    }, .parallel = parallel) %>% do.call(cbind, .)
+    }, .progress = .progress, .parallel = parallel) %>% do.call(cbind, .)
     
     #> system.time(do.call(cbind, Fund))
     #user system   棳惱 

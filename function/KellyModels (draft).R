@@ -1514,9 +1514,9 @@ saveRDS(BRSummary, file = './data/BRSummary.rds')
 source('./function/readKelly.R', local = TRUE)
 
 if(file.exists('./data/initial.rds')) {
-  BR <- read_rds(path = './data/initial.rds')
+  initial <- read_rds(path = './data/initial.rds')
 } else {
-  initial <- readKelly(details = 'initial-fund-size')
+  initial <- readKelly(details = 'initial-fund-size', .progress = 'none')
   saveRDS(initial, file = './data/initial.rds')
 }
 
@@ -1525,14 +1525,21 @@ iniVal <- initial$KM[6] %>% as.character %>% as.numeric
 if(file.exists('./data/BR.rds')) {
   BR <- read_rds(path = './data/BR.rds')
 } else {
-  BR <- readKelly(.summary = FALSE)
+  BR <- readKelly(.summary = FALSE, .progress = 'none')
   saveRDS(BR, file = './data/BR.rds')
 }
+
+## save every funds independently in order to easier load/read.
+suppressPackageStartupMessages(library('rlist'))
+
+fnds <- paste0(names(BR$KM), '.', 
+               llply(BR$KM, function(x) 
+                 as.character(names(x))) %>% unlist)
 
 if(file.exists('./data/BRSummary.rds')) {
   BRSummary <- read_rds(path = './data/BRSummary.rds')
 } else {
-  BRSummary <- readKelly()
+  BRSummary <- readKelly(.progress = 'none')
   saveRDS(BRSummary, file = './data/BRSummary.rds')
 }
 
