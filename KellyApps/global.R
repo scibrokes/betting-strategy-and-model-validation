@@ -23,10 +23,6 @@ load('./K1mean2.rda', envir = .GlobalEnv)
 load('./K2mean1.rda', envir = .GlobalEnv)
 load('./K2mean2.rda', envir = .GlobalEnv)
 
-lRiskProf <<- ddply(dat[c('League', 'Stakes')], .(League), summarise, min = currency(min(Stakes)), 
-                    mean = currency(mean(Stakes)), median = currency(median(Stakes)), 
-                    sd = currency(sd(Stakes)), max = currency(max(Stakes))) %>% tbl_df %>% 
-  mutate(League = factor(League))
 
 ## ========= Kelly Models ================================
 ## 

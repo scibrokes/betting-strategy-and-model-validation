@@ -1736,9 +1736,11 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 ### 4.5.1 Risk Management
 
 ```{r bank-roll2, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
-suppressAll(source('./function/buildFund.R'))
+#'@ suppressAll(source('./function/buildFund.R'))
 suppressAll(source('./function/plotChart.R'))
-SOFund = buildFund(dat)
+#'@ SOFund <- buildFund(dat)
+#'@ saveRDS(SOFund, file = './KellyApps/SOFund.rds')
+SOFund <- read_rds(path = './KellyApps/SOFund.rds')
 
 ## Select 1st main-fund and also 1st sub-fund.
 plotFund <- plotChart(SOFund, type = 'single')

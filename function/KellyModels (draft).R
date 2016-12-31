@@ -1513,6 +1513,7 @@ saveRDS(BRSummary, file = './data/BRSummary.rds')
 ## - portion arrangement as baseline stakes for league profile
 source('./function/readKelly.R', local = TRUE)
 
+## read initial fund size of bank roll.
 if(file.exists('./data/initial.rds')) {
   initial <- read_rds(path = './data/initial.rds')
 } else {
@@ -1520,6 +1521,15 @@ if(file.exists('./data/initial.rds')) {
   saveRDS(initial, file = './data/initial.rds')
 }
 
+## read summary of bank roll.
+if(file.exists('./data/BRSummary.rds')) {
+  BRSummary <- read_rds(path = './data/BRSummary.rds')
+} else {
+  BRSummary <- readKelly(.progress = 'none')
+  saveRDS(BRSummary, file = './data/BRSummary.rds')
+}
+
+## read bankroll for plot chart.
 iniVal <- initial$KM[6] %>% as.character %>% as.numeric
 
 if(file.exists('./data/BR.rds')) {
@@ -1530,18 +1540,16 @@ if(file.exists('./data/BR.rds')) {
 }
 
 ## save every funds independently in order to easier load/read.
-suppressPackageStartupMessages(library('rlist'))
+source('./function/splitFund.R', local = TRUE)
+splitFund(parallel = TRUE, progress = 'text')
+## tried to run few times splitFund() but due to object size allocation 
+##   issue and cause the pc forced to restart. Here I run the codes 
+##   inside the function and working fine.
 
-fnds <- paste0(names(BR$KM), '.', 
-               llply(BR$KM, function(x) 
-                 as.character(names(x))) %>% unlist)
 
-if(file.exists('./data/BRSummary.rds')) {
-  BRSummary <- read_rds(path = './data/BRSummary.rds')
-} else {
-  BRSummary <- readKelly(.progress = 'none')
-  saveRDS(BRSummary, file = './data/BRSummary.rds')
-}
+SOFund <- read_rds(path = './KellyApps/SOFund.rds')
+list.files('./KellyApps', pattern = '.rds$') %>% length
+#[1] 6195
 
 
 
