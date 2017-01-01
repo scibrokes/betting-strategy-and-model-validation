@@ -75,10 +75,10 @@ splitFund <- function(.print = FALSE, parallel = FALSE, progress = 'none') {
   allfnds <- data.frame(dtt, Op(fnds), Hi(fnds), Lo(fnds), Cl(fnds), 
                         Vo(fnds), Ad(fnds)) %>% tbl_df
   
-  allfnds2 <- suppressAll(llply(paste0(allfds, '.'), function(y) {
-    df = allfnds[c('DateUS', grep(y, names(allfnds), value = TRUE))] %>% tbl_df
-    
+  allfnds2 <- suppressAll(llply(allfds, function(y) {
     ty = c('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted')
+    df = allfnds[c('DateUS', paste0(y, ty))] %>% tbl_df
+    
     if(ty == '.Open') {
       xx = ddply(df, .(DateUS), numcolwise(head, 1)) %>% tbl_df
     } else if(ty == '.High') {
