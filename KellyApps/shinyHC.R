@@ -1,16 +1,27 @@
-library("shiny")
-library('shinyBS')
-library('highcharter')
-source("./function/compareKelly.R")
-source("./function/plotChart2.R")
+suppressPackageStartupMessages(library("BBmisc"))
+suppressAll(library('plyr'))
+suppressAll(library('stringr'))
+suppressAll(library('tidyverse'))
+suppressAll(library("shiny"))
+suppressAll(library('shinyBS'))
+suppressAll(library('highcharter'))
+suppressAll(library('DT'))
+suppressAll(source("./function/compareKelly.R"))
+suppressAll(source("./function/plotChart2.R"))
 
 SOFund <<- read_rds(path = './SOFund.rds')
 dateRange <<- data.frame(SOFund) %>% row.names %>% as.Date
+SOFundDT <<- data.frame(DateUS = row.names(data.frame(SOFund)), SOFund) %>% tbl_df %>% 
+  mutate(DateUS = as.Date(DateUS), Ordinary.Open = currency(Ordinary.Open), 
+         Ordinary.High = currency(Ordinary.High), Ordinary.Low = currency(Ordinary.Low), 
+         Ordinary.Close = currency(Ordinary.Close), 
+         Ordinary.Volume = digits(Ordinary.Volume, 4, format = 'd', big.mark=','), 
+         Ordinary.Adjusted = digits(Ordinary.Adjusted, 4, format = 'd', big.mark=','))
 
 ui <- fluidPage(
   h1("Highcharter Demo"),
-  fluidRow(
-    column(width = 4, class = "panel",
+  sidebarLayout(
+    sidebarPanel(
            selectInput("type", label = "Type", width = "100%",
                        choices = c(FALSE, "line", "column", "spline", "bar", "pie"), 
                        selected = "line"), 
@@ -35,11 +46,13 @@ ui <- fluidPage(
                                    "smpl" = "hc_theme_smpl()", 
                                    "sparkline" = "hc_theme_sparkline()"), 
                        selected = "hc_theme_economist()"), 
-           dateRangeInput("dateRange", "Date Range:", 
-                       start = range(dateRange)[1], 
-                       end = range(dateRange)[2]),
+
            actionButton("tabBut", "View Table")),
-    column(width = 8, highchartOutput("hcontainer", height = "500px"))))
+    
+    mainPanel(
+      highchartOutput("hcontainer", height = "500px"),
+      bsModal("modalExample", "Data Table", "tabBut", size = "large",
+              dataTableOutput("distTable")))))
 
 server = function(input, output) {
   
@@ -52,7 +65,7 @@ server = function(input, output) {
   
   output$distTable <- renderDataTable({
     
-    SOFund %>% datatable(
+    SOFundDT %>% datatable(
       caption = "Table 2.1.1 : Firm A Staking Data (in $0,000)", 
       escape = FALSE, filter = "top", rownames = FALSE, 
       extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
@@ -65,7 +78,7 @@ server = function(input, output) {
                                          buttons = c('csv', 'excel', 'pdf'), 
                                          text = 'Download'), I('colvis'))))
     
-  }, options = list(pageLength = 10))
+  })#, options = list(pageLength = 10))
   }
 
 shinyApp(ui = ui, server = server)
