@@ -75,7 +75,7 @@ splitFund <- function(.print = FALSE, parallel = FALSE, progress = 'none') {
   allfnds <- data.frame(dtt, Op(fnds), Hi(fnds), Lo(fnds), Cl(fnds), 
                         Vo(fnds), Ad(fnds)) %>% tbl_df
   
-  allfnds2 <- suppressAll(llply(allfds, function(y) {
+  allfnds2 <- suppressWarnings(llply(allfds, function(y) {
     ty = c('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted')
     df = allfnds[c('DateUS', paste0(y, ty))] %>% tbl_df
     
@@ -97,7 +97,9 @@ splitFund <- function(.print = FALSE, parallel = FALSE, progress = 'none') {
     xx = xts(xx[-1], xx$DateUS)
     
     saveRDS(eval(parse(text = paste(allfds, '= xx'))), 
-            file = paste0('./KellyApps/', y, 'rds'))
+            file = paste0('./KellyApps/', y, '.rds'))
     rm(df, ty, xx)
+    if(.print == TRUE) cat('\n', y, ' had saved.')
+    
   }, .progress = progress, .parallel = parallel))
 }

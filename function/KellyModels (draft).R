@@ -1541,7 +1541,7 @@ if(file.exists('./data/BR.rds')) {
 
 ## save every funds independently in order to easier load/read.
 source('./function/splitFund.R', local = TRUE)
-splitFund(parallel = TRUE, progress = 'text')
+splitFund(.print = TRUE, parallel = TRUE, progress = 'text')
 ## tried to run few times splitFund() but due to object size allocation 
 ##   issue and cause the pc forced to restart. Here I run the codes 
 ##   inside the function and working fine.

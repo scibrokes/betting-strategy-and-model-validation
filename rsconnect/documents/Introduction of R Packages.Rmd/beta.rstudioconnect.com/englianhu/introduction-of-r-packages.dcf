@@ -3,8 +3,10 @@ title: introduction-of-r-packages
 account: englianhu
 server: beta.rstudioconnect.com
 appId: 2291
-bundleId: 4725
+bundleId: 4765
 url: https://beta.rstudioconnect.com/content/2291/
-when: 1482888896.7228
+when: 1483345936.57945
 asMultiple: FALSE
 asStatic: FALSE
+additionalFiles: KellyApps/SOFund.rds|data/K1.rds
+ignoredFiles: data/2011.csv|data/2012.csv|data/2013.csv|data/2014.csv|data/2015.csv|data/K1D1.rds

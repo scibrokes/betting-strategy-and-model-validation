@@ -1,6 +1,6 @@
 ---
 title: "Introduction of R Packages"
-author: "®yo, Eng Lian Hu"
+author: "<ef>ｾゑｽｮyo, Eng Lian Hu"
 date: "8/28/2015"
 output:
   html_document:
@@ -13,21 +13,8 @@ output:
     toc: yes
 runtime: shiny
 resource_files:
-- regressionApps/shinyData.RData
-- function/buildFund.R
-- function/compareKelly.R
-- function/plotChart.R
-- function/KellyPL.R
-- function/vKelly.R
-- function/vKelly2.R
-- function/libs.R
-- data/2011.csv
-- data/2012.csv
-- data/2013.csv
-- data/2014.csv
-- data/2015.csv
-- data/K1D1.rds
-- figure/oda-army.jpg
+- KellyApps/SOFund.rds
+- data/K1.rds
 ---
 
 # 1. Introduction
@@ -85,16 +72,24 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
 
   Below is codes for merge files, there has another function which is `plyr::join_all()` which is very efficient, however the datetime format will became 0 value but `reshape::merge_all()` can combine the data efficiently but taken longer time.
 
-```{r get-data-summary-table-2.1, warning = FALSE}
+```{r get-data-summary-table-2.1, eval = FALSE, warning = FALSE}
 suppressWarnings(nrow(do.call(rbind, llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = FALSE))))
+#[1] 48744
 
 suppressWarnings(nrow(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = FALSE))))
+#[1] 48744
 
 suppressWarnings(system.time(do.call(rbind, llply(as.list(seq(2011,2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = FALSE))))
-
+#  user system   棳惱 
+#  1.53   0.02   1.62
+  
 suppressWarnings(system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, read.csv(paste0('./data/', x, '.csv'))), .parallel = FALSE))))
+#  user system   棳惱 
+#  1.41   0.03   1.55
 
 suppressWarnings(system.time(bind_rows(llply(as.list(seq(2011, 2015)), function(x) data.frame(Sess = x, data.table::fread(paste0('./data/', x, '.csv'))), .parallel = FALSE))))
+#  user system   棳惱 
+#  0.22   0.00   0.22
 ```
 
   You can also embed plots, for example:
@@ -260,6 +255,7 @@ print(xtable(summary(BR)), type = 'html')
   - [Unable display hight at html format](http://rpubs.com/englianhu/highcharter-issue) states the issue but *SOLVED* as we can see from below data visualization.
 
 ```{r bank-roll1A, message = FALSE, warning = FALSE, results = 'asis'}
+## doen't not run due to able to working fine and plotable if run by `chunk` but not in ramarkdown.
 suppressAll(library('highcharter'))
 suppressAll(library('stringr'))
 suppressAll(source('./function/vKelly.R'))
@@ -267,71 +263,32 @@ suppressAll(source('./function/compareKelly.R'))
 
 ## Applied various fractional Kelly models version I.
 ##   stakes based reverser models.
-if(file.exists('./data/K1D1.rds')) {
-  K1D1 <- read_rds(path = './data/K1D1.rds')
+if(file.exists('./data/K1.rds')) {
+  K1 <- read_rds(path = './data/K1.rds')
 } else {
-  K1D1 <- vKelly(dat, type = 'D1')
+  K1 <- vKelly(dat, type = 'D1')
 }
 
-plotFund <- compareKelly(K1D1, chart = TRUE, type = 'single')
-plotFund
+#'@ plotFund <- compareKelly(K1, chart = TRUE, type = 'single', num = 4, subnum = 14)
+#'@ plotFund
 ```
 
 *graph 2.5.1A : Candle stick chart.*
 
-```{r bank-roll1B, eval = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
+```{r bank-roll1B, message = FALSE, warning = FALSE, results = 'asis'}
 suppressAll(source('./function/buildFund.R'))
 suppressAll(source('./function/plotChart.R'))
-load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
+#'@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
 
-SOFund = buildFund(dat)
+if(file.exists('./KellyApps/SOFund.rds')) {
+  SOFund <- read_rds(path = './KellyApps/SOFund.rds')
+} else {
+  SOFund <- buildFund(dat)
+}
 
 ## Select 1st main-fund and also 1st sub-fund.
 plotFund <- plotChart(SOFund, type = 'single')
 plotFund
-
-#Quitting from lines 275-284 (Introduction_of_R_Packages.Rmd) 
-#Warning: Error in order: 嶲悢1晄惀栴検
-#Stack trace (innermost first):
-#    123: order
-#    122: NextMethod
-#    121: [.Date
-#    120: FUN
-#    119: lapply
-#    118: [.tbl_df
-#    117: [
-#    116: buildFund
-#    115: eval
-#    114: eval
-#    113: withVisible
-#    112: withCallingHandlers
-#    111: handle
-#    110: timing_fn
-#    109: evaluate_call
-#    108: evaluate::evaluate
-#    107: evaluate
-#    106: in_dir
-#    105: block_exec
-#    104: call_block
-#    103: process_group.block
-#    102: process_group
-#    101: withCallingHandlers
-#    100: process_file
-#     99: knitr::knit
-#     98: <Anonymous>
-#     97: do.call
-#     96: contextFunc
-#     95: .getReactiveEnvironment()$runWith
-#     94: shiny::maskReactiveContext
-#     93: <reactive>
-#     82: doc
-#     81: shiny::renderUI
-#     80: func
-#     79: origRenderFunc
-#     78: output$__reactivedoc__
-#      3: <Anonymous>
-#      2: do.call
-#      1: rmarkdown::run
 ```
 
 *graph 2.5.1B : Candle stick chart.*
@@ -340,7 +297,7 @@ plotFund
 suppressAll(library('highcharter'))
 suppressAll(source('./function/compareKelly.R'))
 
-plotFund <- compareKelly(K1D1, chart = TRUE, type = 'multiple')
+plotFund <- compareKelly(K1, chart = TRUE, type = 'multiple')
 plotFund
 ```
 
@@ -378,18 +335,34 @@ tagList(
 
 *table 2.5.1 : Price flutuation table.*
 
-  Here are some examples about applicatino of highchart on shiny. The original link is <http://rpubs.com/englianhu/introduction-of-r-packages> while I added shinyapp and post as shiny rmarkdown file.
+  I used to write an embed shiny rmarkdown file which was [Coursera-Data-Mining/2 Text Retrieval and Search Engines/Programming-Assignment-1-Submission.Rmd](https://github.com/englianhu/Coursera-Data-Mining/blob/master/2%20Text%20Retrieval%20and%20Search%20Engines/Programming-Assignment-1-Submission.Rmd) and working fine but now similar setting for `path` is works locally but not workable when deployed. Here are some examples about applicatino of highchart on shiny. The original link is <http://rpubs.com/englianhu/introduction-of-r-packages> while I added shinyapp and post as shiny rmarkdown file.
+
+  Below are the questions with regards the issue about the shinyApp unable to deploy onto the website : `shinyAppDir()` required.
+
+  - [Embedding Shiny app in knitr document](http://stackoverflow.com/questions/26351134/embedding-shiny-app-in-knitr-document)
+  - [Working dir of shiny app when run R rmarkdown document, where shiny is embeded into by `shinyAppDir`](https://groups.google.com/forum/#!topic/shiny-discuss/X1Xx3RGvMqc)
+  - [Embedding Shiny Apps in R Markdown documents](http://user2014.stat.ucla.edu/abstracts/talks/30_Grolemund.pdf)
+  - [shinyAppDir function does not recognize global.R using Rmarkdown to embed a shiny app](https://github.com/rstudio/rmarkdown/issues/211)
+
+  I raised an issue at [shinyAppDir function does not recognize global.R using Rmarkdown to embed a shiny app](https://github.com/rstudio/rmarkdown/issues/211#issuecomment-269937313) as well. Below is some articles for data visualization in shiny.
   
   - [Adding a legend to a pie chart using highcharter, or Rcharts](http://stackoverflow.com/questions/38179361/adding-a-legend-to-a-pie-chart-using-highcharter-or-rcharts)
   - [Shiny Integration](http://jkunst.com/highcharter/shiny.html)
 
 ```{r highchart, message = FALSE, warning = FALSE}
+#'@ shinyAppDir('C:/Users/scibr/Documents/GitHub/scibrokes/betting-strategy-and-model-validation',
+#'@    options = list(
+#'@    width = '100%', height = 550
+#'@  )
+#'@ )
+
 library("shiny")
 library("highcharter")
 
 data(citytemp)
 
-ui <- fluidPage(
+shinyApp(
+  ui = fluidPage(
     h1("Highcharter Demo"),
     fluidRow(
         column(width = 4, class = "panel",
@@ -407,9 +380,9 @@ ui <- fluidPage(
                                        "null" = "hc_theme_null()", "handdrwran" = "hc_theme_handdrawn()", 
                                        "chalk" = "hc_theme_chalk"), 
                            selected = "hc_theme_economist()")),
-        column(width = 8, highchartOutput("hcontainer",height = "500px"))))
+        column(width = 8, highchartOutput("hcontainer",height = "500px")))),
 
-server = function(input, output) {
+  server = function(input, output) {
     
     output$hcontainer <- renderHighchart({
         
@@ -427,9 +400,9 @@ server = function(input, output) {
                 hc_plotOptions(showInLegend=TRUE,dataLabels=FALSE)
         }")
         eval(parse(text = hc))
-    })}
+    })})
 
-shinyApp(ui = ui, server = server)
+#'@ shinyApp(ui = ui, server = server)
 ```
 
 Reference :

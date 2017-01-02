@@ -1,6 +1,6 @@
 plotChart2 <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL, 
-                       chart.type = NULL, chart.type2 = NULL, chart.theme = NULL, 
-                       stacked = FALSE) {
+                       chart.type = NULL, chart.type2 = FALSE, 
+                       chart.theme = 'hc_theme_smpl()', stacked = FALSE) {
   ## http://jkunst.com/highcharter/highstock.html
   ## type = 'single' or type = 'multiple'. Plot comparison graph or single fund details.
   ## chart.type = 'Op', chart.type = 'Hi', chart.type = 'Lo', chart.type = 'Cl'. Use 
@@ -32,7 +32,11 @@ plotChart2 <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL
   if(!chart.type2 %in% hcchart) {
     stop('Kindly choose one chart type among ', paste(hcchart, collapse = ', '), '.')
   } else {
-    chart.type2 <- chart.type2
+    if(chart.type2 == FALSE) {
+      plotch <- highchart()
+    } else {
+      plotch <- highchart() %>% hc_chart(type = chart.type2)
+    }
   }
   
   ## check stacked
@@ -55,21 +59,22 @@ plotChart2 <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL
     
     initial <- Op(Fund)[1, ] %>% unique %>% currency
     
+    fname <- names(Op(Fund)) %>% str_replace_all('.Open', '')
     #'@ fname <- grep('.Open', names(Op(Fund)), value = TRUE) %>% 
     #'@   str_split_fixed('\\.', 2) %>% .[, 1]
-    if(('$' %in% paste0(substitute(Fund))) & (length(paste0(substitute(Fund))) > 1)) {
-      fname <- str_split(paste0(substitute(Fund))[2:3], '\\$') %>% 
-        unlist %>% .[2:3] %>% paste0(collapse = '.')
-      
-    } else if((!'$' %in% paste0(substitute(Fund))) & (length(paste0(substitute(Fund))) == 1)) {
-      fname <- grep('.Open', names(Op(Fund)), value = TRUE) %>% 
-        str_split_fixed('\\.', 2) %>% .[, 1]
-      
-    } else {
-      fname <- 'Fund'
-    }
+    #'@ if(('$' %in% paste0(substitute(Fund))) & (length(paste0(substitute(Fund))) > 1)) {
+    #'@   fname <- str_split(paste0(substitute(Fund))[2:3], '\\$') %>% 
+    #'@     unlist %>% .[2:3] %>% paste0(collapse = '.')
+    #'@   
+    #'@ } else if((!'$' %in% paste0(substitute(Fund))) & (length(paste0(substitute(Fund))) == 1)) {
+    #'@   fname <- grep('.Open', names(Op(Fund)), value = TRUE) %>% 
+    #'@     str_split_fixed('\\.', 2) %>% .[, 1]
+    #'@   
+    #'@ } else {
+    #'@   fname <- 'Fund'
+    #'@ }
     
-    plotc <- highchart() %>% hc_chart(type = chart.type2) %>% 
+    plotc <- plotch %>% #highchart() %>% hc_chart(type = chart.type2) %>% 
       hc_title(text = "Sportsbook Hedge Fund") %>% 
       hc_subtitle(text = paste0("Candle stick chart with initial fund size : ", 
                                 paste0(initial, collapse = ', '))) %>% 
@@ -93,9 +98,12 @@ plotChart2 <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL
                         name = 'Buy level', enableMouseTracking = FALSE)
     
     # I <3 themes
-    hc <- paste0("hc <- plotc %>% hc_add_theme(", chart.theme, "); if (stacked != FALSE) { plotc <- plotc %>% hc_plotOptions(showInLegend = TRUE, dataLabels = FALSE)}")
+    htc <- paste0('hc <- plotc %>% hc_add_theme(', chart.theme, 
+                  '); if (stacked != FALSE) { ', 
+                  'plotc <- plotc %>% ', 
+                  'hc_plotOptions(showInLegend = TRUE, dataLabels = FALSE)}; hc')
     
-    return(eval(parse(text = hc)))
+    return(eval(parse(text = htc)))
     
   } else if(type == 'multiple') {
     ## --------------------- Plot multiple funds or main funds ------------------
