@@ -54,6 +54,7 @@ ui <- fluidPage(
     
     mainPanel(
       highchartOutput("hcontainer", height = "500px"),
+      ## https://ebailey78.github.io/shinyBS/docs/Modals.html#components
       bsModal("modalExample", "Data Table", "tabBut", size = "large",
               dataTableOutput("distTable")))))
 

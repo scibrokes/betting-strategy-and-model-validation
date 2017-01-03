@@ -14,7 +14,7 @@ suppressMessages(library('stringr'))
 
 ## ========= ShinyServer ================================
 # Define server logic required to draw a histogram
-server <- shinyServer(function(input, output) {
+server <- shinyServer(function(input, output, session) {
   
   # Simulate work being done for 1 second
   Sys.sleep(1)
@@ -23,7 +23,8 @@ server <- shinyServer(function(input, output) {
   hide(id = 'loading-content', anim = TRUE, animType = 'fade')    
   show('app-content')
   
-  onclick('toggleModels', shinyjs::toggle(id = 'adjuster', anim = TRUE))
+  #'@ onclick('toggleModels', shinyjs::toggle(id = 'selectSIFund', anim = TRUE))
+  #'@ onclick('toggleAdvanced', shinyjs::toggle(id = 'adjuster', anim = TRUE))    
   onclick('toggleAdvanced', shinyjs::toggle(id = 'advanced', anim = TRUE))    
   onclick('update', shinyjs::html('time', date()))
   
@@ -37,311 +38,92 @@ server <- shinyServer(function(input, output) {
     })
   })
   
-  ## --------------- 1. K1 ------------------------
-  ## Reserved Stakes Kelly Models.
-  output$K1 <- renderTable()
+  loadpage <- reactive({ 
+    validate(
+      need(input$Member, "Member input is null!!")
+    )
+    zahhl <- members[which(members == input$Member)]
+    paste0(zahhl)
+  })
   
-  ## --------------- 2. K2 ------------------------
-  ## Reserved EM Probabilities Kelly Models.
-  output$K2 <- renderTable()
+  output$displaypage <- renderUI({
+    tags$iframe(src = loadpage(), height = 800, width = 600)
+  })
   
-  ## --------------- 3. K1W1 ------------------------
-  ## Reserved Stakes Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L)
-  output$K1W1 <- renderTable()
+  ## Define a reactive expression for the document term matrix
+  terms <- reactive({
+    ## Change when the "update" button is pressed...
+    input$funds
+    ## ...but not for anything else
+    isolate({
+      withProgress({
+        setProgress(message = "Processing graph...")
+        selectFund(input$funds)
+      })
+    })
+  })
   
-  ## --------------- 4. K1W2 ------------------------
-  ## Reserved Stakes Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L)
-  output$K2W2 <- renderTable()
+  output$hcontainer <- renderHighchart({
+    fund <- terms()$sfund
+    plotChart2(fund, type = 'single', chart.type2 = input$type, 
+               chart.theme = input$hc_theme, stacked = input$stacked)
+    
+  })
   
-  ## --------------- 5. K2W1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L)
-  output$K2W1 <- renderTable()
+  output$distTable <- renderDataTable({
+    fundDT <- terms()$sfundDT
+    fundDT %>% datatable(
+      caption = "Table 2.1.1 : Firm A Staking Data (in $0,000)", 
+      escape = FALSE, filter = "top", rownames = FALSE, 
+      extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
+                        "Buttons" = NULL, "Responsive" = NULL), 
+      options = list(dom = 'BRrltpi', autoWidth = TRUE, scrollX = TRUE, 
+                     lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
+                     ColReorder = TRUE, rowReorder = TRUE, 
+                     buttons = list('copy', 'print', 
+                                    list(extend = 'collection', 
+                                         buttons = c('csv', 'excel', 'pdf'), 
+                                         text = 'Download'), I('colvis'))))
+    
+  })#, options = list(pageLength = 10))
   
-  ## --------------- 6. K2W1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L)
-  output$K2W2 <- renderTable()
   
-  ## --------------- 7. K1W1WS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K1W1WS1 <- renderTable()
+  #http://stackoverflow.com/questions/25920548/shiny-select-go-to-different-tabpanel-using-action-button-or-something/25921150
   
-  ## --------------- 8. K1W1WS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K1W1WS2 <- renderTable()
   
-  ## --------------- 9. K1W2WS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K1W2WS1 <- renderTable()
-  
-  ## --------------- 10. K1W2WS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K1W2WS2 <- renderTable()
-  
-  ## --------------- 11. K2W1WS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K2W1M1 <- renderTable()
-  
-  ## --------------- 12. K2W1WS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K2W1M2 <- renderTable()
-  
-  ## --------------- 13. K2W2WS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K2W2M1 <- renderTable()
-  
-  ## --------------- 14. K2W2WS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K2W2M2 <- renderTable()
-  
-  ## --------------- 15. K1D1 ------------------------
-  ## Reserved Stakes Kelly Models with Weight past year until latest soccer match's dynamic theta values. (mix weighted on W, WH, P, C, LH, L)
-  output$K1D1 <- renderTable()
-  
-  ## --------------- 16. K1D2 ------------------------
-  ## Reserved Stakes Kelly Models with Weight past year until latest soccer match's dynamic dres values. (separate weighted on W, WH, P, C, LH, L)
-  output$K2D2 <- renderTable()
-  
-  ## --------------- 17. K2D1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year until latest soccer match's dynamic theta values. (mix weighted on W, WH, P, C, LH, L)
-  output$K2D1 <- renderTable()
-  
-  ## --------------- 18. K2D2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year until latest soccer match's dynamic dres values. (separate weighted on W, WH, P, C, LH, L)
-  output$K2D2 <- renderTable()
-  
-  ## --------------- 19. K1D1WS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K1D1WS1 <- renderTable()
-  
-  ## --------------- 20. K1D1WS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K1D1WS2 <- renderTable()
-  
-  ## --------------- 21. K1D2WS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K1D2WS1 <- renderTable()
-  
-  ## --------------- 22. K1D2WS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K1D2WS2 <- renderTable()
-  
-  ## --------------- 23. K2D1WS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K2D1WS1 <- renderTable()
-  
-  ## --------------- 24. K2D1WS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K2D1WS2 <- renderTable()
-  
-  ## --------------- 25. K2D2WS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K2D2WS1 <- renderTable()
-  
-  ## --------------- 26. K2D2WS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K2D2WS2 <- renderTable()
-  
-  ## --------------- 27. K1W1DWS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K1W1DWS1 <- renderTable()
-  
-  ## --------------- 28. K1W1DWS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K1W1DWS2 <- renderTable()
-  
-  ## --------------- 29. K1W2DWS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K1W2DWS1 <- renderTable()
-  
-  ## --------------- 30. K1W2DWS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K1W2DWS2 <- renderTable()
-  
-  ## --------------- 31. K2W1DWS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K2W1DWS1 <- renderTable()
-  
-  ## --------------- 32. K2W1DWS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K2W1DWS2 <- renderTable()
-  
-  ## --------------- 33. K2W2DWS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K2W2DWS1 <- renderTable()
-  
-  ## --------------- 34. K2W2DWS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K2W2DWS2 <- renderTable()
-  
-  ## --------------- 35. K1D1DWS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K1D1DWS1 <- renderTable()
-  
-  ## --------------- 36. K1D1DWS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K1D1DWS2 <- renderTable()
-  
-  ## --------------- 37. K1D2DWS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K1D2DWS1 <- renderTable()
-  
-  ## --------------- 38. K1D2DWS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K1D2DWS2 <- renderTable()
-  
-  ## --------------- 39. K2D1DWS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K2D1DWS1 <- renderTable()
-  
-  ## --------------- 40. K2D1DWS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual theta constant value. (mix weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K2D1DWS2 <- renderTable()
-  
-  ## --------------- 41. K2D2DWS1 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a cross league variance weighted stakes constant.
-  output$K2D2DWS1 <- renderTable()
-  
-  ## --------------- 42. K2D2DWS2 ------------------------
-  ## Reserved EM Probabilities Kelly Models with Weight past year annual dres values. (separate weighted on W, WH, P, C, LH, L) plus a separate variance weighted stakes values.
-  output$K2D2DWS2 <- renderTable()
   
   ## -------------------- render plot -----------------------------------------------
-  output$table1A <- renderFormattable({
-    suppressMessages(library('magrittr'))
-    compare[[1]] %>% formattable(list(
-      AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
-      
-      BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
-      
-      df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
-      
-      residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
-      
-      p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
-      
-      delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
-      
-    ))
-  })
+  #'@ output$table1A <- renderFormattable({
+  #'@   suppressMessages(library('magrittr'))
+  #'@   compare[[1]] %>% formattable(list(
+  #'@     AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  #'@     
+  #'@     BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
+  #'@     
+  #'@     df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
+  #'@     
+  #'@     residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
+  #'@     
+  #'@     p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
+  #'@     
+  #'@     delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  #'@     
+  #'@     Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  #'@     
+  #'@     weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  #'@     
+  #'@     delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  #'@     
+  #'@     Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
+  #'@     
+  #'@     weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
+  #'@     
+  #'@   ))
+  #'@ })
   
-  output$table1B <- renderFormattable({
-    compare[[3]] %>% formattable(list(
-      AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
-      
-      BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
-      
-      df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
-      
-      residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
-      
-      p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
-      
-      delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
-      
-    ))
-  })
+  #'@ output$txt <- renderText({
+  #'@   fOdds <- c(input$num1, input$num2, input$num3) / input$spread
+  #'@   c(paste0('Home Win = ', round(fOdds[1], 3)), ';', paste0('Draw = ', round(fOdds[2], 3)), ';', paste0('Away Win = ', round(fOdds[3], 3)))
+  #'@ })
   
-  output$table1C <- renderFormattable({
-    compare[[2]] %>% formattable(list(
-      AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
-      
-      BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
-      
-      df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(-x))),
-      
-      residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %02d)', x, rank(x))),
-      
-      p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %02d)', x, rank(x))),
-      
-      delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
-      
-    ))
-  })
-  
-  output$table2 <- renderFormattable({
-    bestlm %>% formattable(list(
-      AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
-      
-      BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
-      
-      df = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(-x))),
-      
-      residuals = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.0f (rank: %.0f)', x, rank(x))),
-      
-      p.value = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      delta.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      Loglik.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      weight.AIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      delta.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      Loglik.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x))),
-      
-      weight.BIC = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'white')), x ~ sprintf('%.4f (rank: %.0f)', x, rank(x)))
-      
-    ))
-  })
-  
-  output$txt <- renderText({
-    fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-    c(paste0('Home Win = ', round(fOdds[1], 3)), ';', paste0('Draw = ', round(fOdds[2], 3)), ';', paste0('Away Win = ', round(fOdds[3], 3)))
-  })
-  
-  output$tab1 <- renderTable({
-    fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-    data_frame(Team = c('Home', 'Away'), Hdp = c('0.5', ''), Price = c(fOdds[1] - 1, ((fOdds[2] * fOdds[3]) / (fOdds[2] + fOdds[3])) - 1))
-  })
-  
-  output$tab2 <- renderTable({
-    fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-    data_frame(Team = c('Home', 'Away'), Hdp = c('', '0.5'), Price = c(((fOdds[1] * fOdds[2]) / (fOdds[1] + fOdds[2])) - 1, fOdds[3] - 1))
-  })
-  
-  output$tab3 <- renderTable({
-    fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-    data_frame(Team = c('Home', 'Away'), Hdp = c('0', '0'), Price = c(((fOdds[1] * fOdds[2]) - fOdds[1] - fOdds[2]) / fOdds[2], ((fOdds[2] * fOdds[3]) - fOdds[2] - fOdds[3]) / fOdds[2]))
-  })
-  
-  output$tab4 <- renderTable({
-    fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-    data_frame(Team = c('Home', 'Away'), Hdp = c('0/0.5', ''), Price = c(((2 * fOdds[1] * fOdds[2]) - fOdds[1] - (2 * fOdds[2])) / (2 * fOdds[2]), ((2 * fOdds[2] * fOdds[3]) - (2 * fOdds[2]) - (2 * fOdds[3])) / ((2 * fOdds[2]) + fOdds[3])))
-  })
-  
-  output$tab5 <- renderTable({
-    fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-    data_frame(Team = c('Home', 'Away'), Hdp = c('', '0/0.5'), Price = c(((2 * fOdds[1] * fOdds[2]) - (2 * fOdds[1]) - (2 * fOdds[2])) / ((2 * fOdds[2]) + fOdds[1]), ((2 * fOdds[2] * fOdds[3]) - fOdds[3] - (fOdds[2])) / (2 * fOdds[2])))
-  })
 })

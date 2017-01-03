@@ -1,6 +1,6 @@
 plotChart2 <- function(Fund, type = 'multiple', event = NULL, event.dates = NULL, 
                        chart.type = NULL, chart.type2 = FALSE, 
-                       chart.theme = 'hc_theme_smpl()', stacked = FALSE) {
+                       chart.theme = 'hc_theme_economist()', stacked = FALSE) {
   ## http://jkunst.com/highcharter/highstock.html
   ## type = 'single' or type = 'multiple'. Plot comparison graph or single fund details.
   ## chart.type = 'Op', chart.type = 'Hi', chart.type = 'Lo', chart.type = 'Cl'. Use 
