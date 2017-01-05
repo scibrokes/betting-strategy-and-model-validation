@@ -1,10 +1,4 @@
 base
-methods
-datasets
-utils
-grDevices
-graphics
-stats
 BBmisc
 tufte
 devtools
@@ -40,7 +34,6 @@ plotly
 StanHeaders
 rstan
 iterators
-parallel
 doParallel
 xml2
 rvest
@@ -50,7 +43,6 @@ scales
 lubridate
 whisker
 gtable
-grid
 gridExtra
 arules
 arulesViz
@@ -62,3 +54,5 @@ stargazer
 shiny
 shinyjs
 formattable
+htmltools
+DiagrammeR
