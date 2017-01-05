@@ -1,4 +1,4 @@
-selectFund <- function(selectedFund) {
+selectFund <- function(selectedFund, pth = './data1/') {
   suppressPackageStartupMessages(library("BBmisc"))
   suppressAll(library('plyr'))
   suppressAll(library('stringr'))
@@ -6,10 +6,10 @@ selectFund <- function(selectedFund) {
   suppressAll(library('quantmod'))
   suppressAll(library('formattable'))
   
-  fundsopt <- list.files(pattern = '.rds$')
+  fundsopt <- list.files(pth, pattern = '.rds$')
   fundsopt <- c(tail(fundsopt, 1), fundsopt) %>% unique %>% str_replace_all('.rds', '')
   
-  sfund <- read_rds(path = paste0(selectedFund, '.rds'))
+  sfund <- read_rds(path = paste0(pth, selectedFund, '.rds'))
   DateUS <- data.frame(sfund) %>% row.names %>% as.Date
   
   sfund1 <- data.frame(Op(sfund), Hi(sfund), Lo(sfund), Cl(sfund)) %>% tbl_df %>% 

@@ -9,6 +9,8 @@ suppressMessages(library('shinythemes'))
 suppressMessages(library('plyr'))
 suppressMessages(library('dplyr'))
 suppressMessages(library('magrittr'))
+suppressMessages(library('PerformanceAnalytics'))
+suppressMessages(library('quantmod'))
 suppressMessages(library('formattable'))
 suppressMessages(library('stringr'))
 
@@ -28,22 +30,22 @@ server <- shinyServer(function(input, output, session) {
   onclick('toggleAdvanced', shinyjs::toggle(id = 'advanced', anim = TRUE))    
   onclick('update', shinyjs::html('time', date()))
   
-  observeEvent(input$analysis, {
-    y = ifelse(is.null(input$response)||is.na(input$response)||length(input$response) == 0, 'Return', input$response)
-    x = ifelse(is.null(input$explan1)||is.na(input$explan1)||length(input$explan1) == 0, 'Stakes', input$explan1)
-    
-    model = vKelly()
-    output$modelSummary = renderPrint({
-      list(Summary = summary(model), Anova = anova(model))
-    })
-  })
+  #'@ observeEvent(input$analysis, {
+  #'@   y = ifelse(is.null(input$response)||is.na(input$response)||length(input$response) == 0, 'Return', input$response)
+  #'@   x = ifelse(is.null(input$explan1)||is.na(input$explan1)||length(input$explan1) == 0, 'Stakes', input$explan1)
+  #'@   
+  #'@   model = vKelly()
+  #'@   output$modelSummary = renderPrint({
+  #'@     list(Summary = summary(model), Anova = anova(model))
+  #'@   })
+  #'@ })
   
   loadpage <- reactive({ 
     validate(
-      need(input$Member, "Member input is null!!")
+      need(input$page, "Web page input is null!!")
     )
-    zahhl <- members[which(members == input$Member)]
-    paste0(zahhl)
+    disppage <- pages[which(pages == input$page)]
+    paste0(disppage)
   })
   
   output$displaypage <- renderUI({
@@ -88,10 +90,23 @@ server <- shinyServer(function(input, output, session) {
   })#, options = list(pageLength = 10))
   
   
+  output$BRSM <- renderDataTable({
+    ldply(BRSummary$KM, ldply, as.matrix) %>% datatable(
+      caption = "Table 4.3.5.2 : Summary of Kelly Main Funds ('0,000)", 
+      escape = FALSE, filter = 'top', rownames = FALSE, 
+      extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                        'Buttons' = NULL, 'Responsive' = NULL), 
+      options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
+                     lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
+                     ColReorder = TRUE, rowReorder = TRUE, 
+                     buttons = list('copy', 'print', 
+                                    list(extend = 'collection', 
+                                         buttons = c('csv', 'excel', 'pdf'), 
+                                         text = 'Download'), I('colvis'))))
+    })
+  
   #http://stackoverflow.com/questions/25920548/shiny-select-go-to-different-tabpanel-using-action-button-or-something/25921150
-  
-  
-  
+
   ## -------------------- render plot -----------------------------------------------
   #'@ output$table1A <- renderFormattable({
   #'@   suppressMessages(library('magrittr'))

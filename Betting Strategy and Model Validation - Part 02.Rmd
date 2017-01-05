@@ -21,7 +21,7 @@ link-citations: yes
 ## Loading the packages and setting adjustment
 suppressMessages(library('BBmisc'))
 suppressAll(library('utils'))
-suppressAll(source('function/libs.R'))
+suppressAll(source('./function/libs.R'))
 ```
 
 # Abstract
@@ -855,8 +855,8 @@ tagList(
 #'@   }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
 
 ## save above data to easier for loading.
-#'@ save(K1mean1, file = './KellyApps/K1mean1.rda')
-load('./KellyApps/K1mean1.rda')
+#'@ save(K1mean1, file = './KellyApps/data/K1mean1.rda')
+load('./KellyApps/data/K1mean1.rda')
 
 #'@ kable(summary(K1mean1), caption = 'Table 4.3.2.2C : Summary Table of Various Kelly Models (Stakes Reversed based with Mean Stakes Adjusted Models)')
 ```
@@ -916,8 +916,8 @@ tagList(
 #'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
 
 ## save above data to easier for loading.
-#'@ save(K1mean2, file = './KellyApps/K1mean2.rda')
-load('./KellyApps/K1mean2.rda')
+#'@ save(K1mean2, file = './KellyApps/data/K1mean2.rda')
+load('./KellyApps/data/K1mean2.rda')
 
 #'@ kable(summary(K1mean2), caption = 'Table 4.3.2.2E : Summary Table of Various Kelly Models  (Stakes Reversed based with Mean Stakes Adjusted Models)')
 ```
@@ -1031,8 +1031,8 @@ suppressMessages(source('./function/vKelly2.R'))
 #'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
 
 ## save above data to easier for loading.
-#'@ save(K2mean1, file = './KellyApps/K2mean1.rda')
-load('./KellyApps/K2mean1.rda')
+#'@ save(K2mean1, file = './KellyApps/data/K2mean1.rda')
+load('./KellyApps/data/K2mean1.rda')
 
 #'@ kable(summary(K2), caption = 'Table 4.3.2.3C : Summary Table of Various Kelly Models (Reversed rEMProbB based with Mean Stakes Adjusted models)')
 ```
@@ -1094,8 +1094,8 @@ suppressMessages(source('./function/vKelly2.R'))
 #'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
 
 ## save above data to easier for loading.
-#'@ save(K2mean2, file = './KellyApps/K2mean2.rda')
-load('./KellyApps/K2mean2.rda')
+#'@ save(K2mean2, file = './KellyApps/data/K2mean2.rda')
+load('./KellyApps/data/K2mean2.rda')
 
 #'@ kable(summary(K2mean2), caption = 'Table 4.3.2.3E : Summary Table of Various Kelly Models (Reversed rEMProbB based with Mean Stakes Adjusted models)')
 ```
@@ -1623,6 +1623,59 @@ plotFund
   
   *graph 4.3.5.1* has **Event** label to marking a specific event on a specifi date or time while I just leave it and only mark on high volatily event dates. From [BankRoll.csv](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BankRoll.csv) we observe the end of soccer sesson in May 2011 `dat %>% filter(DateUS >= '2011-05-14' & DateUS <= '2011-05-21')` has a seriourly crash. We can investigate more details about the loss matches from the data (or filter the range of the bets in the data table inside [Part I](http://rpubs.com/englianhu/208637)).
 
+**Comparison of Summarized Kelly Investment Funds**
+
+```{r bank-roll-portfolio, echo = FALSE, message = FALSE, results = 'asis'}
+## simulate Kelly 
+## - united initial fund size
+## - portion arrangement as baseline stakes for league profile
+library('DT')
+source('./function/readKelly.R', local = TRUE)
+
+if(file.exists('./data/initial.rds')) {
+  initial <- read_rds(path = './data/initial.rds')
+} else {
+  initial <- readKelly(details = 'initial-fund-size')
+  saveRDS(initial, file = './data/initial.rds')
+}
+
+iniVal <- initial$KM[6] %>% as.character %>% as.numeric
+
+#'@ if(file.exists('./data/BR.rds')) {
+#'@   BR <- read_rds(path = './data/BR.rds')
+#'@ } else {
+#'@   BR <- readKelly(.summary = FALSE)
+#'@   saveRDS(BR, file = './data/BR.rds')
+#'@ }
+
+## read the summary of the data for comparison.
+if(file.exists('./data/BRSummary.rds')) {
+  BRSummary <- read_rds(path = './data/BRSummary.rds')
+} else {
+  BRSummary <- readKelly()
+  saveRDS(BRSummary, file = './data/BRSummary.rds')
+}
+
+ldply(BRSummary$KM, ldply, as.matrix) %>% datatable(
+  caption = "Table 4.3.5.2 : Summary of Kelly Main Funds ('0,000)", 
+  escape = FALSE, filter = 'top', rownames = FALSE, 
+  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
+                    'Buttons' = NULL, 'Responsive' = NULL), 
+  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
+                 lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
+                 ColReorder = TRUE, rowReorder = TRUE, 
+                 buttons = list('copy', 'print', 
+                                list(extend = 'collection', 
+                                     buttons = c('csv', 'excel', 'pdf'), 
+                                     text = 'Download'), I('colvis'))))
+```
+
+*table 4.3.5.2 : Summary of `r length(BRSummary$KMnames)` Kelly main funds.*
+
+  From *table 4.5.1.1* we can know the risk of the all investmental funds. You are feel free to browse over [KellyApps](https://beta.rstudioconnect.com/content/2311/) for more details. You can also refer to [Faster Way of Calculating Rolling Realized Volatility in R](http://stackoverflow.com/questions/12823445/faster-way-of-calculating-rolling-realized-volatility-in-r) to measure the volatility of the fund as here I omit it at this stage.
+
+![*shinyapp 4.3.5.1 : Kelly sportsbook investment fund.* Kindly click on [*KellyApps*](https://beta.rstudioconnect.com/content/2311/)^[The shinyApp contain both basic fund management and also portfolio management which is in later section [4.5.1 Risk Management].] to use the ShinyApp.](figure/KellyApps.jpg)
+
 ## 4.4 Poisson Ⓜodel
 
 ### 4.4.1 Niko Marttinen (2001)
@@ -1662,6 +1715,8 @@ German Bundesliga and Spanish Primera Liga...
   - multinomial ordered probit model.
   
   He concludes that the multinomial ordered probit model is the best fit model but the software for fitting is not generally available. Meanwhile, the Poisson model is more versatile than probit logit model based on the dataset accross the European soccer leagues.^[There has a lot of papers with regard to application of logit probit models on soccer betting, might read through and made comparison with my **®Model** *®γσ, Eng Lian Hu (2016)*. I used to read though the logit probit and there has a complicated parameters setting for various effects like : wheather, players' condition, couch, pitch condition and even though the distance travel and the players' stamina modelling.]
+  
+  You can read for more details from *paper 4.3.1.1 : Niko Marttinen (2001)*.
 
 ### 4.4.2 Dixon and Coles (1996)
 
@@ -1739,8 +1794,8 @@ $$X_{ij} = pois(\gamma \alpha_{ij} \beta_{ij} ); Y_{ij} = pois(\alpha_{ij} \beta
 #'@ suppressAll(source('./function/buildFund.R'))
 suppressAll(source('./function/plotChart.R'))
 #'@ SOFund <- buildFund(dat)
-#'@ saveRDS(SOFund, file = './KellyApps/SOFund.rds')
-SOFund <- read_rds(path = './KellyApps/SOFund.rds')
+#'@ saveRDS(SOFund, file = './KellyApps/data1/SOFund.rds')
+SOFund <- read_rds(path = './KellyApps/data1/SOFund.rds')
 
 ## Select 1st main-fund and also 1st sub-fund.
 plotFund <- plotChart(SOFund, type = 'single')
@@ -1794,54 +1849,8 @@ All investors:
 
 <br>
 
-```{r bank-roll-portfolio, echo = FALSE, message = FALSE, results = 'asis'}
-## simulate Kelly 
-## - united initial fund size
-## - portion arrangement as baseline stakes for league profile
-source('./function/readKelly.R', local = TRUE)
-
-if(file.exists('./data/initial.rds')) {
-  initial <- read_rds(path = './data/initial.rds')
-} else {
-  initial <- readKelly(details = 'initial-fund-size')
-  saveRDS(initial, file = './data/initial.rds')
-}
-
-iniVal <- initial$KM[6] %>% as.character %>% as.numeric
-
-#'@ if(file.exists('./data/BR.rds')) {
-#'@   BR <- read_rds(path = './data/BR.rds')
-#'@ } else {
-#'@   BR <- readKelly(.summary = FALSE)
-#'@   saveRDS(BR, file = './data/BR.rds')
-#'@ }
-
-## read the summary of the data for comparison.
-if(file.exists('./data/BRSummary.rds')) {
-  BRSummary <- read_rds(path = './data/BRSummary.rds')
-} else {
-  BRSummary <- readKelly()
-  saveRDS(BRSummary, file = './data/BRSummary.rds')
-}
-
-ldply(BRSummary$KM, ldply, as.matrix) %>% datatable(
-  caption = "Table 4.5.1.1 : Summary of Kelly Main Funds ('0,000)", 
-  escape = FALSE, filter = 'top', rownames = FALSE, 
-  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
-                    'Buttons' = NULL, 'Responsive' = NULL), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
-                 lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
-                 ColReorder = TRUE, rowReorder = TRUE, 
-                 buttons = list('copy', 'print', 
-                                list(extend = 'collection', 
-                                     buttons = c('csv', 'excel', 'pdf'), 
-                                     text = 'Download'), I('colvis'))))
-```
-
-*table 4.5.1.1 : Summary of `r length(BRSummary$KMnames)` Kelly main funds.*
-
-  From *table 4.5.1.1* we can know the risk of the all investmental funds.
-
+  From *table 4.5.1.1* we can know the risk of the all investmental funds. You are feel free to browse over [KellyApps](https://beta.rstudioconnect.com/content/2311/)^[*shinyapp 4.3.5.1*] for more details.
+  
   In order to equalise the initial fund size, here I united it as `r currency(iniVal)` which is get from max value among the 110 funds.
 
 ```{r}
@@ -1986,6 +1995,7 @@ tagList(
     
 ```{r test-scores, echo = FALSE, results = 'asis'}
 ## Test the efficiency of truncated normal distribution.
+suppressMessages(library('MASS'))
 #'@ source('./function/rScores.R', local = TRUE)
 #'@ scores <- dat[c('FTHG', 'FTAG')]
 #'@ scores1 <- rScores(dat, type = 'option1')
@@ -2048,9 +2058,13 @@ if(file.exists('./data/scoresall.rds')){
 
 lms <- llply(scoresall$opts, function(x) lm(FTHG~FTAG, x$pred))
 
-lms$opt0 <- mvrnorm(n = nrow(dat[c('FTHG', 'FTAG')]), 
-                    mu = colMeans(dat[c('FTHG', 'FTAG')]), 
-                    Sigma = as.matrix(var(dat[c('FTHG', 'FTAG')])))
+#'@ lms$opt0 <- mvrnorm(n = nrow(dat[c('FTHG', 'FTAG')]), 
+#'@                     mu = colMeans(dat[c('FTHG', 'FTAG')]), 
+#'@                     Sigma = as.matrix(var(dat[c('FTHG', 'FTAG')])))
+
+# scores <- read_rds('./data/scores.rds')
+# dat[c('FTHG', 'FTAG')]
+lms$opt0 <- lm(FTHG~FTAG, data = dat[c('FTHG', 'FTAG')])
 ```
 
 ```{r test-scores1A, echo = FALSE, results = 'asis'}

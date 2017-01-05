@@ -1454,11 +1454,6 @@ if(exists('K2D2DWS2OO')) {
   saveRDS(K2D2DWS2OO, file = './data/K2D2DWS2OO.rds'); rm(K2D2DWS2OO)
 }
 
-## ================== Monte-Carlo Simulation =============================
-source('./function/simulateKelly.R', local = TRUE)
-
-
-
 ## ================== Comparison Models =============================
 ## list the Kelly models for easier handling.
 Kmodels <- c(K1, K2, K1W1, K1W2, K2W1, K2W2, #6
@@ -1546,12 +1541,9 @@ splitFund(.print = TRUE, parallel = TRUE, progress = 'text')
 ##   issue and cause the pc forced to restart. Here I run the codes 
 ##   inside the function and working fine.
 
-
 SOFund <- read_rds(path = './KellyApps/SOFund.rds')
 list.files('./KellyApps', pattern = '.rds$') %>% length
 #[1] 6195
-
-
 
 ## ================== Load Data ================================
 ## When we saved data by execute above codes, then we just load the data from here onwards. 
@@ -1633,13 +1625,23 @@ saveRDS(scoresall, file = './data/scoresall.rds')
 scoresall <- read_rds(path = './data/scoresall.rds')
 
 
-## ================== Plot Investment Fund =============================
+## ================== Plot Investment Fund ===============================
 ## Convert the various Kelly models into quantmod's xts format for ploting. Compare the growth of 
 ##   investment funds.
 source('./function/compareKelly.R', local = TRUE)
 compareKelly
 
 
+
+## ================== Plot Investment Fund ===============================
+
+initial <- read_rds('./data/initial.rds') %>% .$KM %>% as.numeric %>% tail(1) %>% currency
+
+
+
+
+## ================== Monte-Carlo Simulation =============================
+source('./function/simulateKelly.R', local = TRUE)
 
 
 

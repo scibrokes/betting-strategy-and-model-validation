@@ -1,59 +1,104 @@
-## https://ebailey78.github.io/shinyBS/docs/Modals.html#components
+suppressPackageStartupMessages(library("BBmisc"))
+suppressAll(library('plyr'))
+suppressAll(library('stringr'))
+suppressAll(library('tidyverse'))
+suppressAll(library("shiny"))
+suppressAll(library('shinyBS'))
+suppressAll(library('highcharter'))
+suppressAll(library('DT'))
+suppressAll(library('quantmod'))
+suppressAll(source("./function/selectFund.R"))
+suppressAll(source("./function/compareKelly.R"))
+suppressAll(source("./function/plotChart2.R"))
 
-library('shiny')
-library('shinyBS')
-library('highcharter')
+## This shinyApps test the highchart embed into shinyApp with application of shinyBS for datatable view.
+## need to set the path if run independently.
+#'@ getwd()
+#'@ setwd()
 
-source('./function/plotChart.R')
+fundsopt <<- list.files('./data1/', pattern = '.rds$')
+fundsopt <<- c(tail(fundsopt, 1), fundsopt) %>% unique %>% str_replace_all('.rds', '')
 
-shinyApp(
-  ui =
-    fluidPage(
-      sidebarLayout(
-        sidebarPanel(
-          sliderInput("bins",
-                      "Number of bins:",
-                      min = 1,
-                      max = 50,
-                      value = 30),
-          actionButton("tabBut", "View Table")
-        ),
-        
-        mainPanel(
-          plotOutput("distPlot"),
-          bsModal("modalExample", "Data Table", "tabBut", size = "large",
-                  dataTableOutput("distTable"))
-        )
-      )
-    ),
-  server =
-    function(input, output, session) {
-      
-      output$distPlot <- renderPlot({
-        
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-        
-        # draw the histogram with the specified number of bins
-        hist(x, breaks = bins, col = 'darkgray', border = 'white')
-        
+ui <- fluidPage(
+  h1("Highcharter Demo"),
+  sidebarLayout(
+    sidebarPanel(
+      selectInput("funds", label = "Fund", width = "100%",
+                  choices = fundsopt, 
+                  selected = "SOFund"), 
+      br(), 
+      selectInput("type", label = "Type", width = "100%",
+                  choices = c(FALSE, "line", "column", "spline", "bar", "pie"), 
+                  selected = "line"), 
+      selectInput("stacked", label = "Stacked",  width = "100%",
+                  choices = c(FALSE, "normal", "percent"), 
+                  selected = "normal"),
+      selectInput("hc_theme", label = "Theme",  width = "100%",
+                  choices = c("theme" = "hc_theme()", "538" = "hc_theme_538()", 
+                              "chalk" = "hc_theme_chalk()", 
+                              "darkunica" = "hc_theme_darkunica()", 
+                              "db" = "hc_theme_db()", 
+                              "economist" = "hc_theme_economist()",
+                              "flat" = "hc_theme_flat()", 
+                              "flatdark" = "hc_theme_flatdark()", 
+                              "ft" = "hc_theme_ft()", 
+                              "google" = "hc_theme_google()", 
+                              "gridlight" = "hc_theme_gridlight()", 
+                              "handdrwran" = "hc_theme_handdrawn()", 
+                              "merge" = "hc_theme_merge()", 
+                              "null" = "hc_theme_null()", 
+                              "sandsignika" = "hc_theme_sandsignika()",
+                              "smpl" = "hc_theme_smpl()", 
+                              "sparkline" = "hc_theme_sparkline()"), 
+                  selected = "hc_theme_economist()"), 
+      actionButton("tabBut", "View Table")),
+    
+    mainPanel(
+      highchartOutput("hcontainer", height = "500px"),
+      ## https://ebailey78.github.io/shinyBS/docs/Modals.html#components
+      bsModal("modalExample", "Data Table", "tabBut", size = "large",
+              dataTableOutput("distTable")))))
+
+server <- function(input, output) {
+  
+  ## Define a reactive expression for the document term matrix
+  terms <- reactive({
+    ## Change when the "update" button is pressed...
+    input$funds
+    ## ...but not for anything else
+    isolate({
+      withProgress({
+        setProgress(message = "Processing graph...")
+        selectFund(input$funds)
       })
-      
-      output$distTable <- renderDataTable({
-        
-        x    <- faithful[, 2]
-        bins <- seq(min(x), max(x), length.out = input$bins + 1)
-        
-        # draw the histogram with the specified number of bins
-        tab <- hist(x, breaks = bins, plot = FALSE)
-        tab$breaks <- sapply(seq(length(tab$breaks) - 1), function(i) {
-          paste0(signif(tab$breaks[i], 3), "-", signif(tab$breaks[i+1], 3))
-        })
-        tab <- as.data.frame(do.call(cbind, tab))
-        colnames(tab) <- c("Bins", "Counts", "Density")
-        return(tab[, 1:3])
-        
-      }, options = list(pageLength=10))
-      
-    }
-)
+    })
+  })
+  
+  output$hcontainer <- renderHighchart({
+    fund <- terms()$sfund
+    plotChart2(fund, type = 'single', chart.type2 = input$type, 
+               chart.theme = input$hc_theme, stacked = input$stacked)
+    
+  })
+  
+  output$distTable <- renderDataTable({
+    fundDT <- terms()$sfundDT
+    fundDT %>% datatable(
+      caption = "Table 2.1.1 : Firm A Staking Data (in $0,000)", 
+      escape = FALSE, filter = "top", rownames = FALSE, 
+      extensions = list("ColReorder" = NULL, "RowReorder" = NULL, 
+                        "Buttons" = NULL, "Responsive" = NULL), 
+      options = list(dom = 'BRrltpi', autoWidth = TRUE, scrollX = TRUE, 
+                     lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
+                     ColReorder = TRUE, rowReorder = TRUE, 
+                     buttons = list('copy', 'print', 
+                                    list(extend = 'collection', 
+                                         buttons = c('csv', 'excel', 'pdf'), 
+                                         text = 'Download'), I('colvis'))))
+    
+  })#, options = list(pageLength = 10))
+}
+
+shinyApp(ui = ui, server = server)
+
+
