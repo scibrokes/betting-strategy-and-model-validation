@@ -13,18 +13,34 @@ suppressMessages(library('formattable'))
 suppressMessages(library('stringr'))
 suppressMessages(library('highcharter'))
 
+#'@ appCSS <- "
+#'@ #loading-content {
+#'@ position: absolute;
+#'@ background: #3498DB;
+#'@ opacity: 0.9;
+#'@ z-index: 100;
+#'@ left: 0;
+#'@ right: 0;
+#'@ height: 100%;
+#'@ text-align: center;
+#'@ color: #D4AC0D;
+#'@ background-image:url('loader.gif') center no-repeat #fff;
+#'@ }
+#'@ "
+
 appCSS <- "
 #loading-content {
 position: absolute;
-background: #3498DB;
 opacity: 0.9;
 z-index: 100;
+top: 0;
+bottom: 0;
 left: 0;
 right: 0;
 height: 100%;
 text-align: center;
 color: #D4AC0D;
-background: url(www/loader.gif) center no-repeat #fff;
+background: url(loader.gif) center no-repeat #fff;
 }
 "
 
@@ -41,12 +57,14 @@ ui <- shinyUI(fluidPage(
                     background-color: darkgoldenrod;
                     }
                     "))),
+  #'@ tags$audio(src = 'sound.mp3', type = 'audio/mp3', autoplay = NA, controls = 'controls'), 
   useShinyjs(),
   inlineCSS(appCSS),
-  extendShinyjs(text = 'shinyjs.hideSidebar = function(params) { $("body").addClass("sidebar-collapse") }'),
+  #'@ extendShinyjs(text = 'shinyjs.hideSidebar = function(params) { $("body").addClass("sidebar-collapse") }'),
   
   # Loading message
-  div(id = 'loading-content', h2('Loading...')),
+  #'@ div(id = 'loading-content', h2('Loading...', align = 'center'), img(src = "loader.gif")),
+  div(id = 'loading-content'),#, img(src = 'loader.gif', align = 'center')),
   
   # The main app code goes here
   hidden(
@@ -105,14 +123,14 @@ ui <- shinyUI(fluidPage(
                                   tabPanel('Introduction',
                                            tabsetPanel(
                                              tabPanel('Article', 
-                                                      h1('Betting Strategy and Model Validation'), 
+                                                      h4('Betting Strategy and Model Validation'), 
                                                       #http://stackoverflow.com/questions/33020558/embed-iframe-inside-shiny-app
                                                       #http://stackoverflow.com/questions/25849968/shiny-iframe-depending-on-input
                                                       selectInput("page", label = h5("Choose an article"), 
                                                                   choices = c('Natural Language Analysis', 'Part I', 'Part II', 'regressionApps'), selected = 'Part II'),
                                                       htmlOutput('displaypage')), 
                                              tabPanel('John Kelly (1956)',
-                                                      h1('John Larry Kelly (1956) - Kelly criterion'), 
+                                                      h4('John Larry Kelly (1956) - Kelly criterion'), 
                                                       p('In probability theory and intertemporal portfolio choice, the ', 
                                                         strong('Kelly criterion, Kelly strategy, Kelly formula'), ', or', 
                                                         strong('Kelly bet'), ', is a formula used to determine the optimal 
@@ -128,7 +146,7 @@ ui <- shinyUI(fluidPage(
                                                       imageOutput('imp_pdf', width='500px', height='500px'),
                                                       HTML("<a href='http://vnijs.github.io/radiant/'>Radiant is a platform-independent browser-based interface for business analytics in R, based on the Shiny package</a>")),
                                              tabPanel('Niko Marttinen (2001)', 
-                                                      h1('Niko Marttinen (2001)'), 
+                                                      h4('Niko Marttinen (2001)'), 
                                                       p('This is a Master Degree thesis by the author. He apply few steps to test the odds modelling and application of Kelly model. The thesis is similar with my previous research ', 
                                                         HTML("<a href='https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers'>Odds Modelling and Testing Inefficiency of Sports Bookmakers</a>"), 
                                                         ' and ', em('Dixon and Coles (1996)'), ' but more sophiscated : '), 
@@ -140,15 +158,15 @@ ui <- shinyUI(fluidPage(
                                                       imageOutput('imp_pdf', width='500px', height='500px'),
                                                       HTML("<a href='http://vnijs.github.io/radiant/'>Radiant is a platform-independent browser-based interface for business analytics in R, based on the Shiny package</a>")),
                                              tabPanel('Fabián Enrique Moya (2012)', 
-                                                      h1('Fabián Enrique Moya (2012)'), 
-                                                      p(), 
+                                                      h4('Fabián Enrique Moya (2012)'), 
+                                                      p('The paper...'), 
                                                       HTML('<iframe src=\"https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/c2da2e5ca09aaf218616045031c9ee4ce3537b18/references/Statistical%20Methodology%20for%20Profitable%20Sports%20Gambling.pdf" width=\"900\" height=\"600\"></iframe>'),
                                                       imageOutput('imp_pdf', width='500px', height='500px'),
                                                       HTML("<a href='http://vnijs.github.io/radiant/'>Radiant is a platform-independent browser-based interface for business analytics in R, based on the Shiny package</a>")
                                                       ))),
                                   tabPanel('Fund', 
                                            tabsetPanel(
-                                             tabPanel('Fund Selection', h1('Fund Selection'), 
+                                             tabPanel('Fund Selection', h4('Fund Selection'), 
                                                       p('SOFund is the fund growth of British firm A and the rest are Kelly based investment fund without allocation of portfolio. You are feel free to refer to ', 
                                                         HTML("<a href='http://rstudio-pubs-static.s3.amazonaws.com/208636_454ebe20f3434859a15bb4196ca1503c.html#kelly-odel'>4.3 Kelly Ⓜodel</a>"), ' for more details.'), 
                                                       br(), 
@@ -157,13 +175,13 @@ ui <- shinyUI(fluidPage(
                                                       bsModal("modalExample", "Data Table", "tabBut", size = "large",
                                                               dataTableOutput('distTable'))), 
                                              #table(lRiskProf)),
-                                             tabPanel('Fund Comparison', h1('Fund Comparison'), 
+                                             tabPanel('Fund Comparison', h4('Fund Comparison'), 
                                                       p('Kindly refer to ', em('table 4.3.5.2') ,' in the research paper if it is slow to display.'),
                                                       dataTableOutput('BRSM')),
-                                             tabPanel('League Risk Profile', h1('2. Reversed EM Models')))),
+                                             tabPanel('League Risk Profile', h4('2. Reversed EM Models')))),
                                   tabPanel('Portfolio', 
                                            tabsetPanel(
-                                             tabPanel('Fund Selection', h1('Fund Selection'), 
+                                             tabPanel('Fund Selection', h4('Fund Selection'), 
                                                       p('SOFund is the fund growth of British firm A and the rest are Kelly based investment fund with allocation of portfolio. You are feel feel to refer to ', 
                                                         HTML("<a href='http://rstudio-pubs-static.s3.amazonaws.com/208636_454ebe20f3434859a15bb4196ca1503c.html#staking-odel-and-oney-anagement'>4.5.1 Risk Management</a>"), ' for more details.'), 
                                                       br()#, 
@@ -173,8 +191,8 @@ ui <- shinyUI(fluidPage(
                                                       #        dataTableOutput("distTable"))), 
                                              ), 
                                              #table(lRiskProf)),
-                                             tabPanel('Fund Comparison', h1('1. Reversed Stakes Models')), 
-                                             tabPanel('League Risk Profile', h1('2. Reversed EM Models')))), 
+                                             tabPanel('Fund Comparison', h4('1. Reversed Stakes Models')), 
+                                             tabPanel('League Risk Profile', h4('2. Reversed EM Models')))), 
                                   tabPanel('Reference', 
                                            tabsetPanel(
                                              tabPanel('Reference', h4('Reference'), 

@@ -19,11 +19,12 @@ suppressMessages(library('stringr'))
 server <- shinyServer(function(input, output, session) {
   
   # Simulate work being done for 1 second
-  Sys.sleep(1)
+  Sys.sleep(2)
   
   # Hide the loading message when the rest of the server function has executed
   hide(id = 'loading-content', anim = TRUE, animType = 'fade')    
   show('app-content')
+  #'@ loadData()
   
   #'@ onclick('toggleModels', shinyjs::toggle(id = 'selectSIFund', anim = TRUE))
   #'@ onclick('toggleAdvanced', shinyjs::toggle(id = 'adjuster', anim = TRUE))    

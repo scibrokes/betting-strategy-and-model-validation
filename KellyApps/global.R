@@ -6,6 +6,7 @@ suppressAll(library('plyr'))
 suppressAll(library('stringr'))
 suppressAll(library('tidyverse'))
 suppressAll(library("shiny"))
+suppressAll(library("shinyjs"))
 suppressAll(library('shinyBS'))
 suppressAll(library('highcharter'))
 suppressAll(library('DT'))
@@ -40,4 +41,9 @@ pages <<- list(
 
 BRSummary <<- read_rds(path = './data/BRSummary.rds')
 
+#'@ loadData <<- function() {
+#'@   Sys.sleep(2)
+#'@   hide('loading-content')
+#'@   show('app-content')
+#'@ }
 
