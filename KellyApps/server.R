@@ -41,13 +41,6 @@ server <- shinyServer(function(input, output, session) {
   #'@   tags$iframe(src = loadpage(), height = 800, width = 500)
   #'@ })
   
-  observe({
-    if(input$funds > 0){
-      print('1')
-      session$sendCustomMessage("myCallbackHandler", "1")
-    }
-  })
-  
   observe({ 
     query <- pages[which(pages==input$page)]
     disppage <<- pages[which(pages == input$page)]

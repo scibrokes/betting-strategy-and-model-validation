@@ -43,7 +43,7 @@ plyr::l_ply(funs, function(x) source(paste0('./function/', x), local = TRUE)); r
 ## ========= Setup parallel computing =================================
 ## Creating a parallel computing Cluster and support functions.
 ## Preparing the parallel cluster using the cores
-doParallel::registerDoParallel(cores = detectCores())
+doParallel::registerDoParallel(cores = parallel::detectCores())
 #'@ doParallel::registerDoParallel(cores = 16)
 #'@ BiocParallel::register(MulticoreParam(workers = 8))
 

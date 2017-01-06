@@ -76,9 +76,11 @@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
     + Section [4.4.2 Dixon and Coles (1996)] - Odds Modelling and Betting Stretagy.
     + Section [4.4.3 ®γσ, Eng Lian Hu (2016)] - Odds Modelling and Testing Efficiency in Sportsbook Betting.
     + Section [4.4.4 Combination Handicap] - Descrete result of handicap and P&L.
-  - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - Simulate the staking model.
-    + Section [4.5.1 Risk Management]
-    + Section [4.5.2 Investors' Fund Refill]
+  - Section [4.5 Staking Ⓜodel and Ⓜoney Ⓜanagement] - Simulate the staking model. and fund portfolio management
+    + Section [4.5.1 Risk Management] - Introduce to Investment Fund Management
+    + Section [4.5.2 Markowitz Portfolio] - Optimal Investment Fund Portfolio
+    + Section [4.5.3 Optimal Kelly Portfolio]
+    + Section [4.5.4 Investors' Fund Refill]
   - Section [4.6 Expectation Ⓜaximization and Staking Simulation] - Enhance by weighted function on Staking model and Simulation.
     + Section [4.6.1 Truncated Bivariate Normal Distribution] - Test the best fit random scoring models.
     + Section [4.6.2 Resampling Scores and Stakes] - Application of resampling method on Kelly portfolio to get the optimal return from investment.
@@ -100,7 +102,7 @@ suppressMessages(library('htmltools'))
 ## Get the investment return rates per annun
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
 ## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
-m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), PL = sum(PL), n = length(Sess), rRates = PL / Stakes) %>% mutate(Stakes = currency(Stakes), PL = currency(PL), n = accounting(n, format = 'd'), rRates = percent(rRates)) %>% tbl_df
+m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), PL = sum(PL), n = length(Sess), rRates = PL / Stakes) %>% mutate(Stakes = currency(Stakes), PL = currency(PL), n = accounting(n, format = 'd'), rRates = formattable::percent(rRates)) %>% tbl_df
 
 tagList(
   tags$div(align = "center", 
@@ -112,11 +114,11 @@ tagList(
     
     Stakes = color_tile('white', 'darkgoldenrod'), 
     
-    PL = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ paste0(round(x, 2), ' (rank: ', sprintf('%02d', rank(-x)), ')')), 
+    PL = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ paste0(round(x, 2), ' (rank: ', sprintf('%02d', rank(-x)), ')')), 
     
     n = color_tile('white', '#9B870C'), 
     
-    rRates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))))))
+    rRates = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))))))
 ```
 
 *table 4.1.1* : `r paste0(dim(m), collapse = ' x ')` : *Return of annually investment summary table.*^[Kindly refer to the list of colors via [Dark yellow with hexadecimal color code #9B870C](http://encycolorpedia.com/9b870c) for plot the stylist table.]
@@ -151,7 +153,7 @@ m1 <- ddply(dat, .(Result), summarise, Stakes = sum(Stakes), Return = sum(Return
 tv <- c('Total', colSums(m1[-1])); tv[4] <- as.numeric(tv[3]) / as.numeric(tv[2])
 m1 <- suppressWarnings(rbind(m1, tv))
 m1$Result <- factor(c(as.character(m1$Result)[-length(m1$Result)], 'Total')); rm(tv)
-m1 %<>% purrr::map_if(is.character, as.numeric) %>% data.frame %>% tbl_df %>% mutate(Stakes = currency(Stakes), Return = currency(Return), Rates = percent(Rates), n = accounting(n, format = 'd'), S.prop = percent(S.prop), R.prop = percent(R.prop), prop = percent(prop))
+m1 %<>% purrr::map_if(is.character, as.numeric) %>% data.frame %>% tbl_df %>% mutate(Stakes = currency(Stakes), Return = currency(Return), Rates = formattable::percent(Rates), n = accounting(n, format = 'd'), S.prop = formattable::percent(S.prop), R.prop = formattable::percent(R.prop), prop = formattable::percent(prop))
 #'@ m %>% kable(caption = 'Table 4.1.3 : Summary of Betting Results')
 
 tagList(
@@ -162,21 +164,21 @@ tagList(
                    "Stakes and Profit and Loss of Firm A at Agency A (2011~2015) ($0,000)")), 
   as.htmlwidget(m1 %>% formattable(list(
     
-    #'@ Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
-    Stakes = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ paste0(round(x, 2), ' (rank: ', sprintf('%02d', rank(-x)), ')')), 
+    #'@ Stakes = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
+    Stakes = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ paste0(round(x, 2), ' (rank: ', sprintf('%02d', rank(-x)), ')')), 
     
-    #'@ Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
-    Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ paste0(round(x, 2), ' (rank: ', sprintf('%02d', rank(-x)), ')')), 
+    #'@ Return = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%.2f (rank: %.0f)', x, rank(-x))),
+    Return = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ paste0(round(x, 2), ' (rank: ', sprintf('%02d', rank(-x)), ')')), 
     
-    Rates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %.0f)', 100 * x, rank(-x))),
+    Rates = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %.0f)', 100 * x, rank(-x))),
     
     n = color_tile('white', 'green'),
     
-    S.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %2d)', 100 * x, rank(-x))),
+    S.prop = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %2d)', 100 * x, rank(-x))),
     
-    R.prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %.0f)', 100 * x, rank(-x))),
+    R.prop = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %.0f)', 100 * x, rank(-x))),
     
-    prop = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %.0f)', 100 * x, rank(-x)))
+    prop = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %.0f)', 100 * x, rank(-x)))
 ))))
 ```
 
@@ -215,7 +217,9 @@ dat$rEMProbB <- round(dat$rRates * dat$netProbB, 6)
 dat$rEMProbL <- round(1 - dat$rEMProbB, 6)
 dat$netEMEdge <- round(dat$rEMProbB / dat$netProbB, 6)
 
-dat %>% select(No.x, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL, rRates, rEMProbB, rEMProbL, netEMEdge, favNetProb, undNetProb) %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
+#'@ dat %>% select(No.x, EUPrice, HKPrice, fHKPriceL, fMYPriceB, fMYPriceL, netProbB, netProbL, rRates, rEMProbB, rEMProbL, netEMEdge, favNetProb, undNetProb) %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
+
+dat[c('No.x', 'EUPrice', 'HKPrice', 'fHKPriceL', 'fMYPriceB', 'fMYPriceL', 'netProbB', 'netProbL', 'rRates', 'rEMProbB', 'rEMProbL', 'netEMEdge', 'favNetProb', 'undNetProb')] %>% .[sample(1:nrow(.), 6), ] %>% formattable %>% as.htmlwidget
 ```
 
 *table 4.1.3* : `r paste0(dim(dat), collapse = ' x ')` : *Odds price and probabilities sample table.*
@@ -275,12 +279,12 @@ hdp <- sort(unique(as.numeric(as.character(dat$HCap))))
 hdp %<>% matrix(., nrow = 8) %>% data.frame %>% tbl_df
 
 hdp %>% formattable(list(
-  X1 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X2 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X3 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X4 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X5 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
-  X6 = formatter('span', style = x ~ style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))) 
+  X1 = formatter('span', style = x ~ formattable::style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X2 = formatter('span', style = x ~ formattable::style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X3 = formatter('span', style = x ~ formattable::style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X4 = formatter('span', style = x ~ formattable::style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X5 = formatter('span', style = x ~ formattable::style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))), 
+  X6 = formatter('span', style = x ~ formattable::style(color = ifelse(x > 0, 'green', 'red')), x ~ icontext(ifelse(x > 0, x, -x), ifelse(x, x, x))) 
   )
 ) %>% as.htmlwidget
 ```
@@ -451,9 +455,9 @@ names(form) <- c('.id', 'formula')
 #'@ compare %<>% join(form, ., by = '.id') %>% select(No, Cat, .id, formula, AIC, BIC, df, residuals, p.value, delta.AIC, Loglik.AIC, weight.AIC, delta.BIC, Loglik.BIC, weight.BIC)
 
 ## Refer to *figure 4.4.1* to compare the models, between "all" and "pm + ip".
-bestlm <- compare %>% filter(p.value < 0.05) %>% group_by(Cat) %>% slice(which.min(BIC)) %>% mutate(AIC = accounting(AIC), BIC = accounting(BIC), df = accounting(df, format = 'd'), residuals = accounting(residuals, format = 'd'), p.value = percent(p.value), delta.AIC = accounting(delta.AIC), delta.BIC = accounting(delta.BIC)) #best model for every single category.
+bestlm <- compare %>% filter(p.value < 0.05) %>% group_by(Cat) %>% slice(which.min(BIC)) %>% mutate(AIC = accounting(AIC), BIC = accounting(BIC), df = accounting(df, format = 'd'), residuals = accounting(residuals, format = 'd'), p.value = formattable::percent(p.value), delta.AIC = accounting(delta.AIC), delta.BIC = accounting(delta.BIC)) #best model for every single category.
 
-compare %<>% mutate(AIC = accounting(AIC), BIC = accounting(BIC), df = accounting(df, format = 'd'), residuals = accounting(residuals, format = 'd'), p.value = percent(p.value), delta.AIC = accounting(delta.AIC), delta.BIC = accounting(delta.BIC)) %>% split(., .$Cat) #split the category and list the ranking.
+compare %<>% mutate(AIC = accounting(AIC), BIC = accounting(BIC), df = accounting(df, format = 'd'), residuals = accounting(residuals, format = 'd'), p.value = formattable::percent(p.value), delta.AIC = accounting(delta.AIC), delta.BIC = accounting(delta.BIC)) %>% split(., .$Cat) #split the category and list the ranking.
 
 form %>% formattable %>% as.htmlwidget
 ```
@@ -705,14 +709,14 @@ suppressMessages(library('formattable'))
 ## http://www.math.ku.dk/~rolf/teaching/thesis/DixonColes.pdf
 ## value rRates is based on annual EMProb/netProb ratio, while EMProb get from equation 4.1.2
 ## due to subset doesn't work, here I add the subset function again.
-m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), PL = sum(PL), n = length(Sess), rRates = PL / Stakes) %>% mutate(Stakes = currency(Stakes), PL = currency(PL), rRates = percent(rRates)) %>% tbl_df
+m <- ddply(dat, .(Sess), summarise, Stakes = sum(Stakes), PL = sum(PL), n = length(Sess), rRates = PL / Stakes) %>% mutate(Stakes = currency(Stakes), PL = currency(PL), rRates = formattable::percent(rRates)) %>% tbl_df
 
 m %>% formattable(list(
 
   Stakes = color_tile('white', 'darkgoldenrod'),
-  Return = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.2f (rank: %02d)', x, rank(-x))),
+  Return = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.2f (rank: %02d)', x, rank(-x))),
   n = color_tile('white', '#9B870C'),
-  rRates = formatter('span', style = x ~ style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.4f (rank: %02d)', x, rank(-x)))
+  rRates = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'green', 'gray')), x ~ sprintf('%.4f (rank: %02d)', x, rank(-x)))
 )) %>% as.htmlwidget
 ```
 
@@ -852,7 +856,7 @@ tagList(
 #'@   z <- suppressMessages(join(dat, y))
 #'@   x[[i]] <- mutate(z, Stakes = mean)
 #'@   vKelly(x[[i]])$Kelly1$summary
-#'@   }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
+#'@   }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = formattable::percent(PL.R))
 
 ## save above data to easier for loading.
 #'@ save(K1mean1, file = './KellyApps/data/K1mean1.rda')
@@ -913,7 +917,7 @@ tagList(
 #'@     z <- suppressMessages(join(dat, y))
 #'@     x[[i]] <- mutate(z, Stakes = mean)
 #'@     vKelly(x[[i]])$Kelly1$summary
-#'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
+#'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = formattable::percent(PL.R))
 
 ## save above data to easier for loading.
 #'@ save(K1mean2, file = './KellyApps/data/K1mean2.rda')
@@ -1028,7 +1032,7 @@ suppressMessages(source('./function/vKelly2.R'))
 #'@     z <- suppressMessages(join(dat, y))
 #'@     x[[i]] <- mutate(z, Stakes = mean)
 #'@     vKelly2(x[[i]])$Kelly1$summary
-#'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
+#'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = formattable::percent(PL.R))
 
 ## save above data to easier for loading.
 #'@ save(K2mean1, file = './KellyApps/data/K2mean1.rda')
@@ -1091,7 +1095,7 @@ suppressMessages(source('./function/vKelly2.R'))
 #'@     z <- suppressMessages(join(dat, y))
 #'@     x[[i]] <- mutate(z, Stakes = mean)
 #'@     vKelly2(x[[i]])$Kelly1$summary
-#'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = percent(PL.R))
+#'@ }) %>% bind_rows %>% mutate(sm = seq(nrow(.))) %>% mutate(sm = seq(nrow(.))) %>% ddply(.(Category), summarise, Stakes = mean(Stakes), Return = mean(Return), PL = mean(PL), PL.R = PL / Stakes) %>% mutate(Stakes = currency(Stakes), Return = currency(Return), PL = currency(Return), PL.R = formattable::percent(PL.R))
 
 ## save above data to easier for loading.
 #'@ save(K2mean2, file = './KellyApps/data/K2mean2.rda')
@@ -1258,7 +1262,7 @@ rEMProbB netProbB    theta     dWin     dwhf     dpus     dlhf     dlos
 
 ```{r weight-para2, echo = FALSE, results = 'asis'}
 ## static weighted parameter estimation
-theta <- ddply(dat2, .(Sess), summarise, rRates = percent(mean(rRates)), 
+theta <- ddply(dat2, .(Sess), summarise, rRates = formattable::percent(mean(rRates)), 
              theta = mean(theta), dWin = mean(dWin), dwhf = mean(dwhf), 
              dpus = mean(dpus), dlhf = mean(dlhf), dlos = mean(dlos)) %>% tbl_df
 
@@ -1625,7 +1629,12 @@ plotFund
 
 **Comparison of Summarized Kelly Investment Funds**
 
-```{r bank-roll-portfolio, echo = FALSE, message = FALSE, results = 'asis'}
+```{r bank-roll-portfolio, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
+## remove all previous objects except 'op' (googleVis ggvis.option) to save memory.
+## http://stackoverflow.com/questions/6190051/how-can-i-remove-all-objects-but-one-from-the-workspace-in-r/6190319
+rm(list = setdiff(ls(), 'op'))
+
+## ===========================================================
 ## simulate Kelly 
 ## - united initial fund size
 ## - portion arrangement as baseline stakes for league profile
@@ -1673,6 +1682,11 @@ ldply(BRSummary$KM, ldply, as.matrix) %>% datatable(
 *table 4.3.5.2 : Summary of `r length(BRSummary$KMnames)` Kelly main funds.*
 
   From *table 4.5.1.1* we can know the risk of the all investmental funds. You are feel free to browse over [KellyApps](https://beta.rstudioconnect.com/content/2311/) for more details. You can also refer to [Faster Way of Calculating Rolling Realized Volatility in R](http://stackoverflow.com/questions/12823445/faster-way-of-calculating-rolling-realized-volatility-in-r) to measure the volatility of the fund as here I omit it at this stage.
+
+```{r echo = FALSE}
+## remove object to save memory.
+rm(BRSummary)
+```
 
 ![*shinyapp 4.3.5.1 : Kelly sportsbook investment fund.* Kindly click on [*KellyApps*](https://beta.rstudioconnect.com/content/2311/)^[The shinyApp contain both basic fund management and also portfolio management which is in later section [4.5.1 Risk Management].] to use the ShinyApp.](figure/KellyApps.jpg)
 
@@ -1806,7 +1820,75 @@ plotFund
 
 <br>
 
-  Above table shows the return rates of investment fund from firm A via agent A. We know the initial unvestment fund from `r currency(as.numeric(Op(SOFund)[1,])) * 10000` growth to `r currency(as.numeric(tail(Cl(SOFund), 1))) * 10000` within year `r row.names(data.frame(SOFund)) %>% range` with a high return rates `r percent(as.numeric(tail(Cl(SOFund), 1) / as.numeric(Op(SOFund)[1,])))`. Well, I try to apply Kelly model for stakes management which is in previous section [4.3 Kelly Ⓜodel].
+  Above table shows the return rates of investment fund from firm A via agent A. We know the initial unvestment fund from `r currency(as.numeric(Op(SOFund)[1,])) * 10000` growth to `r currency(as.numeric(tail(Cl(SOFund), 1))) * 10000` within year `r row.names(data.frame(SOFund)) %>% range` with a high return rates `r formattable::percent(as.numeric(tail(Cl(SOFund), 1) / as.numeric(Op(SOFund)[1,])))`. Well, I try to apply Kelly model for stakes management which is in previous section [4.3 Kelly Ⓜodel].
+
+  From *table 4.3.5.2* we can know the risk of the all investmental funds. You are feel free to browse over [KellyApps](https://beta.rstudioconnect.com/content/2311/)^[*shinyapp 4.3.5.1*] for more details.
+  
+  In order to equalise the initial fund size, here I united it as `r currency(iniVal)` which is get from max value among the 110 funds.
+
+  From above shinyApps, we can know the initial fund required and the risk as well as the return of investment for us to follow the firm A with application of a time series onto the Kelly staking models.
+
+  I had built and test `r list.files('./data', pattern = '^K.+\\.rds$') %>% length` Kelly main funds (split to indipedent fund will be altogether `r list.files('./KellyApps/data1', pattern = '^K.+\\.rds$') %>% length %>% formattable::digits(., 3, format = 'd', big.mark = ',')` funds) but now need to set a baseline for every single leagues and simulate again the steps in [4.3 Kelly Ⓜodel] to made a comparison based on the portion of stakes from the initial pools for every single league as we can refer to *table 4.3.2.1*.
+
+```{r lprofile2, echo = FALSE, results = 'asis'}
+## remove object to save memory.
+rm(SOFund)
+
+## Below profHandling() will read all league risk profile but now we only need to read lRProf1A.rds.
+#'@ source('./function/profHandling.R', local = TRUE)
+#'@ wProf = profHandling()
+#'@ lRProf = profHandling(type = 'weight.stakes')
+#'@ rm(profHandling)
+source('./function/leagueRiskProf.R', local = TRUE)
+
+if(file.exists('./data/lRProf1A.rds')) {
+    lRProf1A <- read_rds(path = './data/lRProf1A.rds')
+} else {
+    lRProf1A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'all')
+    saveRDS(lRProf1A, file = './data/lRProf1A.rds')
+}
+
+lRiskSettingProf <- lRProf1A %>% 
+  mutate(portion = formattable::percent(all.lg/sum(all.lg)), baseline = currency(iniVal * portion))
+
+ttd <- lRiskSettingProf %>% .[-1] %>% colSums %>% t %>% 
+  data.frame(League = 'Total', .) %>% tbl_df %>% 
+  mutate(portion = formattable::percent(portion), 
+         baseline = formattable::currency(baseline))
+
+tagList(
+  tags$div(align = "center", 
+           class = "bg-info", 
+           tags$h3(class = "bg-primary", "League Stakes Profiling"), 
+           tags$h5(align = "center", class = "text-muted", 
+                   "Staking allocation and portfolio ($0,000)")), 
+  as.htmlwidget(lRiskSettingProf %>% .[sample(1:nrow(.), 6), ] %>% rbind(., ttd)%>% formattable(list(
+    all.lg = color_tile('white', 'darkgoldenrod'), 
+    portion = color_tile('white', 'darkgoldenrod'), 
+    baseline = color_tile('white', 'darkgoldenrod')))))
+```
+
+*table 4.5.1.2* : `r paste0(dim(lRiskSettingProf), collapse = ' x ')` : *A simple new league stakes profile.*
+
+  *table 4.5.1.2* is just a simple baseline profile for league risk management to test the Kelly models. Here I try to adjust few points to do comparison : 
+  
+  - united the initial fund size
+  - set a baseline staking portfolio acrosss the leagues
+  - application of various Kelly but not reversed models
+
+```{r fund-reallocation, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
+## After we set a united initial fund size and set a baseline and portfolio for staking on every single league, here we need to test the Kelly.
+
+## need to load again the saved raw data and start from 0 again with mentioned criterias.
+load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
+
+## fit the stakes based on the league portion among the fund.
+dat <- join(dat, lRiskSettingProf) %>% tbl_df %>% mutate(League = factor(League))
+dat %<>% mutate(Stakes = Stakes / mean(Stakes) * baseline)
+dat[c('all.lg', 'portion', 'baseline')] <- NULL
+```
+
+### 4.5.2 Markowitz Portfolio
 
   *Galema, Plantinga and Scholtens (2008)*^[You are feel free to refer to [Reference for industry knowdelege and academic research portion for the paper.] in **7.4 References** for further details] introduce [Fama-MacBeth regressions](https://en.wikipedia.org/wiki/Fama%E2%80%93MacBeth_regression)^[FM-regression is a [Capital asset pricing model (CAPM)](https://en.wikipedia.org/wiki/Capital_asset_pricing_model) which estimate the rates of return of an asset.] for portfolio management. The method estimates the [betas](https://en.wikipedia.org/wiki/Beta_coefficient) and [risk premia](https://en.wikipedia.org/wiki/Risk_premium) for any [risk factors](https://en.wikipedia.org/wiki/Risk_factor) that are expected to determine asset prices. The method works with multiple assets across time ([panel data](https://en.wikipedia.org/wiki/Panel_data)). The parameters are estimated in two steps:
 
@@ -1837,7 +1919,7 @@ All investors:
 
 <iframe width="560" height="315" src="https://www.youtube.com/embed/IH7On9hJsAk" frameborder="0" allowfullscreen></iframe>
 
-*video 4.5.1.1 : Calculated Bets - computers, gambling, mathematical modeling to Win (part 4 of 4)*
+*video 4.5.2.1 : Calculated Bets - computers, gambling, mathematical modeling to Win (part 4 of 4)*
 
 <br>
 
@@ -1845,70 +1927,17 @@ All investors:
 
 <iframe src="https://raw.githubusercontent.com/scibrokes/kelly-criterion/d12b9b565b49f4b987470ca2cd853619f050594d/references/Kelly%20vs%20Markowitz%20Portfolio%20Optimization.pdf" style="width:560px; height:500px;" frameborder="0"></iframe>
 
-*paper 4.5.1.1 : Magnus Erik Hvass Pedersen (2014)*
+*paper 4.5.2.1 : Magnus Erik Hvass Pedersen (2014)*
 
 <br>
 
-  From *table 4.5.1.1* we can know the risk of the all investmental funds. You are feel free to browse over [KellyApps](https://beta.rstudioconnect.com/content/2311/)^[*shinyapp 4.3.5.1*] for more details.
-  
-  In order to equalise the initial fund size, here I united it as `r currency(iniVal)` which is get from max value among the 110 funds.
-
-```{r}
-## need to embed a shinyapps for comparison of the effeciency of follow bets.
-## ![Kelly fund](figure/.gif)
-```
-
-  From above shinyApps, we can know the initial fund required and the risk as well as the return of investment for us to follow the firm A with application of a time series onto the Kelly staking models.
-
-  Now we try to simulate whole 110 Kelly funds with steps in [4.3 Kelly Ⓜodel] to made a comparison based on the portion of stakes from the initial pools for every single league as we can refer to *table 4.3.2.1*.
-
-```{r lprofile2, echo = FALSE, results = 'asis'}
-## Below profHandling() will read all league risk profile but now we only need to read lRProf1A.rds.
-#'@ source('./function/profHandling.R', local = TRUE)
-#'@ wProf = profHandling()
-#'@ lRProf = profHandling(type = 'weight.stakes')
-#'@ rm(profHandling)
-source('./function/leagueRiskProf.R', local = TRUE)
-
-if(file.exists('./data/lRProf1A.rds')) {
-    lRProf1A <- read_rds(path = './data/lRProf1A.rds')
-} else {
-    lRProf1A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'all')
-    saveRDS(lRProf1A, file = './data/lRProf1A.rds')
-}
-
-lRiskSettingProf <- lRProf1A %>% 
-  mutate(portion = percent(all.lg/sum(all.lg)), baseline = currency(iniVal * portion))
-
-tagList(
-  tags$div(align = "center", 
-           class = "bg-info", 
-           tags$h3(class = "bg-primary", "League Stakes Profiling"), 
-           tags$h5(align = "center", class = "text-muted", 
-                   "Staking allocation and portfolio ($0,000)")), 
-  as.htmlwidget(lRiskSettingProf %>% .[sample(1:nrow(.), 6), ] %>% formattable(list(
-    all.lg = color_tile('white', 'darkgoldenrod'), 
-    portion = color_tile('white', 'darkgoldenrod'), 
-    baseline = color_tile('white', 'darkgoldenrod')))))
-```
-
-*table 4.5.1.2* : `r paste0(dim(lRiskSettingProf), collapse = ' x ')` : *A simple new league stakes profile.*
-
-  *table 4.5.1.2* is just a simple baseline profile for league risk management to test the Kelly models. Here I try to adjust few points to do comparison : 
-  
-  - united the initial fund size
-  - set a baseline staking portfolio acrosss the leagues
-  - application of various Kelly but not reversed models
-
-```{r kelly-staking-models, echo = FALSE, results = 'asis'}
-## After we set a united initial fund size and set a baseline for staking, here we need to test the Kelly.
-
-
-```
-
   *张丹 (2016)*^[Kindly refer to 7th paper inside [Reference for technical research on programming and coding portion for the paper.] in **7.4 References** for further details] provides couple of r package for investment and analysis in financial market. You can also refer to [Introduction of R Packages](http://rpubs.com/englianhu/introduction-of-r-packages).
 
-### 4.5.2 Investors' Fund Refill
+### 4.5.3 Optimal Kelly Portfolio
+
+
+
+### 4.5.4 Investors' Fund Refill
 
   Kelly model will be a good risk averse investment portfolio. As we know normally a mutual fund or any investment fund will advise investors credit a certain money into the pool regularly. For this section I keep it as the next study which is in [Application of Kelly Criterion model in Sportsbook Investment - Part II](https://github.com/scibrokes/kelly-criterion) as an dynamic staking baseline model upon injection of new fund into the pool. It will includes the :
   
@@ -1916,7 +1945,7 @@ tagList(
   - refill or pump-in money into the pool
   - fund management and admin fees
 
-![*equation 4.5.2.1 : Economic Order Quantity (EOQ)*](./figure/EOQ.jpg)
+![*equation 4.5.4.1 : Economic Order Quantity (EOQ)*](./figure/EOQ.jpg)
 
   Base on above euqation, there has some criteria as below :
 
@@ -2216,7 +2245,7 @@ compare <- ldply(lms, function(x) {
 
 compare %<>% mutate(delta.AIC = AIC - min(AIC), Loglik.AIC = exp(-0.5 * delta.AIC), weight.AIC = Loglik.AIC/sum(Loglik.AIC), delta.BIC = BIC - min(BIC), Loglik.BIC = exp(-0.5 * delta.BIC), weight.BIC = Loglik.BIC/sum(Loglik.BIC))
 
-compare %<>% mutate(AIC = accounting(AIC), BIC = accounting(BIC), df = accounting(df, format = 'd'), residuals = accounting(residuals, format = 'd'), p.value = percent(p.value), delta.AIC = accounting(delta.AIC), delta.BIC = accounting(delta.BIC))
+compare %<>% mutate(AIC = accounting(AIC), BIC = accounting(BIC), df = accounting(df, format = 'd'), residuals = accounting(residuals, format = 'd'), p.value = formattable::percent(p.value), delta.AIC = accounting(delta.AIC), delta.BIC = accounting(delta.BIC))
 ```
 
 ```{r compare-tmv2, echo = FALSE, results = 'asis'}
