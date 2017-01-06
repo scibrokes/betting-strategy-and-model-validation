@@ -58,4 +58,4 @@
 2. [**Apply Kelly-Criterion on English Soccer 2011/12 to 2012/13** *by ®γσ, Eng Lian Hu (2014)*](https://github.com/scibrokes/kelly-criterion)
 3. [**Creating a Profitable Betting Strategy for Football by Using Statistical Modelling** *by Niko Marttinen (2006)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Creating%20a%20Profitable%20Betting%20Strategy%20for%20Football%20by%20Using%20Statistical%20Modelling.pdf)
 
-**Powered by - Copyright? Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)**
+**Powered by - Copyright© Intellectual Property Rights of <img src='figure/oda-army.jpg' width='24'> [Scibrokes®](http://www.scibrokes.com)**

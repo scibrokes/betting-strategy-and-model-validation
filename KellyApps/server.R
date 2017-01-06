@@ -19,38 +19,44 @@ suppressMessages(library('stringr'))
 server <- shinyServer(function(input, output, session) {
   
   # Simulate work being done for 1 second
-  Sys.sleep(2)
+  Sys.sleep(1)
   
   # Hide the loading message when the rest of the server function has executed
-  hide(id = 'loading-content', anim = TRUE, animType = 'fade')    
-  show('app-content')
+  hide(id = 'loading-content', anim = TRUE, animType = 'fade')   
+  show(id = 'app-content', anim = TRUE, animType = 'fade')
   #'@ loadData()
   
-  #'@ onclick('toggleModels', shinyjs::toggle(id = 'selectSIFund', anim = TRUE))
-  #'@ onclick('toggleAdvanced', shinyjs::toggle(id = 'adjuster', anim = TRUE))    
-  onclick('toggleAdvanced', shinyjs::toggle(id = 'advanced', anim = TRUE))    
+  onclick('toggleAdvanced', shinyjs::toggle(id = 'advanced', anim = TRUE, animType = 'fade'))    
   onclick('update', shinyjs::html('time', date()))
   
-  #'@ observeEvent(input$analysis, {
-  #'@   y = ifelse(is.null(input$response)||is.na(input$response)||length(input$response) == 0, 'Return', input$response)
-  #'@   x = ifelse(is.null(input$explan1)||is.na(input$explan1)||length(input$explan1) == 0, 'Stakes', input$explan1)
-  #'@   
-  #'@   model = vKelly()
-  #'@   output$modelSummary = renderPrint({
-  #'@     list(Summary = summary(model), Anova = anova(model))
-  #'@   })
+  #'@ loadpage <- reactive({ 
+  #'@   validate(
+  #'@     need(input$page, 'Web page input is null!!')
+  #'@   )
+  #'@   disppage <- pages[which(pages == input$page)]
+  #'@   paste0(disppage)
   #'@ })
   
-  loadpage <- reactive({ 
-    validate(
-      need(input$page, "Web page input is null!!")
-    )
-    disppage <- pages[which(pages == input$page)]
-    paste0(disppage)
+  #'@ output$displaypage <- renderUI({
+  #'@   tags$iframe(src = loadpage(), height = 800, width = 500)
+  #'@ })
+  
+  observe({
+    if(input$funds > 0){
+      print('1')
+      session$sendCustomMessage("myCallbackHandler", "1")
+    }
+  })
+  
+  observe({ 
+    query <- pages[which(pages==input$page)]
+    disppage <<- pages[which(pages == input$page)]
   })
   
   output$displaypage <- renderUI({
-    tags$iframe(src = loadpage(), height = 800, width = 600)
+    input$page
+    dpage <- tags$iframe(src = disppage, height = 800, width = 500)
+    dpage
   })
   
   ## Define a reactive expression for the document term matrix
@@ -87,7 +93,6 @@ server <- shinyServer(function(input, output, session) {
                                     list(extend = 'collection', 
                                          buttons = c('csv', 'excel', 'pdf'), 
                                          text = 'Download'), I('colvis'))))
-    
   })#, options = list(pageLength = 10))
   
   
@@ -107,7 +112,7 @@ server <- shinyServer(function(input, output, session) {
     })
   
   #http://stackoverflow.com/questions/25920548/shiny-select-go-to-different-tabpanel-using-action-button-or-something/25921150
-
+  
   ## -------------------- render plot -----------------------------------------------
   #'@ output$table1A <- renderFormattable({
   #'@   suppressMessages(library('magrittr'))
@@ -137,9 +142,5 @@ server <- shinyServer(function(input, output, session) {
   #'@   ))
   #'@ })
   
-  #'@ output$txt <- renderText({
-  #'@   fOdds <- c(input$num1, input$num2, input$num3) / input$spread
-  #'@   c(paste0('Home Win = ', round(fOdds[1], 3)), ';', paste0('Draw = ', round(fOdds[2], 3)), ';', paste0('Away Win = ', round(fOdds[3], 3)))
-  #'@ })
   
 })

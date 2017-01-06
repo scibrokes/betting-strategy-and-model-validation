@@ -41,9 +41,4 @@ pages <<- list(
 
 BRSummary <<- read_rds(path = './data/BRSummary.rds')
 
-#'@ loadData <<- function() {
-#'@   Sys.sleep(2)
-#'@   hide('loading-content')
-#'@   show('app-content')
-#'@ }
 

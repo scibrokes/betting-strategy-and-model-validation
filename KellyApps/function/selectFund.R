@@ -1,10 +1,18 @@
-selectFund <- function(selectedFund, pth = './data1/') {
+selectFund <- function(selectedFund, pth = 'basic') {
   suppressPackageStartupMessages(library("BBmisc"))
   suppressAll(library('plyr'))
   suppressAll(library('stringr'))
   suppressAll(library('tidyverse'))
   suppressAll(library('quantmod'))
   suppressAll(library('formattable'))
+  
+  if(pth == 'basic') {
+    pth <- './data1/'
+  } else if(pth == 'portfolio') {
+    pth <- './data2/'
+  } else {
+    stop('Kindly select pth = "basic" or pth = "portfolio".')
+  }
   
   fundsopt <- list.files(pth, pattern = '.rds$')
   fundsopt <- c(tail(fundsopt, 1), fundsopt) %>% unique %>% str_replace_all('.rds', '')
