@@ -1,4 +1,4 @@
-splitFund <- function(.print = FALSE, parallel = FALSE, progress = 'none') {
+splitFund <- function(pth = 'basic', .print = FALSE, parallel = FALSE, progress = 'none') {
   
   ## --------------------- Load packages --------------------------------------
   suppressMessages(library('BBmisc'))
@@ -14,6 +14,14 @@ splitFund <- function(.print = FALSE, parallel = FALSE, progress = 'none') {
   if(parallel == TRUE) {
     suppressMessages(library('doParallel'))
     doParallel::registerDoParallel(cores = detectCores())
+  }
+  
+  if(pth == 'basic') {
+    pth <- '/data1/'
+  } else if(pth == 'portfolio') {
+    pth <- '/data2/'
+  } else {
+    stop('Kindly select pth = "basic" or pth = "portfolio".')
   }
   
   ## --------------------- Read data ------------------------------------------
@@ -97,7 +105,7 @@ splitFund <- function(.print = FALSE, parallel = FALSE, progress = 'none') {
     xx = xts(xx[-1], xx$DateUS)
     
     saveRDS(eval(parse(text = paste(allfds, '= xx'))), 
-            file = paste0('./KellyApps/', y, '.rds'))
+            file = paste0('./KellyApps', pth, y, '.rds'))
     rm(df, ty, xx)
     if(.print == TRUE) cat('\n', y, ' had saved.')
     

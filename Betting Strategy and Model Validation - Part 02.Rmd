@@ -1830,31 +1830,52 @@ plotFund
 
   I had built and test `r list.files('./data', pattern = '^K.+\\.rds$') %>% length` Kelly main funds (split to indipedent fund will be altogether `r list.files('./KellyApps/data1', pattern = '^K.+\\.rds$') %>% length %>% formattable::digits(., 3, format = 'd', big.mark = ',')` funds) but now need to set a baseline for every single leagues and simulate again the steps in [4.3 Kelly Ⓜodel] to made a comparison based on the portion of stakes from the initial pools for every single league as we can refer to *table 4.3.2.1*.
 
-```{r lprofile2, echo = FALSE, results = 'asis'}
+```{r fund-reallocation, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
 ## remove object to save memory.
-rm(SOFund)
+if(exists('SOFund')) rm(SOFund)
 
+## ===================== Fund Reallocation ===============================
 ## Below profHandling() will read all league risk profile but now we only need to read lRProf1A.rds.
 #'@ source('./function/profHandling.R', local = TRUE)
 #'@ wProf = profHandling()
 #'@ lRProf = profHandling(type = 'weight.stakes')
 #'@ rm(profHandling)
-source('./function/leagueRiskProf.R', local = TRUE)
+#'@ source('./function/leagueRiskProf.R', local = TRUE)
 
-if(file.exists('./data/lRProf1A.rds')) {
-    lRProf1A <- read_rds(path = './data/lRProf1A.rds')
-} else {
-    lRProf1A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'all')
-    saveRDS(lRProf1A, file = './data/lRProf1A.rds')
-}
+## After we set a united initial fund size and set a baseline and portfolio for staking on every single league, here we need to test the Kelly.
+## 
+## need to load again the saved raw data and start from 0 again with mentioned criterias.
+#'@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
+#'@ iniVal <- read_rds(path = './data/initial.rds') %>% .$KM %>% .[6] %>% as.character %>% as.numeric #leave only initial.rds and shinyData.RData and moved all previous funds objects into another folder to avoid overwrite the previous files.
+
+#'@ if(file.exists('./data/lRProf1A.rds')) {
+#'@     lRProf1A <- read_rds(path = './data/lRProf1A.rds')
+#'@ } else {
+#'@     lRProf1A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'all')
+#'@     saveRDS(lRProf1A, file = './data/lRProf1A.rds')
+#'@ }
+
+#'@ lRiskSettingProf <- lRProf1A %>% 
+#'@   mutate(portion = formattable::percent(all.lg/sum(all.lg)))
+
+## fit the stakes based on the league portion among the fund.
+#'@ dat <- join(dat, lRiskSettingProf) %>% tbl_df %>% mutate(League = factor(League))
+#'@ dat %<>% mutate(Stakes = Stakes / mean(Stakes) * baseline)
+#'@ dat[c('all.lg', 'portion', 'baseline')] <- NULL
+
+#'@ save.image("~/GitHub/scibrokes/betting-strategy-and-model-validation/regressionApps/shinyData2.RData")
+load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
+
+## 
+## After run the chunk `fund-reallocation`, we need to use below functions all recalculate the Kelly models in chunk `resimulateKelly`.
+## ================================================================
 
 lRiskSettingProf <- lRProf1A %>% 
-  mutate(portion = formattable::percent(all.lg/sum(all.lg)), baseline = currency(iniVal * portion))
+  mutate(portion = formattable::percent(all.lg/sum(all.lg)))
 
 ttd <- lRiskSettingProf %>% .[-1] %>% colSums %>% t %>% 
   data.frame(League = 'Total', .) %>% tbl_df %>% 
-  mutate(portion = formattable::percent(portion), 
-         baseline = formattable::currency(baseline))
+  mutate(portion = formattable::percent(portion))
 
 tagList(
   tags$div(align = "center", 
@@ -1864,8 +1885,7 @@ tagList(
                    "Staking allocation and portfolio ($0,000)")), 
   as.htmlwidget(lRiskSettingProf %>% .[sample(1:nrow(.), 6), ] %>% rbind(., ttd)%>% formattable(list(
     all.lg = color_tile('white', 'darkgoldenrod'), 
-    portion = color_tile('white', 'darkgoldenrod'), 
-    baseline = color_tile('white', 'darkgoldenrod')))))
+    portion = color_tile('white', 'darkgoldenrod')))))
 ```
 
 *table 4.5.1.2* : `r paste0(dim(lRiskSettingProf), collapse = ' x ')` : *A simple new league stakes profile.*
@@ -1876,16 +1896,26 @@ tagList(
   - set a baseline staking portfolio acrosss the leagues
   - application of various Kelly but not reversed models
 
-```{r fund-reallocation, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
-## After we set a united initial fund size and set a baseline and portfolio for staking on every single league, here we need to test the Kelly.
+```{r resimulateKelly, eval = FALSE, echo = FALSE, message = FALSE, warning = FALSE, results = 'asis'}
+## -------------------- Resimulate Kelly models --------------------
+## Similar with profHandling() for load or save profiles at once. You can just using below function to load all Kelly models, includes save or load.
+## 
+## Due to direct calculate lRProf and wProf in vKelly() and vKelly2() will be faced errors, here I saved above and directly call and fit into calculation as below KModelslite().
 
-## need to load again the saved raw data and start from 0 again with mentioned criterias.
-load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
+#'@ source('./function/KModels.R', local = TRUE)
+#'@ KMods <- KModels(action = 'save')
 
-## fit the stakes based on the league portion among the fund.
-dat <- join(dat, lRiskSettingProf) %>% tbl_df %>% mutate(League = factor(League))
-dat %<>% mutate(Stakes = Stakes / mean(Stakes) * baseline)
-dat[c('all.lg', 'portion', 'baseline')] <- NULL
+## A lite version function of KModels() due to size allocation issues.
+#'@ source('./function/KModelslite.R', local = TRUE)
+#'@ KModslite <- KModelslite(action = 'save', .print = TRUE)
+
+## save every funds independently in order to easier load/read.
+#'@ source('./function/splitFund.R', local = TRUE)
+#'@ splitFund(pth = 'portfolio', .print = TRUE, parallel = TRUE, progress = 'text')
+## tried to run few times splitFund() but due to object size allocation 
+##   issue and cause the pc forced to restart. Here I run the codes 
+##   inside the function and working fine.
+
 ```
 
 ### 4.5.2 Markowitz Portfolio
@@ -1961,7 +1991,7 @@ All investors:
 
 ### 4.6.1 Truncated Bivariate Normal Distribution
 
-  Before I simulate all 110 Kelly weighted models 100 times by resampling the scores. Here I using few different *trancated bivariate normal distribution*^[You can refer to few r packages which are [MASS](https://cran.r-project.org/web/packages/MASS/index.html), [mvtnorm](https://cran.r-project.org/web/packages/mvtnorm/index.html) and [tmvtnorm](https://cran.r-project.org/web/packages/tmvtnorm/index.html).] and the weight parameters to get the optimal randomise scores.
+  Before I simulate all Kelly funds by resampling the scores, here I using few different *trancated bivariate normal distribution*^[You can refer to few r packages which are [MASS](https://cran.r-project.org/web/packages/MASS/index.html), [mvtnorm](https://cran.r-project.org/web/packages/mvtnorm/index.html) and [tmvtnorm](https://cran.r-project.org/web/packages/tmvtnorm/index.html).] and the weight parameters to get the optimal randomise scores. [tmvtnorm - A Package for the Truncated Multivariate Normal Distribution]()
 
   Due to there has negative lambda values which unable proceed a scores based on basic bivariate normal distribution. Here I try to build few models in order to get the best fit model for soccer scores resampling.
 

@@ -270,6 +270,10 @@ dat <- merge(dat, spboData, by = c('Date', 'spboHome', 'spboAway')) %>% tbl_df
 #   [1] c("Date", "spboHome", "spboAway", "No.x", "Sess", "Month", "Day", "DateUK", "Time", "Home", "Away", "Selection", "HCap", "EUPrice", "HKPrice", "Stakes", "CurScore", "Mins", "Result", "Return", "PL", "Rebates", "Picked", "AHOU", "fMYPriceB", "fMYPriceL", "pHKRange", "fHKPriceL", "pMYRange", "pHKRange2", "pMYRange2", "InPlay", "Mins2", "InPlay2", "ipRange", "HG", "AG", "FHFTET", "Picked2", "ipHCap", "CurScore2", "netProbB", "netProbL", "favNetProb", "undNetProb", "No.y", "X", "matchID", "LeagueColor", "League", "spboDateUK", "spboTime", "Finished", "FTHG", "FTAG", "HTHG", "HTAG", "H.Card", "A.Card", "HT.matchID", "HT.graph1", "HT.graph2")
 ## Due to the daily financial settlement of Asian bookmakers based on 12.00PM (GMT + 8), therefore I just leave the merged data name alignment above to ease for refer the time and score.
 
+dat %<>% mutate(Stakes = as.numeric(Stakes), League = factor(League), 
+                Home = factor(Home), Away = factor(Away), 
+                spboHome = factor(spboHome), spboAway = factor(spboAway))
+
 ## saveImage after filter to ease the whole research and efficiency of read data.
 #'@ save.image("./regressionApps/shinyData.RData")
 

@@ -1,5 +1,5 @@
-KModelslite <- function(action = 'load', kind = 'default', rm.files = as.logical(TRUE), 
-                        overwrite = as.logical(FALSE), parallel = FALSE) {
+KModelslite <- function(KMnames = NULL, action = 'load', kind = 'default', rm.files = as.logical(TRUE), 
+                        overwrite = as.logical(FALSE), parallel = FALSE, .print = FALSE) {
   ## A lite version of KModels() due to the function always face size allocation issues.
   ## 
   ## action = 'load' or action = 'save'.
@@ -48,7 +48,7 @@ KModelslite <- function(action = 'load', kind = 'default', rm.files = as.logical
   ## listKelly()
   
   ## ================== Kelly names ================================
-  KMnames <- c('K1', 'K2', 'K1W1', 'K1W2', 'K2W1', 'K2W2', #6
+  allKMnames <- c('K1', 'K2', 'K1W1', 'K1W2', 'K2W1', 'K2W2', #6
                'K1W1WS1', 'K1W1WS2', 'K1W2WS1', 'K1W2WS2', #4 #10
                'K2W1WS1', 'K2W1WS2', 'K2W2WS1', 'K2W2WS2', #4 #14
                'K1D1', 'K1D2', 'K2D1', 'K2D2', #4 #18
@@ -76,10 +76,45 @@ KModelslite <- function(action = 'load', kind = 'default', rm.files = as.logical
                'K1D1DWS1OO', 'K1D1DWS2OO', 'K1D2DWS1OO', 'K1D2DWS2OO', #4 #106
                'K2D1DWS1OO', 'K2D1DWS2OO', 'K2D2DWS1OO', 'K2D2DWS2OO') #4 #110
   
+  if(is.null(KMnames)) {
+    KMnames <- allKMnames
+  } else if(all(KMnames %in% allKMnames)) {
+    KMnames <- KMnames
+  } else {
+    stop("Kindly insert a vector which contain c('K1', 'K2', 'K1W1', 'K1W2', 'K2W1', 'K2W2', 
+               'K1W1WS1', 'K1W1WS2', 'K1W2WS1', 'K1W2WS2', 
+               'K2W1WS1', 'K2W1WS2', 'K2W2WS1', 'K2W2WS2', 
+               'K1D1', 'K1D2', 'K2D1', 'K2D2', 
+               'K1DWS1', 'K1DWS2', 'K2DWS1', 'K2DWS2', 
+               'K1D1WS1', 'K1D1WS2', 'K1D2WS1', 'K1D2WS2', 
+               'K2D1WS1', 'K2D1WS2', 'K2D2WS1', 'K2D2WS2', 
+               'K1W1DWS1', 'K1W1DWS2', 'K1W2DWS1', 'K1W2DWS2', 
+               'K2W1DWS1', 'K2W1DWS2', 'K2W2DWS1', 'K2W2DWS2', 
+               'K1D1DWS1', 'K1D1DWS2', 'K1D2DWS1', 'K1D2DWS2', 
+               'K2D1DWS1', 'K2D1DWS2', 'K2D2DWS1', 'K2D2DWS2', 
+               'K1D1DWS1TT', 'K1D1DWS2TT', 'K1D2DWS1TT', 'K1D2DWS2TT', 
+               'K2D1DWS1TT', 'K2D1DWS2TT', 'K2D2DWS1TT', 'K2D2DWS2TT', 
+               'K1D1DWS1TO', 'K1D1DWS2TO', 'K1D2DWS1TO', 'K1D2DWS2TO', 
+               'K2D1DWS1TO', 'K2D1DWS2TO', 'K2D2DWS1TO', 'K2D2DWS2TO', 
+               'K1D1DWS1DD', 'K1D1DWS2DD', 'K1D2DWS1DD', 'K1D2DWS2DD', 
+               'K2D1DWS1DD', 'K2D1DWS2DD', 'K2D2DWS1DD', 'K2D2DWS2DD', 
+               'K1D1DWS1DT', 'K1D1DWS2DT', 'K1D2DWS1DT', 'K1D2DWS2DT', 
+               'K2D1DWS1DT', 'K2D1DWS2DT', 'K2D2DWS1DT', 'K2D2DWS2DT', 
+               'K1D1DWS1DO', 'K1D1DWS2DO', 'K1D2DWS1DO', 'K1D2DWS2DO', 
+               'K2D1DWS1DO', 'K2D1DWS2DO', 'K2D2DWS1DO', 'K2D2DWS2DO', 
+               'K1D1DWS1OD', 'K1D1DWS2OD', 'K1D2DWS1OD', 'K1D2DWS2OD', 
+               'K2D1DWS1OD', 'K2D1DWS2OD', 'K2D2DWS1OD', 'K2D2DWS2OD', 
+               'K1D1DWS1OT', 'K1D1DWS2OT', 'K1D2DWS1OT', 'K1D2DWS2OT', 
+               'K2D1DWS1OT', 'K2D1DWS2OT', 'K2D2DWS1OT', 'K2D2DWS2OT', 
+               'K1D1DWS1OO', 'K1D1DWS2OO', 'K1D2DWS1OO', 'K1D2DWS2OO', 
+               'K2D1DWS1OO', 'K2D1DWS2OO', 'K2D2DWS1OO', 'K2D2DWS2OO').")
+  }
+  
+  
   if(action == 'save') {
     ## ================== Save Models ================================
     KM <- llply(KMnames, listKelly, type = 'save', overwrite = overwrite, 
-                rm.files = rm.files, .parallel = parallel)
+                rm.files = rm.files, .print = .print, .parallel = parallel)
   
   } else if(action == 'load') {
     ## ================== Load Models ================================

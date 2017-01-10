@@ -3,9 +3,9 @@ title: KellyApps
 account: englianhu
 server: beta.rstudioconnect.com
 appId: 2311
-bundleId: 4766
+bundleId: 4918
 url: https://beta.rstudioconnect.com/content/2311/
-when: 1483354950.54939
+when: 1483712855.43931
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: global.R|server.R|shinyBS.R|shinyData.RData|ui.R
+ignoredFiles: global.R|server.R|shinyData.RData|ui.R|data/BRSummary.rds|data/K1mean1.rda|data/K1mean2.rda|data/K2mean1.rda|data/K2mean2.rda
