@@ -69,7 +69,7 @@ ui <- fluidPage(
     #'@ div(id = 'loading-content'), 
     #'@ hidden(
       div(id = 'app-content', 
-          h1('Highcharter Demo'),
+          h1('Investment Fund Comparison'),
           sidebarLayout(
             sidebarPanel(
               selectInput("funds", label = "Fund", width = "100%",

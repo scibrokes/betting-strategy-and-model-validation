@@ -1,6 +1,6 @@
 ---
 title: "Introduction of R Packages"
-author: "<ef>ｾゑｽｮyo, Eng Lian Hu"
+author: "[®γσ, Lian Hu](https://englianhu.github.io/) <img src='figure/ENG.jpg' width='24'> <img src='figure/ShirotoNorimichi2.jpg' width='24'> 白戸則道®"
 date: "8/28/2015"
 output:
   html_document:
@@ -106,6 +106,62 @@ Note that the `echo = FALSE` parameter was added to the code chunk to prevent pr
 #'@ system.time(merge(socData, othData, all=TRUE))
 
 #'@ system.time(merge_all(list(socData, othData)))
+```
+
+**Comparing performance of by, ddply and data.table**
+
+source : [Transforming subsets of data in R with by, ddply and data.table](http://www.magesblog.com/2012/06/transforming-subsets-of-data-in-r-with.html)
+
+  Let me move on to a more real life example with 100 companies, each with 20 products and a 10 year history:
+
+```{r}
+set.seed(1)
+df <- data.frame(Company = rep(paste("Company", 1:100), 200),
+                 Product = gl(20, 100, labels = LETTERS[1:20]), 
+                 Year = sort(rep(2002:2011, 2000)), 
+                 Sales = rnorm(20000, 100, 10))
+```
+
+  I use the same three approaches to calculate the share of sales by product for each year and company, but this time I will measure the execution time on my old iBook G4, running R-2.15.0:
+
+```{r}
+r1 <- system.time(
+ R1 <- do.call("rbind", as.list(
+   by(df, df[c("Year", "Company")], 
+      transform, Share=fn(Sales))
+ ))
+)
+
+r2 <- system.time(
+ R2 <- ddply(df, c("Company", "Year"), 
+             transform, Share=fn(Sales))
+)
+
+r3 <- system.time({
+ dt <- data.table(df)
+ setkey(dt, "Year", "Company")
+ X <- dt[, list(SUM=sum(Sales)), by=key(dt)]
+ R3 <- dt[X, list(Company, Sales, Product, Share=Sales/SUM)]
+})
+```
+
+  And here are the results:
+
+```{r}
+## http://www.magesblog.com/2012/06/transforming-subsets-of-data-in-r-with.html
+## r1 # by
+#  user  system elapsed 
+# 13.690   4.178  42.118
+
+## r2 # ddply 
+#  user  system elapsed 
+# 18.215   6.873  53.061
+
+## r3 # data.table 
+#  user  system elapsed 
+# 0.171   0.036   0.442
+
+## need to use data.table package for transforming data.
 ```
 
 ## 2.2 html Format Table

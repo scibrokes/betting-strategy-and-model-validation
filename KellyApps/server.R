@@ -1,4 +1,4 @@
-"2017-01-06 12:26:56"## ========= Setup Options =================================
+## ========= Setup Options =================================
 ## Setup Options, Loading Required Libraries and Preparing Environment
 ## Loading the packages and setting adjustment
 suppressMessages(library('utils'))
@@ -22,8 +22,8 @@ server <- shinyServer(function(input, output, session) {
   Sys.sleep(1)
   
   # Hide the loading message when the rest of the server function has executed
-  hide(id = 'loading-content', anim = TRUE, animType = 'fade')   
-  show(id = 'app-content', anim = TRUE, animType = 'fade')
+  shinyjs::hide(id = 'loading-content', anim = TRUE, animType = 'fade')   
+  shinyjs::show(id = 'app-content', anim = TRUE, animType = 'fade')
   #'@ loadData()
   
   onclick('toggleAdvanced', shinyjs::toggle(id = 'advanced', anim = TRUE, animType = 'fade'))    

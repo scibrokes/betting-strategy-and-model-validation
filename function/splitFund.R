@@ -6,6 +6,7 @@ splitFund <- function(pth = 'basic', .print = FALSE, parallel = FALSE, progress 
   suppressMessages(library('magrittr'))
   suppressMessages(library('stringr'))
   suppressMessages(library('tidyverse'))
+  suppressMessages(library('stringr'))
   suppressMessages(library('rlist'))
   suppressMessages(library('quantmod'))
   suppressMessages(source('./function/readKelly.R', local = TRUE))
@@ -18,8 +19,12 @@ splitFund <- function(pth = 'basic', .print = FALSE, parallel = FALSE, progress 
   
   if(pth == 'basic') {
     pth <- '/data1/'
+    
   } else if(pth == 'portfolio') {
     pth <- '/data2/'
+    iniVal <- read_rds(path = './data/initial.rds') %>% .$KM %>% .[6] %>% 
+      as.character %>% as.numeric
+    
   } else {
     stop('Kindly select pth = "basic" or pth = "portfolio".')
   }
@@ -27,6 +32,7 @@ splitFund <- function(pth = 'basic', .print = FALSE, parallel = FALSE, progress 
   ## --------------------- Read data ------------------------------------------
   if(file.exists('./data/BR.rds')) {
     BR <- read_rds(path = './data/BR.rds')
+    
   } else {
     BR <- readKelly(.summary = FALSE, .progress = progress)
     saveRDS(BR, file = './data/BR.rds')
@@ -49,6 +55,18 @@ splitFund <- function(pth = 'basic', .print = FALSE, parallel = FALSE, progress 
   
   fnds <- unlist(BR$KM, recursive = FALSE) %>% data.frame %>% tbl_df
   names(fnds) <- str_replace_all(names(fnds), '.BR.', '\\.')
+  
+  if(pth == 'portfolio') {
+    r0 <- iniVal - fnds[1, grep('.Open', names(fnds), value = TRUE)] %>% unlist
+    names(r0) %<>% str_replace_all('.Open', '')
+    fnds[grep('.Open|.High|.Low|.Close', names(fnds), value = TRUE)]
+  }
+  
+  llply(seq(r0), function(i) {
+    df1 <- r0[i] + fnds[paste0(names(r0)[i], c('.Open', '.High', '.Low', '.Close'))]
+    fnds[paste0(names(r0)[i], c('.Open', '.High', '.Low', '.Close'))] <- df1
+  }, .parallel = parallel, .progress = progress) %>% bind_rows
+  
   
   ## --------------------- Data Categorization ---------------------------------
   ## categorise the dataset.
@@ -76,7 +94,7 @@ splitFund <- function(pth = 'basic', .print = FALSE, parallel = FALSE, progress 
   
   ## --------------------- Split data ------------------------------------------
   dtt <- llply(c('.id', 'TimeUS', 'DateUS', 'League'), function(y) {
-      fnds[grep(y, names(fnds), value = TRUE)][,1]
+      fnds[grep(y, names(fnds), value = TRUE)][, 1]
     }) %>% bind_cols
   names(dtt) <- c('.id', 'TimeUS', 'DateUS', 'League')
   
@@ -86,6 +104,21 @@ splitFund <- function(pth = 'basic', .print = FALSE, parallel = FALSE, progress 
   allfnds2 <- suppressWarnings(llply(allfds, function(y) {
     ty = c('.Open', '.High', '.Low', '.Close', '.Volume', '.Adjusted')
     df = allfnds[c('DateUS', paste0(y, ty))] %>% tbl_df
+    
+    ## http://www.magesblog.com/2012/06/transforming-subsets-of-data-in-r-with.html
+    ## r1 # by
+    ##  user  system elapsed 
+    ## 13.690   4.178  42.118
+    ## 
+    ## r2 # ddply 
+    ##  user  system elapsed 
+    ## 18.215   6.873  53.061
+    ## 
+    ## r3 # data.table 
+    ##  user  system elapsed 
+    ## 0.171   0.036   0.442
+    ## 
+    ## need to use data.table package for transforming data.
     
     if(ty == '.Open') {
       xx = ddply(df, .(DateUS), numcolwise(head, 1)) %>% tbl_df

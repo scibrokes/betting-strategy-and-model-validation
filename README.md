@@ -26,7 +26,7 @@
 
 ### 2.3 Section C
 
-  - [Betting Strategy and Model Validation - Part II](http://rpubs.com/englianhu/240073), ([Alternative Link](http://englianhu.github.io/2016/09/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html), [Alternative 2](http://rpubs.com/englianhu/208636))
+  - [Betting Strategy and Model Validation - Part II](http://rpubs.com/englianhu/240073), ([Alternative Link](http://englianhu.github.io/2016/09/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html))
     
     + Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp
     + ![regressionApps](figure/20160928_021252.gif)

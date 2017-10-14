@@ -110,7 +110,6 @@ KModelslite <- function(KMnames = NULL, action = 'load', kind = 'default', rm.fi
                'K2D1DWS1OO', 'K2D1DWS2OO', 'K2D2DWS1OO', 'K2D2DWS2OO').")
   }
   
-  
   if(action == 'save') {
     ## ================== Save Models ================================
     KM <- llply(KMnames, listKelly, type = 'save', overwrite = overwrite, 

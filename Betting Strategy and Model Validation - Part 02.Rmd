@@ -258,7 +258,7 @@ rm(plot4.1.1)
 ## Load package again due to unable found the function.
 suppressMessages(library('highcharter'))
 
-hchart(dat[c('netProbB', 'rEMProbB', 'pMYRange')], 'scatter', x = netProbB, y = rEMProbB, group = pMYRange)
+hchart(dat[c('netProbB', 'rEMProbB', 'pMYRange')], 'scatter', hcaes(x = netProbB, y = rEMProbB, group = pMYRange))
 ```
 
 *graph 4.1.1* : *A sample graph about the relationship between the investmental probabilities -vs- bookmakers' probabilities.*
@@ -1483,16 +1483,11 @@ tagList(
            tags$h5(align = "center", class = "text-muted", 
                    "Stakes of Firm A at Agency A (2012~2015) ($0,000)")), 
   as.htmlwidget(K1D1sum %>% formattable(list(
-    Models = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x))),
+    .id = color_tile('white', 'darkgoldenrod'), 
     
-    Stakes = color_tile('white', 'darkgoldenrod'), 
+    model = color_tile('white', 'darkgoldenrod'), 
     
-    Return = color_tile('white', 'darkgoldenrod'), 
-    
-    PL = color_tile('white', 'darkgoldenrod'), 
-    
-    PL.R = formatter('span', style = x ~ formattable::style(color = ifelse(rank(-x) <= 3, 'blue', 'grey')), x ~ sprintf('%1.2f%% (rank: %02d)', 100 * x, rank(-x)))
-    ))))
+    mse = formatter('span', style = x ~ formattable::style(color = ifelse(rank(x) <= 3, 'blue', 'grey')), x ~ sprintf('%.6f (rank: %.0f)', x, rank(x)))))))
 ```
 
 *table 4.3.4.1A* : `r paste0(dim(K1D1sum), collapse = ' x ')` : *PL of Reversed stakes dynamic 1 Kelly models 1 year 2012~2015.*
@@ -1846,32 +1841,25 @@ if(exists('SOFund')) rm(SOFund)
 ## 
 ## need to load again the saved raw data and start from 0 again with mentioned criterias.
 #'@ load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
-#'@ iniVal <- read_rds(path = './data/initial.rds') %>% .$KM %>% .[6] %>% as.character %>% as.numeric #leave only initial.rds and shinyData.RData and moved all previous funds objects into another folder to avoid overwrite the previous files.
 
-#'@ if(file.exists('./data/lRProf1A.rds')) {
-#'@     lRProf1A <- read_rds(path = './data/lRProf1A.rds')
-#'@ } else {
-#'@     lRProf1A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'all')
-#'@     saveRDS(lRProf1A, file = './data/lRProf1A.rds')
-#'@ }
+if(file.exists('./data/lRProf1A.rds')) {
+  lRProf1A <- read_rds(path = './data/lRProf1A.rds')
+} else {
+  lRProf1A <- leagueRiskProf(dat, type = 'weight.stakes', weight.type = 'all')
+  saveRDS(lRProf1A, file = './data/lRProf1A.rds')
+}
 
-#'@ lRiskSettingProf <- lRProf1A %>% 
-#'@   mutate(portion = formattable::percent(all.lg/sum(all.lg)))
+lRiskSettingProf <- lRProf1A %>% 
+  mutate(portion = formattable::percent(all.lg/sum(all.lg)))
 
 ## fit the stakes based on the league portion among the fund.
 #'@ dat <- join(dat, lRiskSettingProf) %>% tbl_df %>% mutate(League = factor(League))
 #'@ dat %<>% mutate(Stakes = Stakes / mean(Stakes) * baseline)
 #'@ dat[c('all.lg', 'portion', 'baseline')] <- NULL
 
-#'@ save.image("~/GitHub/scibrokes/betting-strategy-and-model-validation/regressionApps/shinyData2.RData")
-load('./regressionApps/shinyData.RData', envir = .GlobalEnv)
-
 ## 
 ## After run the chunk `fund-reallocation`, we need to use below functions all recalculate the Kelly models in chunk `resimulateKelly`.
 ## ================================================================
-
-lRiskSettingProf <- lRProf1A %>% 
-  mutate(portion = formattable::percent(all.lg/sum(all.lg)))
 
 ttd <- lRiskSettingProf %>% .[-1] %>% colSums %>% t %>% 
   data.frame(League = 'Total', .) %>% tbl_df %>% 
@@ -2123,7 +2111,7 @@ lms <- llply(scoresall$opts, function(x) lm(FTHG~FTAG, x$pred))
 
 # scores <- read_rds('./data/scores.rds')
 # dat[c('FTHG', 'FTAG')]
-lms$opt0 <- lm(FTHG~FTAG, data = dat[c('FTHG', 'FTAG')])
+lms$opt0 <- lm(FTHG~FTAG, data = scoresall$data)
 ```
 
 ```{r test-scores1A, echo = FALSE, results = 'asis'}
@@ -2334,8 +2322,6 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
 
 ### 5.1.1 Comparison of Fully Followed Bets
 
-Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
-
 ```{r, echo = FALSE, results = 'asis'}
 ## Bootstrap and apply maximum likelihood model 
 ## http://www.r-bloggers.com/apple-compared-to-others-with-ggthemes/
@@ -2347,7 +2333,7 @@ Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 
 ### 5.1.2 Comparison of Missing Bets
 
-  <s>Due to I have no followed bets data, therefore there has no any clue but based on my previous experience in Telebiz, Caspo and Global Solution Sdn Bhd as list in my [CV](https://beta.rstudioconnect.com/englianhu/ryo-eng/ryo-eng.html) I try to adjust setting of 90% successful following rates and 90% of average odds compare to firm A.
+  <s>Due to I have no followed bets data, therefore there has no any clue but based on my previous experience in Telebiz, Caspo and Global Solution Sdn Bhd as list in my [CV](https://beta.rstudioconnect.com/content/3091/ryo-eng.html) I try to adjust setting of 90% successful following rates and 90% of average odds compare to firm A.
   
   According to above result, in order to made it workable in real life. Here I simulate whole Kelly function with monte carlo method to get the return.</s>
 
@@ -2357,10 +2343,11 @@ Chapter 4.2 Comparison of Different Feature Sets and Betting Strategies in []()
 
   By refer to *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 28th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**], here I apply the `arules` and `arulesViz` packages to analyse the market basket of the bets.
 
-```{r gvis-options, echo = FALSE, results = 'asis'}
-## Set options back to original options
-options(op)
-#'@ stopImplicitCluster2()
+```{r arules}
+library(arules)
+library(arulesViz)
+
+
 ```
 
 # 6. Conclusion
@@ -2416,6 +2403,12 @@ options(op)
   
   I will also write as a package to easier load and log.
 
+```{r gvis-options, echo = FALSE, results = 'asis'}
+## Set options back to original options
+options(op)
+#'@ stopImplicitCluster2()
+```
+
 # 7. Appendices
 
   - Section [7.1 Documenting File Creation ] - Information of the Paper.
@@ -2434,7 +2427,7 @@ options(op)
   - [**rmarkdown** package](https://github.com/rstudio/rmarkdown) version: `r packageVersion('rmarkdown')`
   - [**tufte** package](https://github.com/rstudio/tufte) version: `r packageVersion('tufte')`
   - File version: 1.0.0
-  - Author Profile: [®γσ, Eng Lian Hu](https://beta.rstudioconnect.com/englianhu/ryo-eng/)
+  - Author Profile: [®γσ, Eng Lian Hu](https://beta.rstudioconnect.com/content/3091/ryo-eng.html)
   - GitHub: [Source Code](https://github.com/Scibrokes/Betting-Strategy-and-Model-Validation)
   - Additional session information
   
