@@ -26,13 +26,15 @@
 
 ### 2.3 Section C
 
-  - [Betting Strategy and Model Validation - Part II](http://rpubs.com/englianhu/240073), ([Alternative Link](http://englianhu.github.io/2016/09/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html))
+  - [Betting Strategy and Model Validation - Part II](https://englianhu.github.io/2017/10/Betting_Strategy_and_Model_Validation_-_Part_02/) (Notes : *The latest Rmd files lost but only html file available*)
     
     + Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp
     + ![regressionApps](figure/20160928_021252.gif)
     + Kindly click on [*KellyApps*](https://beta.rstudioconnect.com/content/2311/) to use the ShinyApp
-    + ![KellyApps]
-    + Kindly refer to [English Soccer League] for analysis on only English soccer which is pretest on my personal research.
+    + <iframe width="560" height="315" src="https://www.youtube.com/embed/42NOxuYjOQo" frameborder="0" allowfullscreen></iframe>
+    + <iframe width="560" height="315" src="https://www.youtube.com/embed/NDUkg4jHmiA" frameborder="0" allowfullscreen></iframe>
+    + <s>Kindly refer to [English Soccer League] for analysis on only English soccer which is pretest on my personal research.</s>
+    + You are feel free to browse over the summary of Kelly investment fund [BRSum](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.csv) ([BRSum.Op](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Op.csv), [BRSum.Hi](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Hi.csv), [BRSum.Lo](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Lo.csv), [BRSum.Cl](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Cl.csv), [BRSum.Vo](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Vo.csv), [BRSum.Ad](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Ad.csv)).
     
 ## 3. Old File
 
@@ -45,6 +47,10 @@
   - Miscellaneous : [Introduction of R Packages](http://rpubs.com/englianhu/introduction-of-r-packages)
   - Miscellaneous : [Introduction of R Packages (Shiny)](https://beta.rstudioconnect.com/content/2291/)
   - Miscellaneous : [Unable display highchart at html format](http://rpubs.com/englianhu/highcharter-issue)
+  - [Betting Strategy and Model Validation - Part II (*Sep-2017*)](http://rpubs.com/englianhu/240073), ([Alternative Link](http://englianhu.github.io/2016/09/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html))
+  - Due to **KellyApps** shiny app heavily loading, below video is the original file.
+  
+<iframe width="560" height="315" src="https://www.youtube.com/embed/TEhmN-Of--Y" frameborder="0" allowfullscreen></iframe>
 
 ## 4. Future Work
 
