@@ -2331,6 +2331,31 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
 
   *Dixon and Pope (2003)* apply linear model to compare the efficiency of the odds prices offer by first three largest Firm A, B and C in UK.
 
+```{r BRSum}
+BRSummary <- readRDS('./data/BRSummary.rds')
+
+BRSum <- ldply(BRSummary$KM, ldply) %>% tbl_df
+write.csv(BRSum, './data/BRSum.csv')
+
+BRSum.Op <- data.frame(BRSum[1:5], Op(BRSum)) %>% tbl_df
+write.csv(BRSum.Op, './data/BRSum.Op.csv')
+
+BRSum.Hi <- data.frame(BRSum[1:5], Hi(BRSum)) %>% tbl_df
+write.csv(BRSum.Hi, './data/BRSum.Hi.csv')
+
+BRSum.Lo <- data.frame(BRSum[1:5], Lo(BRSum)) %>% tbl_df
+write.csv(BRSum.Lo, './data/BRSum.Lo.csv')
+
+BRSum.Cl <- data.frame(BRSum[1:5], Cl(BRSum)) %>% tbl_df
+write.csv(BRSum.Cl, './data/BRSum.Cl.csv')
+
+BRSum.Vo <- data.frame(BRSum[1:5], Vo(BRSum)) %>% tbl_df
+write.csv(BRSum.Vo, './data/BRSum.Vo.csv')
+
+BRSum.Ad <- data.frame(BRSum[1:5], Ad(BRSum)) %>% tbl_df
+write.csv(BRSum.Ad, './data/BRSum.Ad.csv')
+```
+
 ### 5.1.2 Comparison of Missing Bets
 
   <s>Due to I have no followed bets data, therefore there has no any clue but based on my previous experience in Telebiz, Caspo and Global Solution Sdn Bhd as list in my [CV](https://beta.rstudioconnect.com/content/3091/ryo-eng.html) I try to adjust setting of 90% successful following rates and 90% of average odds compare to firm A.
