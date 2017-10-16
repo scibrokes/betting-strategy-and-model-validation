@@ -35,6 +35,7 @@
     + <iframe width="560" height="315" src="https://www.youtube.com/embed/NDUkg4jHmiA" frameborder="0" allowfullscreen></iframe>
     + <s>Kindly refer to [English Soccer League] for analysis on only English soccer which is pretest on my personal research.</s>
     + You are feel free to browse over the summary of Kelly investment fund [BRSum](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.csv) ([BRSum.Op](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Op.csv), [BRSum.Hi](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Hi.csv), [BRSum.Lo](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Lo.csv), [BRSum.Cl](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Cl.csv), [BRSum.Vo](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Vo.csv), [BRSum.Ad](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/data/BRSum.Ad.csv)).
+    + [Extention]() : summarise the comparison of Kelly fund due to the BSMV II heavily loading...
     
 ## 3. Old File
 
