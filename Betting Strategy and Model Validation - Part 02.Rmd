@@ -2331,54 +2331,6 @@ $$L(\rho) = \prod_{i=1}^{n} (x_{i}|\rho) \cdots equation\ 4.3.4$$
 
   *Dixon and Pope (2003)* apply linear model to compare the efficiency of the odds prices offer by first three largest Firm A, B and C in UK.
 
-```{r BRSum}
-BRSum <- readRDS('./KellyApps/data/BRSum.rds') %>% tbl_df
-
-BRSum  %>% datatable(
-  caption = "Table 5.1.1.1 : Summary of Kelly Main Funds ('0,000)", 
-  escape = FALSE, filter = 'top', rownames = FALSE, 
-  extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 
-                    'Buttons' = NULL, 'Responsive' = NULL), 
-  options = list(dom = 'BRrltpi', autoWidth = TRUE,  scrollX = TRUE, 
-                 lengthMenu = list(c(10, 50, 100, -1), c('10', '50', '100', 'All')), 
-                 ColReorder = TRUE, rowReorder = TRUE, 
-                 buttons = list('copy', 'print', 
-                                list(extend = 'collection', 
-                                     buttons = c('csv', 'excel', 'pdf'), 
-                                     text = 'Download'), I('colvis'))))
-```
-
-*table 5.1.1.1* : `r paste0(dim(BRSum), collapse = ' x ')` : *Comparison of Kelly investmemt fund.*
-
-```{r csv}
-BRSum.Op <- data.frame(BRSum[c(1:5)], Op(BRSum)) %>% tbl_df
-write.csv(BRSum.Op, './data/BRSum.Op.csv')
-
-BRSum.Hi <- data.frame(BRSum[c(1:5)], Hi(BRSum)) %>% tbl_df
-write.csv(BRSum.Hi, './data/BRSum.Hi.csv')
-
-BRSum.Lo <- data.frame(BRSum[c(1:5)], Lo(BRSum)) %>% tbl_df
-write.csv(BRSum.Lo, './data/BRSum.Lo.csv')
-
-BRSum.Cl <- data.frame(BRSum[c(1:5)], Cl(BRSum)) %>% tbl_df
-write.csv(BRSum.Cl, './data/BRSum.Cl.csv')
-
-BRSum.Vo <- data.frame(BRSum[c(1:5)], Vo(BRSum)) %>% tbl_df
-write.csv(BRSum.Vo, './data/BRSum.Vo.csv')
-
-BRSum.Ad <- data.frame(BRSum[c(1:5)], Ad(BRSum)) %>% tbl_df
-write.csv(BRSum.Ad, './data/BRSum.Ad.csv')
-```
-
-  Due to the file is too big, you are feel free to download via [BRSum]() or seperate files as below.
-  
-  - [BRSum.Op]()
-  - [BRSum.Hi]()
-  - [BRSum.Lo]()
-  - [BRSum.Cl]()
-  - [BRSum.Vo]()
-  - [BRSum.Ad]()
-
 ### 5.1.2 Comparison of Missing Bets
 
   <s>Due to I have no followed bets data, therefore there has no any clue but based on my previous experience in Telebiz, Caspo and Global Solution Sdn Bhd as list in my [CV](https://beta.rstudioconnect.com/content/3091/ryo-eng.html) I try to adjust setting of 90% successful following rates and 90% of average odds compare to firm A.
@@ -2390,121 +2342,13 @@ write.csv(BRSum.Ad, './data/BRSum.Ad.csv')
 ## 5.2 Market Basket
 
   By refer to *®γσ, Eng Lian Hu (2016)*^[Kindly refer to 28th paper in [Reference for industry knowdelege and academic research portion for the paper.] under **7.4 References**], here I apply the `arules` and `arulesViz` packages to analyse the market basket of the bets.
-  
-  - [arules — Mining Association Rules and Frequent Itemsets with R](https://cran.r-project.org/web/packages/arules/README.html)
-  - [Market basket analysis](https://rpubs.com/sbushmanov/180410)
 
-```{r arules, eval = FALSE, include = FALSE}
-library('arules')
-library('arulesViz')
-library('visNetwork')
-library('igraph')
-library('BBmisc')
-library('tidyr')
+```{r arules}
+library(arules)
+library(arulesViz)
 
-if(require('shinyjs', quietly = TRUE)) detach('package:shinyjs') ##https://github.com/daattali/shinyjs/issues/41#issuecomment-336700247
 
-source('./function/readfirmData.R')
-source('./function/arrfirmData.R')
-
-## Read the data
-## Refer to **Testing efficiency of coding.Rmd** at chunk `get-data-summary-table-2.1`
-years <- seq(2011, 2015)
-
-## Here I take the majority leagues setting profile which are "league-10-12"
-## fMYPriceB = Back with vigorish price; fMYPriceL = Lay with vigorish price
-## Here we term as Fair Odds
-lProfile <- c(AH = 0.10, OU = 0.12)
-
-mbase <- suppressAll(readfirmData(years = years, pth = './data/') %>% arrfirmData(lProfile = lProfile))
-mbase <- mbase$datasets
-
-mbase <- mbase %>% unite(matchID, Home, Away, sep ='.') %>% unite(matchID, DateUK, matchID, sep ='.')
-mbase <- mbase[c('matchID', 'Selection')]
-
-## https://stackoverflow.com/questions/17313450/how-to-convert-data-frame-to-transactions-for-arules?answertab=votes#tab-top
-## https://stackoverflow.com/questions/44618956/convert-r-data-frame-column-to-arules-transactions?answertab=votes#tab-top
-#'@ items <- strsplit(as.character(mbase$Selection), ', ')
-items <- llply(split(mbase, mbase$matchID), function(x) as.character(x$Selection))
-
-trans3 <- as(items, 'transactions')
-saveRDS(trans3, './data/trans3.rds')
 ```
-```{r read-arules, warning = FALSE, echo = FALSE}
-library('arules')
-library('arulesViz')
-library('visNetwork')
-library('igraph')
-library('BBmisc')
-library('tidyr')
-
-trans3 <- readRDS('./data/trans3.rds')
-```
-
-```{r arules1, echo = FALSE}
-par(mfrow=c(1,2))
-
-itemFrequencyPlot(trans3,
-                  type="relative",
-                  topN=10, # can be changed to the number of interest
-                  horiz=TRUE,
-                  col='steelblue3',
-                  xlab='',
-                  main='Item frequency, relative')
-
-itemFrequencyPlot(trans3,
-                  type="absolute",
-                  topN=10,
-                  horiz=TRUE,
-                  col='steelblue3',
-                  xlab='',
-                  main='Item frequency, absolute')
-```
-
-```{r arules2, echo = FALSE}
-par(mar=c(2,10,2,2), mfrow=c(1,2))
-
-barplot(sort(table(unlist(LIST(trans3))))[1:10]/9835,
-        horiz=TRUE,
-        las=1,
-        col='steelblue3',
-        xlab='',
-        main='Frequency, relative')
-
-barplot(sort(table(unlist(LIST(trans3))))[1:10],
-        horiz=TRUE,
-        las=1,
-        col='steelblue3',
-        xlab='',
-        main='Frequency, absolute')
-```
-
-```{r arules3, echo = FALSE}
-tbl <- crossTable(trans3)
-tbl[1:5, 1:5]
-```
-
-  Equipped with this knowledge, let’s see what products tend to compliment each other with high lift (i.e. purchase of one product would lead to purchase of another with high probability) and what products tend to be substitutes:
-
-```{r arules4, echo = FALSE}
-crossTable(trans3, measure = 'lift', sort = TRUE)[1:5,1:5]
-```
-
-```{r arules5}
-rules <- apriori(trans3, parameter = list(sup = 0.001, conf = 0.5, target = 'rules', minlen = 1))
-```
-
-```{r arules6}
-summary(rules)
-```
-
-```{r arules7}
-itemsets <- apriori(trans3, parameter = list(
-  support = .001, minlen = 2, maxlen = 2, target = 'frequent' # to mine for itemsets
-  ))
-```
-
-  I tried to split the `transaction ID` by `matchID` but the result seems unfavorable, I'll look into it beyond the future.
 
 # 6. Conclusion
 
@@ -2659,10 +2503,6 @@ rm(sys1)
   - I am currently work as a customer service operator and self research as a smart punter. Hope my sportsbook hedge fund company website **Scibrokes®** running business soon...
 
 ![**Terminator II**](figure/Ill-Be-Back-Terminator.gif)
-
-  - [Convert R data.frame column to Arules transactions](https://stackoverflow.com/questions/44618956/convert-r-data-frame-column-to-arules-transactions?answertab=votes#tab-top)
-
-  - [how to convert data.frame to transactions for arules](https://stackoverflow.com/questions/17313450/how-to-convert-data-frame-to-transactions-for-arules?answertab=votes#tab-top)
 
 ## 7.4 References
 

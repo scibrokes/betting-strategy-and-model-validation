@@ -39,6 +39,6 @@ pages <<- list(
   'Part II' = 'http://rpubs.com/englianhu/208636', 
   'regressionApps' = 'https://beta.rstudioconnect.com/content/1807/')
 
-BRSum <<- read_rds(path = './data/BRSum.rds')
+BRSummary <<- read_rds(path = './data/BRSummary.rds')
 
 

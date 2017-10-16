@@ -9,7 +9,6 @@ suppressAll(library('shinythemes'))
 suppressAll(library('highcharter'))
 suppressAll(library('DT'))
 suppressAll(library('quantmod'))
-suppressAll(library('memoise'))
 suppressAll(source("./function/selectFund.R"))
 suppressAll(source("./function/compareKelly.R"))
 suppressAll(source("./function/plotChart2.R"))
@@ -53,67 +52,67 @@ pages <<- list(
 #'@ "
 
 ui <- fluidPage(
-  shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
-  ## this is your web page header information
-  tags$head(
-    ## here you include your inline styles
-    tags$style(HTML("
-                    body {
-                    Text color: yellow;
-                    background-color: darkgoldenrod;
-                    }
-                    "))),
-  #'@ tags$audio(src = 'sound.mp3', type = 'audio/mp3', autoplay = NA, controls = 'controls'), 
-  useShinyjs(),
-  #'@ inlineCSS(appCSS),
-  
-  #'@ div(id = 'loading-content'), 
-  #'@ hidden(
-  div(id = 'app-content', 
-      h1('Investment Fund Comparison'),
-      sidebarLayout(
-        sidebarPanel(
-          selectInput("funds", label = "Fund", width = "100%",
-                      choices = fundsopt, 
-                      selected = "SOFund"), 
-          br(), 
-          selectInput("type", label = "Type", width = "100%",
-                      choices = c(FALSE, "line", "column", "spline", "bar", "pie"), 
-                      selected = "line"), 
-          selectInput("stacked", label = "Stacked",  width = "100%",
-                      choices = c(FALSE, "normal", "percent"), 
-                      selected = "normal"),
-          selectInput("hc_theme", label = "Theme",  width = "100%",
-                      choices = c("theme" = "hc_theme()", "538" = "hc_theme_538()", 
-                                  "chalk" = "hc_theme_chalk()", 
-                                  "darkunica" = "hc_theme_darkunica()", 
-                                  "db" = "hc_theme_db()", 
-                                  "economist" = "hc_theme_economist()",
-                                  "flat" = "hc_theme_flat()", 
-                                  "flatdark" = "hc_theme_flatdark()", 
-                                  "ft" = "hc_theme_ft()", 
-                                  "google" = "hc_theme_google()", 
-                                  "gridlight" = "hc_theme_gridlight()", 
-                                  "handdrwran" = "hc_theme_handdrawn()", 
-                                  "merge" = "hc_theme_merge()", 
-                                  "null" = "hc_theme_null()", 
-                                  "sandsignika" = "hc_theme_sandsignika()",
-                                  "smpl" = "hc_theme_smpl()", 
-                                  "sparkline" = "hc_theme_sparkline()"), 
-                      selected = "hc_theme_economist()"), 
-          actionButton("tabBut", "View Table")),
-        
-        mainPanel(
-          highchartOutput("hcontainer", height = "500px"),
-          ## https://ebailey78.github.io/shinyBS/docs/Modals.html#components
-          bsModal("modalExample", "Data Table", "tabBut", size = "large",
-                  dataTableOutput("distTable"))))),#), 
-  br(), 
-  p('Powered by - Copyright® Intellectual Property Rights of ', 
-    tags$a(href='http://www.scibrokes.com', target='_blank', 
-           tags$img(height = '20px', alt='hot', #align='right', 
-                    src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/regressionApps/oda-army.jpg')), 
-    HTML("<a href='http://www.scibrokes.com'>Scibrokes®</a>")))
+    shinythemes::themeSelector(),  # <--- Add this somewhere in the UI
+    ## this is your web page header information
+    tags$head(
+      ## here you include your inline styles
+      tags$style(HTML("
+                      body {
+                      Text color: yellow;
+                      background-color: darkgoldenrod;
+                      }
+                      "))),
+    #'@ tags$audio(src = 'sound.mp3', type = 'audio/mp3', autoplay = NA, controls = 'controls'), 
+    useShinyjs(),
+    #'@ inlineCSS(appCSS),
+    
+    #'@ div(id = 'loading-content'), 
+    #'@ hidden(
+      div(id = 'app-content', 
+          h1('Investment Fund Comparison'),
+          sidebarLayout(
+            sidebarPanel(
+              selectInput("funds", label = "Fund", width = "100%",
+                          choices = fundsopt, 
+                          selected = "SOFund"), 
+              br(), 
+              selectInput("type", label = "Type", width = "100%",
+                          choices = c(FALSE, "line", "column", "spline", "bar", "pie"), 
+                          selected = "line"), 
+              selectInput("stacked", label = "Stacked",  width = "100%",
+                          choices = c(FALSE, "normal", "percent"), 
+                          selected = "normal"),
+              selectInput("hc_theme", label = "Theme",  width = "100%",
+                          choices = c("theme" = "hc_theme()", "538" = "hc_theme_538()", 
+                                      "chalk" = "hc_theme_chalk()", 
+                                      "darkunica" = "hc_theme_darkunica()", 
+                                      "db" = "hc_theme_db()", 
+                                      "economist" = "hc_theme_economist()",
+                                      "flat" = "hc_theme_flat()", 
+                                      "flatdark" = "hc_theme_flatdark()", 
+                                      "ft" = "hc_theme_ft()", 
+                                      "google" = "hc_theme_google()", 
+                                      "gridlight" = "hc_theme_gridlight()", 
+                                      "handdrwran" = "hc_theme_handdrawn()", 
+                                      "merge" = "hc_theme_merge()", 
+                                      "null" = "hc_theme_null()", 
+                                      "sandsignika" = "hc_theme_sandsignika()",
+                                      "smpl" = "hc_theme_smpl()", 
+                                      "sparkline" = "hc_theme_sparkline()"), 
+                          selected = "hc_theme_economist()"), 
+              actionButton("tabBut", "View Table")),
+            
+            mainPanel(
+              highchartOutput("hcontainer", height = "500px"),
+              ## https://ebailey78.github.io/shinyBS/docs/Modals.html#components
+              bsModal("modalExample", "Data Table", "tabBut", size = "large",
+                      dataTableOutput("distTable"))))),#), 
+    br(), 
+    p('Powered by - Copyright® Intellectual Property Rights of ', 
+      tags$a(href='http://www.scibrokes.com', target='_blank', 
+             tags$img(height = '20px', alt='hot', #align='right', 
+                      src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/regressionApps/oda-army.jpg')), 
+      HTML("<a href='http://www.scibrokes.com'>Scibrokes®</a>")))
 
 server <- function(input, output) {
   
@@ -158,4 +157,5 @@ server <- function(input, output) {
 }
 
 shinyApp(ui = ui, server = server)
+
 
