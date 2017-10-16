@@ -42,7 +42,7 @@ server <- shinyServer(function(input, output, session) {
   #'@ })
   
   observe({ 
-    query <- pages[which(pages==input$page)]
+    query <- pages[which(pages == input$page)]
     disppage <<- pages[which(pages == input$page)]
   })
   
@@ -90,7 +90,7 @@ server <- shinyServer(function(input, output, session) {
   
   
   output$BRSM <- renderDataTable({
-    ldply(BRSummary$KM, ldply, as.matrix) %>% datatable(
+    BRSum %>% datatable(
       caption = "Table 4.3.5.2 : Summary of Kelly Main Funds ('0,000)", 
       escape = FALSE, filter = 'top', rownames = FALSE, 
       extensions = list('ColReorder' = NULL, 'RowReorder' = NULL, 

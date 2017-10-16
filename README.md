@@ -26,13 +26,12 @@
 
 ### 2.3 Section C
 
-  - [Betting Strategy and Model Validation - Part II](http://rpubs.com/englianhu/240073), ([Alternative Link](http://englianhu.github.io/2016/09/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html))
+  - [Betting Strategy and Model Validation - Part II](https://englianhu.github.io/2017/10/Betting_Strategy_and_Model_Validation_-_Part_02/)
     
     + Kindly click on [*regressionApps*](https://beta.rstudioconnect.com/content/1807/) to use the ShinyApp
     + ![regressionApps](figure/20160928_021252.gif)
     + Kindly click on [*KellyApps*](https://beta.rstudioconnect.com/content/2311/) to use the ShinyApp
-    + ![KellyApps]
-    + Kindly refer to [English Soccer League] for analysis on only English soccer which is pretest on my personal research.
+    + <s>Kindly refer to [English Soccer League] for analysis on only English soccer which is pretest on my personal research.</s>
     
 ## 3. Old File
 
@@ -45,6 +44,11 @@
   - Miscellaneous : [Introduction of R Packages](http://rpubs.com/englianhu/introduction-of-r-packages)
   - Miscellaneous : [Introduction of R Packages (Shiny)](https://beta.rstudioconnect.com/content/2291/)
   - Miscellaneous : [Unable display highchart at html format](http://rpubs.com/englianhu/highcharter-issue)
+  - Initially wrote a web application with multiple tabs but due to heavily loading, I forced to write a lite version named **KellyApps**.
+  
+<iframe width="560" height="315" src="https://www.youtube.com/embed/TEhmN-Of--Y" frameborder="0" allowfullscreen></iframe>
+
+  - [Betting Strategy and Model Validation - Part II (*Sep-2017*)](http://rpubs.com/englianhu/240073), ([Alternative Link](http://englianhu.github.io/2016/09/Betting%20Strategy%20and%20Model%20Validation/Betting_Strategy_and_Model_Validation_-_Part_02.html))
 
 ## 4. Future Work
 

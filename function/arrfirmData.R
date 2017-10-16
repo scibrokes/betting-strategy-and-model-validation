@@ -8,7 +8,7 @@ arrfirmData <- function(dfmList, lProfile = c(AH = 0.10, OU = 0.12), parallel = 
     suppressWarnings(install.packages('BBmisc'))}
   
   suppressMessages(require('BBmisc', quietly = TRUE))
-  pkgs <- c('magrittr', 'plyr', 'dplyr', 'purrr', 'stringr', 'lubridate', 'doParallel')
+  pkgs <- c('reshape', 'magrittr', 'plyr', 'dplyr', 'purrr', 'stringr', 'lubridate', 'doParallel')
   suppressAll(lib(pkgs)); rm(pkgs)
   
   if(parallel == TRUE){
