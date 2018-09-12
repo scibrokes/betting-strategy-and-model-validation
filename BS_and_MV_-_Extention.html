@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+
+<meta charset="utf-8" />
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<meta name="generator" content="pandoc" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<meta name="author" content="®γσ, Lian Hu  白戸則道®" />
+
+<meta name="date" content="2017-10-16" />
+
+<title></title>
+
+<link href="BS_and_MV_-_Extention_files/tufte-css-2015.12.29/tufte.css" rel="stylesheet" />
+<link href="BS_and_MV_-_Extention_files/highlightjs-1.1/default.css" rel="stylesheet" />
+<script src="BS_and_MV_-_Extention_files/highlightjs-1.1/highlight.js"></script>
+<script src="BS_and_MV_-_Extention_files/jquery-1.11.3/jquery.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="BS_and_MV_-_Extention_files/bootstrap-3.3.5/css/bootstrap.min.css" rel="stylesheet" />
+<script src="BS_and_MV_-_Extention_files/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="BS_and_MV_-_Extention_files/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="BS_and_MV_-_Extention_files/bootstrap-3.3.5/shim/respond.min.js"></script>
+<script src="BS_and_MV_-_Extention_files/htmlwidgets-0.9/htmlwidgets.js"></script>
+<script src="BS_and_MV_-_Extention_files/formattable_widget-binding-0.2.0.1/formattable_widget.js"></script>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs && document.readyState && document.readyState === "complete") {
+   window.setTimeout(function() {
+      hljs.initHighlighting();
+   }, 0);
+}
+</script>
+
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore"><img src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/figure/SmartOdds.png' width='840'></h1>
+<h3 class="subtitle"><em><a href="https://github.com/scibrokes/betting-strategy-and-model-validation"><span style="color:blue">Betting Strategy and Model Validation II (Extention)</span></a></em></h3>
+<h4 class="author"><em><a href="https://englianhu.github.io/"><span style="color:blue">®γσ, Lian Hu</span></a> <img src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/www/ENG.jpg' width='24'> <img src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/www/RYO.jpg?raw=true' width='24'>白戸則道®</em></h4>
+<h4 class="date"><em>2017-10-16</em></h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#introduction">1. Introduction</a></li>
+<li><a href="#data">2. Data</a></li>
+<li><a href="#statiscal-modelling">3. Statiscal Modelling</a></li>
+<li><a href="#mean-squared-error-mse">4. Mean Squared Error (MSE)</a></li>
+<li><a href="#model-comparison">5. Model Comparison</a></li>
+<li><a href="#conclusion">6. Conclusion</a></li>
+<li><a href="#appendix">7. Appendix</a><ul>
+<li><a href="#documenting-file-creation">7.1 Documenting File Creation</a></li>
+<li><a href="#reference">7.2 Reference</a></li>
+</ul></li>
+</ul>
+</div>
+
+<div id="introduction" class="section level1">
+<h1>1. Introduction</h1>
+<p>By refer to <em>Ryo Eng Lian Hu (2017)</em><label for="tufte-sn-1" class="margin-toggle sidenote-number">1</label><input type="checkbox" id="tufte-sn-1" class="margin-toggle"><span class="sidenote"><span class="sidenote-number">1</span> reference paper 1</span>, I tried to compare few models for financial trading. Today I am using <s>1 minute, 3 minutes, 5 minutes, 10 minutes, 15 minutes, 30 minutes, 1 hour and also daily data instead of</s><label for="tufte-sn-2" class="margin-toggle sidenote-number">2</label><input type="checkbox" id="tufte-sn-2" class="margin-toggle"><span class="sidenote"><span class="sidenote-number">2</span> Since the datasets contain few observation within a minute and also some data time period empty more than 30 minutes. Test all time period but eventually error…</span> only daily data. By the way, I try to compare the accuracy of forecasting instead of invesmnent.</p>
+<p>Besides, this paper will modelling multivariate Garch compare to previous paper which applied univariate Garch models.</p>
+</div>
+<div id="data" class="section level1">
+<h1>2. Data</h1>
+</div>
+<div id="statiscal-modelling" class="section level1">
+<h1>3. Statiscal Modelling</h1>
+</div>
+<div id="mean-squared-error-mse" class="section level1">
+<h1>4. Mean Squared Error (MSE)</h1>
+</div>
+<div id="model-comparison" class="section level1">
+<h1>5. Model Comparison</h1>
+</div>
+<div id="conclusion" class="section level1">
+<h1>6. Conclusion</h1>
+</div>
+<div id="appendix" class="section level1">
+<h1>7. Appendix</h1>
+<div id="documenting-file-creation" class="section level2">
+<h2>7.1 Documenting File Creation</h2>
+<p>It’s useful to record some information about how your file was created.</p>
+<ul>
+<li>File creation date: 2017-10-16</li>
+<li>File latest updated date: 2017-10-16</li>
+<li>R version 3.4.2 (2017-09-28)</li>
+<li>R version (short form): 3.4.2</li>
+<li><a href="https://github.com/rstudio/rmarkdown"><span style="color:blue"><strong>rmarkdown</strong> package</span></a> version: 1.6.0.9004</li>
+<li><a href="https://github.com/rstudio/tufte"><span style="color:blue"><strong>tufte</strong> package</span></a> version: 0.2</li>
+<li>File version: 1.0.1</li>
+<li>Author Profile: <a href="https://beta.rstudioconnect.com/englianhu/ryo-eng/"><span style="color:blue">®γσ, Eng Lian Hu</span></a></li>
+<li>GitHub: <a href="https://github.com/englianhu/binary.com-interview-question"><span style="color:blue">Source Code</span></a></li>
+<li>Additional session information</li>
+</ul>
+<p>[1] “2017-10-16 18:31:32 JST” <div id="htmlwidget-fa152a03c6f3fe378062" class="formattable_widget html-widget" style="width:100%;height:480px;" width="100%" height="480"></div>
+<script type="application/json" data-for="htmlwidget-fa152a03c6f3fe378062">{"x":{"html":"<table class=\"table table-condensed\">\n <thead>\n  <tr>\n   <th style=\"text-align:right;\"> Category <\/th>\n   <th style=\"text-align:right;\"> session_info <\/th>\n  <\/tr>\n <\/thead>\n<tbody>\n  <tr>\n   <td style=\"text-align:right;\"> version <\/td>\n   <td style=\"text-align:right;\"> R version 3.4.2 (2017-09-28) <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> os <\/td>\n   <td style=\"text-align:right;\"> Windows 10 x64 <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> system <\/td>\n   <td style=\"text-align:right;\"> x86_64, mingw32 <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> ui <\/td>\n   <td style=\"text-align:right;\"> RTerm <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> language <\/td>\n   <td style=\"text-align:right;\"> en <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> collate <\/td>\n   <td style=\"text-align:right;\"> Japanese_Japan.932 <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> tz <\/td>\n   <td style=\"text-align:right;\"> Asia/Tokyo <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> date <\/td>\n   <td style=\"text-align:right;\"> 2017-10-16 <\/td>\n  <\/tr>\n<\/tbody>\n<\/table>"},"evals":[],"jsHooks":[]}</script><div id="htmlwidget-c3264589d7d9d1146e83" class="formattable_widget html-widget" style="width:100%;height:480px;" width="100%" height="480"></div>
+<script type="application/json" data-for="htmlwidget-c3264589d7d9d1146e83">{"x":{"html":"<table class=\"table table-condensed\">\n <thead>\n  <tr>\n   <th style=\"text-align:right;\"> Category <\/th>\n   <th style=\"text-align:right;\"> Sys.info <\/th>\n  <\/tr>\n <\/thead>\n<tbody>\n  <tr>\n   <td style=\"text-align:right;\"> sysname <\/td>\n   <td style=\"text-align:right;\"> Windows <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> release <\/td>\n   <td style=\"text-align:right;\"> 10 x64 <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> version <\/td>\n   <td style=\"text-align:right;\"> build 14393 <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> nodename <\/td>\n   <td style=\"text-align:right;\"> RSTUDIO-SCIBROK <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> machine <\/td>\n   <td style=\"text-align:right;\"> x86-64 <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> login <\/td>\n   <td style=\"text-align:right;\"> scibr <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> user <\/td>\n   <td style=\"text-align:right;\"> scibr <\/td>\n  <\/tr>\n  <tr>\n   <td style=\"text-align:right;\"> effective_user <\/td>\n   <td style=\"text-align:right;\"> scibr <\/td>\n  <\/tr>\n<\/tbody>\n<\/table>"},"evals":[],"jsHooks":[]}</script></p>
+</div>
+<div id="reference" class="section level2">
+<h2>7.2 Reference</h2>
+<ol style="list-style-type: decimal">
+<li><a href="https://englianhu.github.io/2017/10/Betting_Strategy_and_Model_Validation_-_Part_02/"><span style="color:blue">Betting Strategy and Model Validation - Part II</span></a></li>
+</ol>
+<p><strong>Powered by - Copyright® Intellectual Property Rights of <img src='https://raw.githubusercontent.com/englianhu/binary.com-interview-question/master/www/oda-army2.jpg?raw=true' width='24'> <a href="http://www.scibrokes.com"><span style="color:blue">Scibrokes®</span></a>個人の経営企業</strong></p>
+</div>
+</div>
+
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

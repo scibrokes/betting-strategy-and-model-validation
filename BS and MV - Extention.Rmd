@@ -1,6 +1,6 @@
 ---
-title: "<img src='https://raw.githubusercontent.com/englianhu/binary.com-interview-question/757b27e1e93132368b0898152078be4961b05a28/www/binary-logo-resize.jpg' width='240'>"
-subtitle: "[<span style='color:blue'>binary.com</span>](https://github.com/scibrokes/betting-strategy-and-model-validation) Interview Question I (Extention)"
+title: "<img src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/figure/SmartOdds.png' width='840'>"
+subtitle: "[<span style='color:blue'>Betting Strategy and Model Validation II (Extention)</span>](https://github.com/scibrokes/betting-strategy-and-model-validation)"
 author: "[<span style='color:blue'>®γσ, Lian Hu</span>](https://englianhu.github.io/) <img src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/www/ENG.jpg' width='24'> <img src='https://raw.githubusercontent.com/scibrokes/betting-strategy-and-model-validation/master/www/RYO.jpg?raw=true' width='24'>白戸則道®"
 date: "`r Sys.Date()`"
 output:
@@ -17,13 +17,16 @@ output:
 link-citations: yes
 ---
 
-```{r setup, include = FALSE}
+```{r setup}
 #'@ rm(list = ls(all = TRUE))
 
 suppressPackageStartupMessages(library('BBmisc'))
-pkgs <- c('knitr', 'kableExtra', 'tint', 'devtools', 'lubridate', 'data.table', 'plyr', 'stringr', 'magrittr', 'dplyr', 'tidyr', 'tidyverse', 'ff', 'ffbase', 'tidyquant', 'sparklyr', 'readr', 'quantmod', 'htmltools', 'highcharter', 'googleVis', 'formattable', 'ggfortify', 'DT', 'forecast', 'Mcomp', 'MCMCpack', 'PerformanceAnalytics', 'broom', 'microbenchmark', 'doParallel', 'Boruta', 'fBasics', 'fPortfolio', 'rugarch', 'parma', 'rmgarch')
+pkgs <- c('knitr', 'kableExtra', 'tint', 'devtools', 'lubridate', 'data.table', 'quantmod', 'plyr', 'stringr', 'magrittr', 'dplyr', 'tidyverse', 'htmltools', 'highcharter', 'googleVis', 'formattable', 'DT', 'fst')
  
+funs <- c('plotChart2.R')
+
 suppressAll(lib(pkgs))
+l_ply(paste0('./function/', funs), source)
 
 ## Set option to below if you want to plot an independent webpage with graph 
 #'@ op <- options(gvis.plot.tag=NULL)
@@ -35,31 +38,89 @@ rm(pkgs)
 
 # 1. Introduction
 
-  By refer to *Ryo Eng Lian Hu (2017)*^[reference paper 1], I tried to compare few models for financial trading. Today I am using <s>1 minute, 3 minutes, 5 minutes, 10 minutes, 15 minutes, 30 minutes, 1 hour and also daily data instead of</s>^[Since the datasets contain few observation within a minute and also some data time period empty more than 30 minutes. Test all time period but eventually error...] only daily data. By the way, I try to compare the accuracy of forecasting instead of invesmnent.
-  
-  Besides, this paper will modelling multivariate Garch compare to previous paper which applied univariate Garch models.
+  By refer to *Ryo Eng Lian Hu (2017)*^[reference paper 1], I tried to model few Kelly funds for financial trading. Today I am zooming on the Kellys fund.
 
 # 2. Data
 
-# 3. Statiscal Modelling
+  Firstly, we need to load a large size data.
+  
+  - [Fast data loading from files to R](http://appsilondatascience.com/blog/rstats/2017/04/11/fast-data-load.html)
+  - [`fst`: Fast serialization of R data frames](http://blog.revolutionanalytics.com/2017/02/fst-fast-serialization-of-r-data-frames.html)
+  - [fstpackage.github.io *Lightning Fast Serialization of Data Frames for R*](http://www.fstpackage.org/)
 
-# 4. Mean Squared Error (MSE)
+```{r read-data}
+## http://appsilondatascience.com/blog/rstats/2017/04/11/fast-data-load.html
+## http://blog.revolutionanalytics.com/2017/02/fst-fast-serialization-of-r-data-frames.html
+#'@ BR <- readRDS('./data/BR.rds')
+#'@ BRSum <- fread('./data/BRSum.csv')
 
-# 5. Model Comparison
+## https://stackoverflow.com/questions/16300344/how-to-flatten-a-list-of-lists-in-r?answertab=votes#tab-top
+#'@ BRM <- do.call(c, unlist(BR$KM, recursive = FALSE))
+Date <- readRDS('./data/K1.rds')$data$Date
+#'@ BRM1 <- llply(BRM, function(x) x[-c(1:5)])
+#'@ BRM1 <- bind_cols(BRM1)
+#'@ saveRDS(BRM1, './data/BRM1.rds')
+BRM1 <- try(readRDS('./data/BRM1.rds'), silent = TRUE)
 
-# 6. Conclusion
+#'@ rm(BR, BRM)
+```
+
+```{r arrange-data}
+## build data frame
+BRM.Hi <- tryCatch(data.table(Date, Hi(BRM1)), error = function(e) Hi(BRM1))
+BRM.Lo <- tryCatch(data.table(Date, Lo(BRM1)), error = function(e) Lo(BRM1))
+BRM.Cl <- tryCatch(data.table(Date, Cl(BRM1)), error = function(e) Cl(BRM1))
+
+BR.Hi <- fread('./data/BRSum.Hi.csv')
+BR.Lo <- fread('./data/BRSum.Lo.csv')
+BR.Cl <- fread('./data/BRSum.Cl.csv')
+
+```
+
+# 3. Model Comparison
+
+  Here we plot a graph for high volume data points.
+
+  - [Question: R Plotting Line Graph With Large Dataset](https://www.biostars.org/p/47288/)
+  - [More efficient plot functions in R when millions of points are present?](https://stats.stackexchange.com/questions/7348/more-efficient-plot-functions-in-r-when-millions-of-points-are-present?answertab=votes#tab-top)
+  - [Visualizing Big Data with R](https://beta.rstudioconnect.com/jmcphers/datavis-talk/datavis.html)
+
+```{r graph-Hi}
+#'@ plotChart2(Hi(BRM1), chart.type = 'Hi')
+#'@ hchart(BRM.Hi, 'line')
+
+## https://cran.r-project.org/web/packages/googleVis/vignettes/googleVis_examples.html
+Line <- gvisLineChart(Hi(BRM1))
+plot(Line)
+```
+
+```{r}
+ggplot(data = BRM.Hi, aes()) + geom_line() + geom_point(size = 4, shape = 21, fill = 'white')
+```
+
+```{r graph-Lo}
+Line <- gvisLineChart(Lo(BRM1))
+plot(Line)
+```
+
+```{r graph-Cl}
+Line <- gvisLineChart(Cl(BRM1))
+plot(Line)
+```
+
+
+# 4. Conclusion
 
 
 ```{r stopPar, echo = FALSE}
 ## Set options back to original options
 options(op)
 options(warn = 0)
-stopCluster(cl)
 ```
 
-# 7. Appendix
+# 5. Appendix
 
-## 7.1 Documenting File Creation 
+## 5.1 Documenting File Creation 
 
   It's useful to record some information about how your file was created.
 
@@ -88,7 +149,7 @@ data.frame(Sys.info()) %>% mutate(Category = rownames(.)) %>% .[2:1] %>% rename(
 rm(sys1)
 ```
 
-## 7.2 Reference
+## 5.2 Reference
 
   01. [<span style='color:blue'>Betting Strategy and Model Validation - Part II</span>](https://englianhu.github.io/2017/10/Betting_Strategy_and_Model_Validation_-_Part_02/)
 
