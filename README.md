@@ -1,4 +1,11 @@
-# Betting Strategy and Model Validation
+# 投注策略|投资战略和计数|机数造物鉴别
+
+在此愚生从[7M](http://www.7msport.com)和[NowGoal.com](http://www.nowgoal.com)赔率资讯网上採撷赔率数据，欲知更多详情请查阅[WebDriver-DynamicWebpage-Scrapping.](https://github.com/scibrokes/webdriver-dynamicwebpage-scrapping)并且使用凯利标准计数|机数尤物，从模拟与回测中可以获利超过三成。
+
+- [「猫城」在足彩投注模式|投资战略中，使用凯利标准计数|机数尤物（英）](https://github.com/scibrokes/kelly-criterion)
+  + [在英超二零二一/二零二二年赛季中，使用凯利标准计数|机数尤物（英）](http://rpubs.com/englianhu/kelly_eng1112)
+  + [在英超二零二二/二零二三年赛季中，使用凯利标准计数|机数尤物（英）](http://rpubs.com/englianhu/kelly_eng1213)
+- [「猫城」投注策略|投资战略和计数|机数造物鉴别（英）](https://github.com/scibrokes/betting-strategy-and-model-validation)
 
 ## 1. Summary
 
