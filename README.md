@@ -62,15 +62,15 @@ Kindly refer to new files in section [2. Case Study] to know the profit and retu
 
 ## 四、科研前瞻
 
-- Part II in [「猫城」Application of Kelly Criterion model in Sportsbook Investment](https://github.com/scibrokes/kelly-criterion) which apply shinyApp.
-- Algorithmic scrapping team name and filtering, matching team name.
-- Writing a website to apply the staking model which is similar with <http://www.matchodds.org/>.
+- 第二部，在闪霓应用上应用[「猫城」在蹴鞠彩券投注模式|投资战略中，使用凯利标准计数|机数尤物（英）](https://github.com/scibrokes/kelly-criterion)。
+- 採撷网站蹴鞠数据，包括蹴鞠队名、文本分析、自动化。
+- 编写个类似Writing a website to apply the staking model which is similar with http://www.matchodds.org 自动筹算、占卜、投注、结算、盈亏表的一条龙服务高频量化对冲自动化网站。
 
 ## 五、参考文献
 
-一、[**Odds Modelling and Testing Inefficiency of Sports Bookmakers : Rmodel** by ®γσ, Eng Lian Hu (2016)](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers)
-二、[**Apply Kelly-Criterion on English Soccer 2011/12 to 2012/13** *by ®γσ, Eng Lian Hu (2014)*](https://github.com/scibrokes/kelly-criterion)
-三、[**Creating a Profitable Betting Strategy for Football by Using Statistical Modelling** *by Niko Marttinen (2006)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Creating%20a%20Profitable%20Betting%20Strategy%20for%20Football%20by%20Using%20Statistical%20Modelling.pdf)
+- 一、[**Odds Modelling and Testing Inefficiency of Sports Bookmakers : Rmodel** by ®γσ, Eng Lian Hu (2016)](https://github.com/scibrokes/odds-modelling-and-testing-inefficiency-of-sports-bookmakers)
+- 二、[**Apply Kelly-Criterion on English Soccer 2011/12 to 2012/13** *by ®γσ, Eng Lian Hu (2014)*](https://github.com/scibrokes/kelly-criterion)
+- 三、[**Creating a Profitable Betting Strategy for Football by Using Statistical Modelling** *by Niko Marttinen (2006)*](https://github.com/scibrokes/betting-strategy-and-model-validation/blob/master/references/Creating%20a%20Profitable%20Betting%20Strategy%20for%20Football%20by%20Using%20Statistical%20Modelling.pdf)
 
 ---
 [![](诸子百家考工记/世博量化.png){height=14} Sςιβrοκεrs Trαdιηg®](http://www.scibrokes.com)<br>
